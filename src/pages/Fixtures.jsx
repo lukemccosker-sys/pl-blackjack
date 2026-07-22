@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import ClubBadge from '@/components/ClubBadge';
 
-const formatScorers = (list) => (list || []).map(s => s.count > 1 ? `${s.name} ×${s.count}` : s.name).join(', ');
+const formatScorers = (list) => (list || []).map(s => {
+  const og = s.is_own_goal ? ' (OG)' : '';
+  return s.count > 1 ? `${s.name}${og} ×${s.count}` : `${s.name}${og}`;
+}).join(', ');
 const hasMatchStats = (f) => f.home_goalscorers?.length > 0 || f.home_assists?.length > 0 || f.away_goalscorers?.length > 0 || f.away_assists?.length > 0;
 
 export default function Fixtures() {

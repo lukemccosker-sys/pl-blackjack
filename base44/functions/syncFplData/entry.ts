@@ -301,17 +301,31 @@ async function syncFixtures(base44, bsData) {
 
   const toCreate = [];
   const toUpdate = [];
+  const scorerWarnings = [];
   fixtures.forEach(fx => {
     const homeTeam = teams[fx.team_h];
     const awayTeam = teams[fx.team_a];
     const fxStats = fx.stats || [];
     const goalsEntry = fxStats.find(s => s.identifier === 'goals_scored');
+    const ogEntry = fxStats.find(s => s.identifier === 'own_goals');
     const assistsEntry = fxStats.find(s => s.identifier === 'assists');
-    const mapStatList = (items) => (items || []).map(item => {
+    const mapStatList = (items, isOG = false) => (items || []).map(item => {
       const player = playerMap[item.element];
       if (!player) return null;
-      return { player: player.id, name: player.web_name, count: item.value };
+      return { player: player.id, name: player.web_name, count: item.value, is_own_goal: isOG };
     }).filter(Boolean);
+
+    // Normal goals: h → home team, a → away team
+    // Own goals: h → away team (home player scored on own goal),
+    //            a → home team (away player scored on own goal)
+    const homeGoalscorers = [
+      ...mapStatList(goalsEntry?.h),
+      ...mapStatList(ogEntry?.a, true),
+    ];
+    const awayGoalscorers = [
+      ...mapStatList(goalsEntry?.a),
+      ...mapStatList(ogEntry?.h, true),
+    ];
 
     const fixtureData = {
       fpl_id: fx.id,
@@ -324,11 +338,25 @@ async function syncFixtures(base44, bsData) {
       home_score: fx.team_h_score ?? null,
       away_score: fx.team_a_score ?? null,
       finished: fx.finished || false,
-      home_goalscorers: mapStatList(goalsEntry?.h),
-      away_goalscorers: mapStatList(goalsEntry?.a),
+      home_goalscorers: homeGoalscorers,
+      away_goalscorers: awayGoalscorers,
       home_assists: mapStatList(assistsEntry?.h),
       away_assists: mapStatList(assistsEntry?.a),
     };
+
+    // Validation: sum attributed goals vs actual scoreline
+    if (fx.finished && fx.team_h_score != null && fx.team_a_score != null) {
+      const homeAttributed = homeGoalscorers.reduce((sum, g) => sum + g.count, 0);
+      const awayAttributed = awayGoalscorers.reduce((sum, g) => sum + g.count, 0);
+      if (homeAttributed !== fx.team_h_score || awayAttributed !== fx.team_a_score) {
+        const homeName = homeTeam?.name || 'Home';
+        const awayName = awayTeam?.name || 'Away';
+        const parts = [];
+        if (homeAttributed !== fx.team_h_score) parts.push(`${homeAttributed} of ${fx.team_h_score} ${homeName} goals`);
+        if (awayAttributed !== fx.team_a_score) parts.push(`${awayAttributed} of ${fx.team_a_score} ${awayName} goals`);
+        scorerWarnings.push(`GW${fx.event || '?'} ${homeName} vs ${awayName}: scorer data incomplete — ${parts.join(', ')}`);
+      }
+    }
     if (existingMap[fx.id]) {
       toUpdate.push({ id: existingMap[fx.id].id, ...fixtureData });
     } else {
@@ -359,7 +387,7 @@ async function syncFixtures(base44, bsData) {
     fixturesDeleted = staleFixtureFplIds.length;
   }
 
-  return { created, updated, fixturesDeleted };
+  return { created, updated, fixturesDeleted, scorerWarnings };
 }
 
 async function syncStats(base44, gameweek, season) {

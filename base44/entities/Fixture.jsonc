@@ -62,6 +62,11 @@
           "count": {
             "type": "number",
             "title": "Count"
+          },
+          "is_own_goal": {
+            "type": "boolean",
+            "default": false,
+            "title": "Is Own Goal"
           }
         }
       }
@@ -84,6 +89,11 @@
           "count": {
             "type": "number",
             "title": "Count"
+          },
+          "is_own_goal": {
+            "type": "boolean",
+            "default": false,
+            "title": "Is Own Goal"
           }
         }
       }

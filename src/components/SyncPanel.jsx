@@ -76,6 +76,15 @@ export default function SyncPanel({ member }) {
             <p>Players: {result.bootstrap?.playersCreated || 0} new, {result.bootstrap?.playersUpdated || 0} updated, {result.bootstrap?.playersDeleted || 0} removed</p>
             <p>Gameweeks: {result.bootstrap?.gwsCreated || 0} new, {result.bootstrap?.gwsUpdated || 0} updated</p>
             <p>Fixtures: {result.fixtures?.created || 0} new, {result.fixtures?.updated || 0} updated, {result.fixtures?.fixturesDeleted || 0} removed</p>
+            {result.fixtures?.scorerWarnings?.length > 0 && (
+              <div className="space-y-1 pt-1">
+                {result.fixtures.scorerWarnings.map((w, i) => (
+                  <p key={i} className="text-xs text-yellow-400 flex items-start gap-1">
+                    <AlertCircle size={12} className="mt-0.5 shrink-0" /> {w}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {result.report?.seasonBackfill && (result.report.seasonBackfill.gameweeksUpdated > 0 || result.report.seasonBackfill.playerStatsUpdated > 0) && (
