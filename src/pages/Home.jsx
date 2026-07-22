@@ -5,6 +5,7 @@ import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import ClubBadge from '@/components/ClubBadge';
 import MemberAvatar from '@/components/MemberAvatar';
+import CardHand from '@/components/CardHand';
 import { Lock } from 'lucide-react';
 
 export default function Home() {
@@ -105,7 +106,7 @@ export default function Home() {
   return (
     <div className="p-4 pb-20">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold">Home</h1>
+        <h1 className="text-2xl font-bold font-heading">Home</h1>
         <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
       </div>
 
@@ -119,51 +120,23 @@ export default function Home() {
           </Link>
         ) : myPlayerData.length > 0 ? (
           <>
-            {/* Score Card */}
-            <div className={`rounded-xl p-4 mb-3 ${myResult.isBust ? 'bg-destructive/10 ring-2 ring-destructive' : myResult.tier === 'blackjack' ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-card'}`}>
-              {myResult.isBust ? (
-                <div className="text-center">
-                  <p className="text-destructive font-black text-3xl tracking-widest">BUST!</p>
-                  <p className="text-sm text-destructive/80 mt-1">{myResult.total} — {myResult.total - threshold} over</p>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div>
-                    {myResult.tier === 'blackjack' && (
-                      <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">BLACKJACK!</span>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-0.5">Your total</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-3xl font-bold ${myResult.isBust ? 'text-destructive' : 'text-primary'}`}>{myResult.score}</p>
-                    <p className="text-xs text-muted-foreground">/ {threshold}</p>
-                  </div>
-                </div>
-              )}
+            {/* Score header */}
+            <div className="flex items-center justify-between bg-card rounded-xl p-3 mb-2">
+              <p className="text-xs text-muted-foreground">Your total</p>
+              <div className="text-right">
+                <span className={`text-2xl font-bold font-display ${myResult.isBust ? 'text-destructive' : 'text-primary'}`}>{myResult.score}</span>
+                <span className="text-xs text-muted-foreground ml-1">/ {threshold}</span>
+              </div>
             </div>
 
-            {/* Player List */}
-            <div className="space-y-1.5">
-              {myPlayerData.map(({ player: p, stat, points: pts }) => (
-                <div key={p.id} className="flex items-center gap-3 bg-card rounded-xl p-2.5">
-                  <ClubBadge code={p.club_code} name={p.club} size={28} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{p.web_name}</p>
-                    <p className="text-xs text-muted-foreground">{p.position} · {p.club_short}</p>
-                    {stat && (
-                      <p className="text-xs text-muted-foreground">
-                        {stat.goals}G · {stat.assists}A · {stat.clean_sheets}CS · {stat.minutes}min
-                        {stat.yellow_cards > 0 && ` · ${stat.yellow_cards}Y`}
-                        {stat.red_cards > 0 && ` · ${stat.red_cards}R`}
-                      </p>
-                    )}
-                  </div>
-                  <span className={`text-lg font-bold w-8 text-right ${pts > 0 ? 'text-primary' : pts < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                    {pts > 0 ? '+' : ''}{pts}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {/* Card hand */}
+            <CardHand
+              playerData={myPlayerData}
+              isBust={myResult.isBust}
+              isBlackjack={myResult.tier === 'blackjack'}
+              threshold={threshold}
+              showPoints={locked}
+            />
           </>
         ) : (
           <p className="text-center text-muted-foreground py-4 bg-card rounded-xl text-sm">No picks for this gameweek</p>

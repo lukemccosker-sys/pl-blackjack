@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,43 +7,43 @@
 
 @layer base {
   :root {
-    --background: 271 45% 6%;
-    --foreground: 0 0% 98%;
-    --card: 271 40% 11%;
-    --card-foreground: 0 0% 98%;
-    --popover: 271 40% 11%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 271 55% 15%;
-    --secondary: 271 30% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 271 30% 16%;
-    --muted-foreground: 271 15% 65%;
-    --accent: 271 35% 20%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 271 30% 18%;
-    --input: 271 30% 18%;
-    --ring: 0 0% 100%;
+    --background: 155 55% 16%;
+    --foreground: 43 35% 95%;
+    --card: 155 40% 20%;
+    --card-foreground: 43 35% 95%;
+    --popover: 155 40% 20%;
+    --popover-foreground: 43 35% 95%;
+    --primary: 273 55% 22%;
+    --primary-foreground: 43 35% 95%;
+    --secondary: 155 35% 24%;
+    --secondary-foreground: 43 35% 95%;
+    --muted: 155 35% 24%;
+    --muted-foreground: 155 15% 65%;
+    --accent: 155 35% 24%;
+    --accent-foreground: 43 35% 95%;
+    --destructive: 355 65% 45%;
+    --destructive-foreground: 43 35% 95%;
+    --border: 155 30% 28%;
+    --input: 155 30% 28%;
+    --ring: 273 55% 22%;
     --chart-1: 271 55% 55%;
     --chart-2: 0 0% 90%;
     --chart-3: 330 85% 60%;
     --chart-4: 200 90% 55%;
     --chart-5: 43 90% 60%;
     --radius: 0.75rem;
-    --font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-heading: 'Fraunces', serif;
     --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Fraunces', serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 271 40% 11%;
-    --sidebar-foreground: 271 15% 65%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 271 55% 15%;
-    --sidebar-accent: 271 30% 16%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 271 30% 18%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-background: 155 40% 20%;
+    --sidebar-foreground: 155 15% 65%;
+    --sidebar-primary: 273 55% 22%;
+    --sidebar-primary-foreground: 43 35% 95%;
+    --sidebar-accent: 155 35% 24%;
+    --sidebar-accent-foreground: 43 35% 95%;
+    --sidebar-border: 155 30% 28%;
+    --sidebar-ring: 273 55% 22%;
   }
 
   .dark {
@@ -91,4 +92,54 @@
   body {
     @apply bg-background text-foreground font-body;
   }
+}
+
+/* Card-game themed animations */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes stamp-press {
+  0% { transform: scale(2.2) rotate(-14deg); opacity: 0; }
+  50% { transform: scale(1.15) rotate(-11deg); opacity: 0.9; }
+  70% { transform: scale(0.95) rotate(-13deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-12deg); opacity: 0.85; }
+}
+
+@keyframes flip-reveal {
+  0% { transform: rotateY(90deg) scale(0.7); opacity: 0; }
+  60% { transform: rotateY(0deg) scale(1.15); opacity: 1; }
+  100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+
+.bust-stamp {
+  text-transform: uppercase;
+  border: 3px solid hsl(355 65% 45%);
+  padding: 4px 14px;
+  border-radius: 6px;
+  letter-spacing: 0.15em;
+  color: hsl(355 65% 45%);
+  background: hsl(43 35% 95% / 0.15);
+  animation: stamp-press 0.45s ease-out forwards;
+  text-shadow: 0 0 3px hsl(355 65% 45% / 0.3);
+}
+
+.blackjack-reveal {
+  text-transform: uppercase;
+  background: linear-gradient(
+    90deg,
+    hsl(43 70% 45%),
+    hsl(43 80% 62%),
+    hsl(43 70% 45%),
+    hsl(43 80% 62%),
+    hsl(43 70% 45%)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s linear infinite, flip-reveal 0.5s ease-out;
+  filter: drop-shadow(0 0 6px hsl(43 70% 52% / 0.5));
+  letter-spacing: 0.1em;
 }

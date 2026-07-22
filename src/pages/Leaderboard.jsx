@@ -85,7 +85,7 @@ export default function Leaderboard() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Leaderboard</h1>
+      <h1 className="text-2xl font-bold font-heading mb-4">Leaderboard</h1>
 
       <div className="flex gap-2 mb-4">
         <button
@@ -162,7 +162,7 @@ export default function Leaderboard() {
                       ) : null}
                     </div>
                     <div className="text-right">
-                      <p className={`text-2xl font-bold ${score.isBust ? 'text-destructive' : 'text-primary'}`}>
+                      <p className={`text-2xl font-bold font-display ${score.isBust ? 'text-destructive' : 'text-primary'}`}>
                         {score.score}
                       </p>
                       {!score.isBust && score.total > 0 && (
@@ -196,7 +196,7 @@ export default function Leaderboard() {
                   {s.busts > 0 && ` · ${s.busts} bust${s.busts > 1 ? 's' : ''}`}
                 </p>
               </div>
-              <p className="text-2xl font-bold text-primary">{s.totalScore}</p>
+              <p className="text-2xl font-bold font-display text-primary">{s.totalScore}</p>
             </div>
           ))}
           {seasonTotals.length === 0 && (

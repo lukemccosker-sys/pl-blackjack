@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import ClubBadge from '@/components/ClubBadge';
+import CardHand from '@/components/CardHand';
 import MemberAvatar from '@/components/MemberAvatar';
 import { Radio, Lock, AlertTriangle } from 'lucide-react';
 
@@ -89,9 +90,10 @@ export default function Live() {
 
   const picksWithScores = picks.map(pick => {
     const playerData = (pick.player_ids || []).map(pid => {
+      const player = players.find(p => p.id === pid);
       const stat = playerStats.find(s => s.player_id === pid);
-      return { stat, points: calculatePlayerPoints(stat, scoringConfig) };
-    });
+      return { player, stat, points: calculatePlayerPoints(stat, scoringConfig) };
+    }).filter(d => d.player);
     const playerPoints = playerData.map(d => d.points);
     const result = calculatePickTotal(playerPoints, scoringConfig);
     return { ...pick, playerData, playerPoints, ...result };
@@ -104,7 +106,7 @@ export default function Live() {
       <div className="flex items-center gap-2 mb-4">
         <Radio className="text-primary" size={20} />
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Live</h1>
+          <h1 className="text-2xl font-bold font-heading">Live</h1>
           <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
         </div>
         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
@@ -137,11 +139,6 @@ export default function Live() {
                 pick.member_id === member?.id ? 'bg-card ring-1 ring-primary/20' : 'bg-card'
               }`}
             >
-              {pick.isBust && (
-                <div className="bg-destructive text-white text-center py-2 font-black text-2xl tracking-widest">
-                  BUST!
-                </div>
-              )}
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -153,45 +150,22 @@ export default function Live() {
                       {pick.member_name}
                       {pick.member_id === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
                     </span>
-                    {pick.tier === 'blackjack' && !pick.isBust && (
-                      <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">BLACKJACK!</span>
-                    )}
                   </div>
                   <div className="flex items-baseline gap-1">
                     {pick.isBust && <AlertTriangle className="text-destructive" size={16} />}
-                    <span className={`text-2xl font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>
+                    <span className={`text-2xl font-bold font-display ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>
                       {pick.score}
                     </span>
                     <span className="text-xs text-muted-foreground">/ {threshold}</span>
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  {pick.player_ids?.map((pid, idx) => {
-                    const player = players.find(p => p.id === pid);
-                    if (!player) return null;
-                    const { stat, points: pts } = pick.playerData[idx] || { stat: null, points: 0 };
-                    return (
-                      <div key={pid} className="flex items-center gap-2 bg-accent/40 rounded-lg p-1.5">
-                        <ClubBadge code={player.club_code} name={player.club} size={28} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{player.web_name}</p>
-                          <p className="text-xs text-muted-foreground">{player.position} · {player.club_short}</p>
-                          {stat && (
-                            <p className="text-xs text-muted-foreground">
-                              {stat.goals}G · {stat.assists}A · {stat.clean_sheets}CS · {stat.minutes}min
-                              {stat.yellow_cards > 0 && ` · ${stat.yellow_cards}Y`}
-                              {stat.red_cards > 0 && ` · ${stat.red_cards}R`}
-                            </p>
-                          )}
-                        </div>
-                        <span className={`text-sm font-bold w-8 text-right ${pts > 0 ? 'text-primary' : pts < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                          {pts > 0 ? '+' : ''}{pts}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                <CardHand
+                  playerData={pick.playerData}
+                  isBust={pick.isBust}
+                  isBlackjack={pick.tier === 'blackjack' && !pick.isBust}
+                  threshold={threshold}
+                />
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                   <span className="text-xs text-muted-foreground">Total</span>

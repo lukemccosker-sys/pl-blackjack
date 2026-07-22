@@ -77,7 +77,7 @@ export default function Stats() {
       <div className="flex items-center gap-2 mb-4">
         <BarChart3 className="text-primary" size={20} />
         <div>
-          <h1 className="text-2xl font-bold">Stats</h1>
+          <h1 className="text-2xl font-bold font-heading">Stats</h1>
           <p className="text-sm text-muted-foreground">
             {scope === 'gameweek' ? `Gameweek ${activeGwNumber || '—'}` : 'Season totals across all gameweeks'}
           </p>

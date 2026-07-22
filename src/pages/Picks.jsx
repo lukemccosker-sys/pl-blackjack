@@ -5,6 +5,7 @@ import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed, isGameweek
 import PlayerSearch from '@/components/PlayerSearch';
 import PickSummary from '@/components/PickSummary';
 import ClubBadge from '@/components/ClubBadge';
+import CardHand from '@/components/CardHand';
 import { Lock, Clock } from 'lucide-react';
 
 export default function Picks() {
@@ -97,11 +98,16 @@ export default function Picks() {
     return calculatePlayerPoints(stat, scoringConfig);
   });
   const { total, isBust, tier } = calculatePickTotal(playerPoints, scoringConfig);
+  const playerData = selectedPlayers.map((p, i) => ({
+    player: p,
+    stat: playerStats.find(s => s.player_id === p.id),
+    points: playerPoints[i],
+  }));
 
   return (
     <div className="p-4 pb-48">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold">Gameweek {gameweek.number}</h1>
+        <h1 className="text-2xl font-bold font-heading">Gameweek {gameweek.number}</h1>
         {locked ? (
           <p className="text-destructive flex items-center gap-1 mt-1 text-sm">
             <Lock size={14} /> Picks locked
@@ -118,31 +124,15 @@ export default function Picks() {
       )}
 
       {locked && (
-        <div className="space-y-2 mb-4">
-          {selectedPlayers.map((p, i) => {
-            const stat = playerStats.find(s => s.player_id === p.id);
-            const pts = calculatePlayerPoints(stat, scoringConfig);
-            return (
-              <div key={p.id} className="bg-card rounded-xl p-3 flex items-center gap-3">
-                <ClubBadge code={p.club_code} name={p.club} size={36} />
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{p.web_name}</p>
-                  <p className="text-xs text-muted-foreground">{p.position} · {p.club_short}</p>
-                  {stat && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {stat.goals}G · {stat.assists}A · {stat.clean_sheets}CS · {stat.minutes}min
-                      {stat.yellow_cards > 0 && ` · ${stat.yellow_cards}Y`}
-                      {stat.red_cards > 0 && ` · ${stat.red_cards}R`}
-                    </p>
-                  )}
-                </div>
-                {locked && (
-                  <span className={`text-2xl font-bold ${pts > 0 ? 'text-primary' : 'text-muted-foreground'}`}>{pts}</span>
-                )}
-              </div>
-            );
-          })}
-          {selectedPlayers.length === 0 && (
+        <div className="mb-4">
+          {playerData.length > 0 ? (
+            <CardHand
+              playerData={playerData}
+              isBust={isBust}
+              isBlackjack={tier === 'blackjack'}
+              threshold={scoringConfig?.bust_threshold || 21}
+            />
+          ) : (
             <p className="text-center text-muted-foreground py-8">No picks saved for this gameweek</p>
           )}
         </div>
