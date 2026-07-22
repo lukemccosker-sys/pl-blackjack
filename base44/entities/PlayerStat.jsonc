@@ -1,0 +1,61 @@
+{
+  "name": "PlayerStat",
+  "type": "object",
+  "properties": {
+    "player_id": {
+      "type": "string",
+      "title": "Player ID"
+    },
+    "player_name": {
+      "type": "string",
+      "title": "Player Name"
+    },
+    "fpl_id": {
+      "type": "number",
+      "title": "FPL ID"
+    },
+    "gameweek": {
+      "type": "number",
+      "title": "Gameweek"
+    },
+    "goals": {
+      "type": "number",
+      "default": 0,
+      "title": "Goals"
+    },
+    "assists": {
+      "type": "number",
+      "default": 0,
+      "title": "Assists"
+    },
+    "clean_sheets": {
+      "type": "number",
+      "default": 0,
+      "title": "Clean Sheets"
+    },
+    "minutes": {
+      "type": "number",
+      "default": 0,
+      "title": "Minutes"
+    },
+    "yellow_cards": {
+      "type": "number",
+      "default": 0,
+      "title": "Yellow Cards"
+    },
+    "red_cards": {
+      "type": "number",
+      "default": 0,
+      "title": "Red Cards"
+    },
+    "points": {
+      "type": "number",
+      "default": 0,
+      "title": "Points"
+    }
+  },
+  "required": [
+    "player_id",
+    "gameweek"
+  ]
+}

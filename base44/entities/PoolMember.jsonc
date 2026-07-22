@@ -1,0 +1,23 @@
+{
+  "name": "PoolMember",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name"
+    },
+    "pin": {
+      "type": "string",
+      "title": "PIN"
+    },
+    "is_admin": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Admin"
+    }
+  },
+  "required": [
+    "name",
+    "pin"
+  ]
+}

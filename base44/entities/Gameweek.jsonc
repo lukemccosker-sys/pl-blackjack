@@ -1,0 +1,33 @@
+{
+  "name": "Gameweek",
+  "type": "object",
+  "properties": {
+    "number": {
+      "type": "number",
+      "title": "Gameweek Number"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Deadline"
+    },
+    "is_locked": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Locked"
+    },
+    "is_finalized": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Finalized"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Active"
+    }
+  },
+  "required": [
+    "number"
+  ]
+}

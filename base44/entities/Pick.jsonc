@@ -1,0 +1,43 @@
+{
+  "name": "Pick",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "title": "Member ID"
+    },
+    "member_name": {
+      "type": "string",
+      "title": "Member Name"
+    },
+    "gameweek": {
+      "type": "number",
+      "title": "Gameweek"
+    },
+    "player_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Player IDs"
+    },
+    "total_points": {
+      "type": "number",
+      "title": "Total Points"
+    },
+    "is_bust": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Bust"
+    },
+    "score": {
+      "type": "number",
+      "title": "Score"
+    }
+  },
+  "required": [
+    "member_id",
+    "gameweek",
+    "player_ids"
+  ]
+}

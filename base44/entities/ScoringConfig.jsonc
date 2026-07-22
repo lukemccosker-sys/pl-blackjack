@@ -1,0 +1,47 @@
+{
+  "name": "ScoringConfig",
+  "type": "object",
+  "properties": {
+    "points_per_goal": {
+      "type": "number",
+      "default": 3,
+      "title": "Points Per Goal"
+    },
+    "points_per_assist": {
+      "type": "number",
+      "default": 2,
+      "title": "Points Per Assist"
+    },
+    "points_per_clean_sheet": {
+      "type": "number",
+      "default": 2,
+      "title": "Points Per Clean Sheet"
+    },
+    "points_per_appearance": {
+      "type": "number",
+      "default": 1,
+      "title": "Points Per Appearance"
+    },
+    "points_per_yellow_card": {
+      "type": "number",
+      "default": 1,
+      "title": "Points Per Yellow Card"
+    },
+    "points_per_red_card": {
+      "type": "number",
+      "default": 3,
+      "title": "Points Per Red Card"
+    },
+    "bust_threshold": {
+      "type": "number",
+      "default": 21,
+      "title": "Bust Threshold"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "title": "Is Active"
+    }
+  },
+  "required": []
+}

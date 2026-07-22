@@ -7,6 +7,13 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
+import Login from '@/pages/Login';
+import Picks from '@/pages/Picks';
+import Fixtures from '@/pages/Fixtures';
+import Leaderboard from '@/pages/Leaderboard';
+import Admin from '@/pages/Admin';
+import Layout from '@/components/Layout';
+import { PoolAuthProvider } from '@/lib/PoolAuth';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -35,6 +42,13 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       {/* Add your page Route elements here */}
+      <Route path="/login" element={<Login />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<Picks />} />
+        <Route path="/fixtures" element={<Fixtures />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/admin" element={<Admin />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
@@ -48,7 +62,9 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
-          <AuthenticatedApp />
+          <PoolAuthProvider>
+            <AuthenticatedApp />
+          </PoolAuthProvider>
         </Router>
         <Toaster />
       </QueryClientProvider>

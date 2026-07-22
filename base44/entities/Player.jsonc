@@ -1,0 +1,49 @@
+{
+  "name": "Player",
+  "type": "object",
+  "properties": {
+    "fpl_id": {
+      "type": "number",
+      "title": "FPL ID"
+    },
+    "web_name": {
+      "type": "string",
+      "title": "Web Name"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "club": {
+      "type": "string",
+      "title": "Club"
+    },
+    "club_short": {
+      "type": "string",
+      "title": "Club Short"
+    },
+    "club_code": {
+      "type": "number",
+      "title": "Club Code"
+    },
+    "position": {
+      "type": "string",
+      "enum": [
+        "GK",
+        "DEF",
+        "MID",
+        "FWD"
+      ],
+      "title": "Position"
+    },
+    "price": {
+      "type": "number",
+      "title": "Price"
+    }
+  },
+  "required": [
+    "web_name",
+    "club",
+    "position"
+  ]
+}

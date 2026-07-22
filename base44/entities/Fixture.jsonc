@@ -1,0 +1,53 @@
+{
+  "name": "Fixture",
+  "type": "object",
+  "properties": {
+    "fpl_id": {
+      "type": "number",
+      "title": "FPL ID"
+    },
+    "gameweek": {
+      "type": "number",
+      "title": "Gameweek"
+    },
+    "home_team": {
+      "type": "string",
+      "title": "Home Team"
+    },
+    "away_team": {
+      "type": "string",
+      "title": "Away Team"
+    },
+    "home_team_code": {
+      "type": "number",
+      "title": "Home Team Code"
+    },
+    "away_team_code": {
+      "type": "number",
+      "title": "Away Team Code"
+    },
+    "kickoff_time": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Kickoff Time"
+    },
+    "home_score": {
+      "type": "number",
+      "title": "Home Score"
+    },
+    "away_score": {
+      "type": "number",
+      "title": "Away Score"
+    },
+    "finished": {
+      "type": "boolean",
+      "default": false,
+      "title": "Finished"
+    }
+  },
+  "required": [
+    "gameweek",
+    "home_team",
+    "away_team"
+  ]
+}
