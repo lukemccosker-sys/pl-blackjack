@@ -3,15 +3,30 @@ import { usePoolAuth } from '@/lib/PoolAuth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Shield, LogOut, Lock, Check } from 'lucide-react';
+import { Shield, LogOut, Lock, Check, Camera } from 'lucide-react';
+import MemberAvatar from '@/components/MemberAvatar';
 
 export default function AdminUnlock() {
-  const { member, unlockAdmin, logout } = usePoolAuth();
+  const { member, unlockAdmin, logout, updateProfilePhoto } = usePoolAuth();
   const [open, setOpen] = useState(false);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      await updateProfilePhoto(file);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleUnlock = async (e) => {
     e.preventDefault();
@@ -41,9 +56,23 @@ export default function AdminUnlock() {
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Logged in as</p>
-            <p className="font-medium">{member?.name}</p>
+          <div className="flex items-center gap-3">
+            <MemberAvatar member={member} size={56} />
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">Logged in as</p>
+              <p className="font-medium">{member?.name}</p>
+            </div>
+            <label className={`flex items-center gap-1 text-xs text-primary cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              <Camera size={14} />
+              {uploading ? 'Uploading...' : 'Photo'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
           </div>
 
           {!member?.is_admin && !success && (

@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import ClubBadge from '@/components/ClubBadge';
+import MemberAvatar from '@/components/MemberAvatar';
 import { Radio, Lock, AlertTriangle } from 'lucide-react';
 
 export default function Live() {
@@ -11,21 +12,24 @@ export default function Live() {
   const [picks, setPicks] = useState([]);
   const [playerStats, setPlayerStats] = useState([]);
   const [players, setPlayers] = useState([]);
+  const [members, setMembers] = useState([]);
   const [scoringConfig, setScoringConfig] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     try {
-      const [gws, configs, allPlayers] = await Promise.all([
+      const [gws, configs, allPlayers, allMembers] = await Promise.all([
         base44.entities.Gameweek.list('number', 50),
         base44.entities.ScoringConfig.filter({ is_active: true }),
         base44.entities.Player.list('', 600),
+        base44.entities.PoolMember.list('', 50),
       ]);
       const sorted = gws.sort((a, b) => a.number - b.number);
       const active = sorted.find(g => g.is_active) || sorted[sorted.length - 1];
       setGameweek(active);
       setScoringConfig(configs[0]);
       setPlayers(allPlayers);
+      setMembers(allMembers);
       if (active) {
         await reloadGwData(active.number);
       }
@@ -84,12 +88,13 @@ export default function Live() {
   const threshold = scoringConfig?.bust_threshold || 21;
 
   const picksWithScores = picks.map(pick => {
-    const playerPoints = (pick.player_ids || []).map(pid => {
+    const playerData = (pick.player_ids || []).map(pid => {
       const stat = playerStats.find(s => s.player_id === pid);
-      return calculatePlayerPoints(stat, scoringConfig);
+      return { stat, points: calculatePlayerPoints(stat, scoringConfig) };
     });
+    const playerPoints = playerData.map(d => d.points);
     const result = calculatePickTotal(playerPoints, scoringConfig);
-    return { ...pick, playerPoints, ...result };
+    return { ...pick, playerData, playerPoints, ...result };
   }).sort((a, b) => b.score - a.score);
 
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
@@ -126,57 +131,74 @@ export default function Live() {
           {picksWithScores.map((pick, i) => (
             <div
               key={pick.id}
-              className={`bg-card rounded-xl p-4 ${
-                pick.isBust ? 'ring-1 ring-destructive/40' :
-                i === 0 ? 'ring-1 ring-primary/40' :
-                pick.member_id === member?.id ? 'ring-1 ring-primary/20' : ''
+              className={`relative rounded-xl overflow-hidden ${
+                pick.isBust ? 'bg-destructive/10 ring-2 ring-destructive' :
+                i === 0 ? 'bg-card ring-1 ring-primary/40' :
+                pick.member_id === member?.id ? 'bg-card ring-1 ring-primary/20' : 'bg-card'
               }`}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className={`w-7 text-center font-bold ${medalColors[i] || 'text-muted-foreground'}`}>
-                    {i + 1}
-                  </span>
-                  <span className="font-medium">
-                    {pick.member_name}
-                    {pick.member_id === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
-                  </span>
-                  {pick.tier === 'blackjack' && !pick.isBust && (
-                    <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">BLACKJACK!</span>
-                  )}
+              {pick.isBust && (
+                <div className="bg-destructive text-white text-center py-2 font-black text-2xl tracking-widest">
+                  BUST!
                 </div>
-                <div className="flex items-baseline gap-1">
-                  {pick.isBust && <AlertTriangle className="text-destructive" size={16} />}
-                  <span className={`text-2xl font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>
-                    {pick.score}
-                  </span>
-                  <span className="text-xs text-muted-foreground">/ {threshold}</span>
+              )}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-7 text-center font-bold ${medalColors[i] || 'text-muted-foreground'}`}>
+                      {i + 1}
+                    </span>
+                    <MemberAvatar member={members.find(m => m.id === pick.member_id)} size={28} />
+                    <span className="font-medium">
+                      {pick.member_name}
+                      {pick.member_id === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
+                    </span>
+                    {pick.tier === 'blackjack' && !pick.isBust && (
+                      <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">BLACKJACK!</span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    {pick.isBust && <AlertTriangle className="text-destructive" size={16} />}
+                    <span className={`text-2xl font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>
+                      {pick.score}
+                    </span>
+                    <span className="text-xs text-muted-foreground">/ {threshold}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-1.5">
-                {pick.player_ids?.map((pid, idx) => {
-                  const player = players.find(p => p.id === pid);
-                  if (!player) return null;
-                  const pts = pick.playerPoints[idx] || 0;
-                  return (
-                    <div key={pid} className="flex items-center gap-2">
-                      <ClubBadge code={player.club_code} name={player.club} size={24} />
-                      <span className="text-sm flex-1 truncate">{player.web_name}</span>
-                      <span className="text-xs text-muted-foreground">{player.position}</span>
-                      <span className={`text-sm font-bold w-8 text-right ${pts > 0 ? 'text-primary' : pts < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {pts > 0 ? '+' : ''}{pts}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                <div className="space-y-1.5">
+                  {pick.player_ids?.map((pid, idx) => {
+                    const player = players.find(p => p.id === pid);
+                    if (!player) return null;
+                    const { stat, points: pts } = pick.playerData[idx] || { stat: null, points: 0 };
+                    return (
+                      <div key={pid} className="flex items-center gap-2 bg-accent/40 rounded-lg p-1.5">
+                        <ClubBadge code={player.club_code} name={player.club} size={28} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{player.web_name}</p>
+                          <p className="text-xs text-muted-foreground">{player.position} · {player.club_short}</p>
+                          {stat && (
+                            <p className="text-xs text-muted-foreground">
+                              {stat.goals}G · {stat.assists}A · {stat.clean_sheets}CS · {stat.minutes}min
+                              {stat.yellow_cards > 0 && ` · ${stat.yellow_cards}Y`}
+                              {stat.red_cards > 0 && ` · ${stat.red_cards}R`}
+                            </p>
+                          )}
+                        </div>
+                        <span className={`text-sm font-bold w-8 text-right ${pts > 0 ? 'text-primary' : pts < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {pts > 0 ? '+' : ''}{pts}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
 
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-                <span className="text-xs text-muted-foreground">Total</span>
-                <span className={`text-sm font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>
-                  {pick.total} {pick.isBust && `— ${pick.total - threshold} over`}
-                </span>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className={`text-sm font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>
+                    {pick.total} {pick.isBust && `— ${pick.total - threshold} over`}
+                  </span>
+                </div>
               </div>
             </div>
           ))}

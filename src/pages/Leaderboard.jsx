@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { AlertTriangle } from 'lucide-react';
+import MemberAvatar from '@/components/MemberAvatar';
 
 export default function Leaderboard() {
   const [tab, setTab] = useState('gameweek');
@@ -147,6 +148,7 @@ export default function Leaderboard() {
                     <span className={`w-8 text-center font-bold ${medalColors[i] || 'text-muted-foreground'}`}>
                       {i + 1}
                     </span>
+                    <MemberAvatar member={allMembers.find(m => m.id === pick.member_id)} size={32} />
                     <div className="flex-1">
                       <p className="font-medium">{pick.member_name}</p>
                       {score.isBust ? (
@@ -183,6 +185,7 @@ export default function Leaderboard() {
               <span className={`w-8 text-center font-bold ${medalColors[i] || 'text-muted-foreground'}`}>
                 {i + 1}
               </span>
+              <MemberAvatar member={s.member} size={32} />
               <div className="flex-1">
                 <p className="font-medium">{s.member.name}</p>
                 <p className="text-xs text-muted-foreground">

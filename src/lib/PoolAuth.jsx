@@ -67,8 +67,17 @@ export function PoolAuthProvider({ children }) {
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  const updateProfilePhoto = async (file) => {
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await base44.entities.PoolMember.update(member.id, { profile_photo: file_url });
+    const newMember = { ...member, profile_photo: file_url };
+    setMember(newMember);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newMember));
+    return newMember;
+  };
+
   return (
-    <PoolAuthContext.Provider value={{ member, loading, login, register, logout, unlockAdmin }}>
+    <PoolAuthContext.Provider value={{ member, loading, login, register, logout, unlockAdmin, updateProfilePhoto }}>
       {children}
     </PoolAuthContext.Provider>
   );
