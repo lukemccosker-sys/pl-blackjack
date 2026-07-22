@@ -125,7 +125,18 @@ async function syncBootstrap(base44, data) {
     gwsUpdated = gwsToUpdate.length;
   }
 
-  return { playersCreated, playersUpdated, gwsCreated, gwsUpdated };
+  // Delete stale players not in fresh FPL data
+  const freshPlayerIds = new Set(data.elements.map(el => el.id));
+  const stalePlayerFplIds = existingPlayers
+    .filter(p => p.fpl_id && !freshPlayerIds.has(p.fpl_id))
+    .map(p => p.fpl_id);
+  let playersDeleted = 0;
+  if (stalePlayerFplIds.length > 0) {
+    await base44.asServiceRole.entities.Player.deleteMany({ fpl_id: { $in: stalePlayerFplIds } });
+    playersDeleted = stalePlayerFplIds.length;
+  }
+
+  return { playersCreated, playersUpdated, playersDeleted, gwsCreated, gwsUpdated };
 }
 
 async function syncFixtures(base44, bsData) {
@@ -172,7 +183,19 @@ async function syncFixtures(base44, bsData) {
     await base44.asServiceRole.entities.Fixture.bulkUpdate(batch);
     updated += batch.length;
   }
-  return { created, updated };
+
+  // Delete stale fixtures not in fresh FPL data
+  const freshFixtureIds = new Set(fixtures.map(fx => fx.id));
+  const staleFixtureFplIds = existing
+    .filter(f => f.fpl_id && !freshFixtureIds.has(f.fpl_id))
+    .map(f => f.fpl_id);
+  let fixturesDeleted = 0;
+  if (staleFixtureFplIds.length > 0) {
+    await base44.asServiceRole.entities.Fixture.deleteMany({ fpl_id: { $in: staleFixtureFplIds } });
+    fixturesDeleted = staleFixtureFplIds.length;
+  }
+
+  return { created, updated, fixturesDeleted };
 }
 
 async function syncStats(base44, gameweek) {
@@ -270,7 +293,7 @@ async function syncStats(base44, gameweek) {
 
   const gws = await base44.asServiceRole.entities.Gameweek.filter({ number: gameweek });
   if (gws.length > 0) {
-    await base44.asServiceRole.entities.Gameweek.update(gws[0].id, { is_finalized: true, is_locked: true });
+    await base44.asServiceRole.entities.Gameweek.update(gws[0].id, { is_finalized: true });
   }
 
   return { created, updated, picksUpdated: pickUpdates.length };

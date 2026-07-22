@@ -29,7 +29,6 @@ export function formatGameweekLabel(gw) {
 
 export function isDeadlinePassed(gw) {
   if (!gw) return false;
-  if (gw.is_locked) return true;
   if (!gw.deadline) return false;
   return new Date(gw.deadline) < new Date();
 }

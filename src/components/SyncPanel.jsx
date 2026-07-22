@@ -37,9 +37,9 @@ export default function SyncPanel({ member }) {
             <Check size={14} /> Sync complete
           </p>
           <div className="space-y-1 text-muted-foreground">
-            <p>Players: {result.bootstrap?.playersCreated || 0} new, {result.bootstrap?.playersUpdated || 0} updated</p>
+            <p>Players: {result.bootstrap?.playersCreated || 0} new, {result.bootstrap?.playersUpdated || 0} updated, {result.bootstrap?.playersDeleted || 0} removed</p>
             <p>Gameweeks: {result.bootstrap?.gwsCreated || 0} new, {result.bootstrap?.gwsUpdated || 0} updated</p>
-            <p>Fixtures: {result.fixtures?.created || 0} new, {result.fixtures?.updated || 0} updated</p>
+            <p>Fixtures: {result.fixtures?.created || 0} new, {result.fixtures?.updated || 0} updated, {result.fixtures?.fixturesDeleted || 0} removed</p>
             {result.gameweeksFinalized?.length > 0 && (
               <p className="text-primary">Finalized: GW {result.gameweeksFinalized.map(g => g.gameweek).join(', ')}</p>
             )}

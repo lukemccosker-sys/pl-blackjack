@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { calculatePlayerPoints, calculatePickTotal } from '@/lib/scoring';
-import { Lock, Unlock, Check, Star } from 'lucide-react';
+import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
+import { Lock, Check, Star } from 'lucide-react';
 
 export default function GameweekManager() {
   const [gameweeks, setGameweeks] = useState([]);
@@ -41,7 +41,7 @@ export default function GameweekManager() {
       if (updates.length > 0) {
         await base44.entities.Pick.bulkUpdate(updates);
       }
-      await base44.entities.Gameweek.update(gw.id, { is_finalized: true, is_locked: true });
+      await base44.entities.Gameweek.update(gw.id, { is_finalized: true });
       load();
     } catch (err) {
       console.error(err);
@@ -55,7 +55,7 @@ export default function GameweekManager() {
   return (
     <div>
       <p className="text-sm text-muted-foreground mb-4">
-        Gameweeks are created and updated automatically when you sync. Use the controls below to manually lock/unlock or re-finalize scoring if needed.
+        Gameweeks are created and updated automatically when you sync. Lock status is derived from the FPL deadline — no manual toggle needed.
       </p>
       <div className="space-y-2">
         {gameweeks.map(gw => (
@@ -67,7 +67,7 @@ export default function GameweekManager() {
               </div>
               {gw.is_finalized ? (
                 <span className="text-xs text-primary flex items-center gap-1"><Check size={12} /> Final</span>
-              ) : gw.is_locked ? (
+              ) : isDeadlinePassed(gw) ? (
                 <span className="text-xs text-muted-foreground flex items-center gap-1"><Lock size={12} /> Locked</span>
               ) : (
                 <span className="text-xs text-muted-foreground">Open</span>
@@ -76,30 +76,22 @@ export default function GameweekManager() {
             <div className="text-xs text-muted-foreground mb-3">
               {gw.deadline ? `Deadline: ${new Date(gw.deadline).toLocaleString()}` : 'No deadline set'}
             </div>
-            <div className="grid grid-cols-2 gap-1">
+            {!gw.is_finalized ? (
               <button
-                onClick={() => updateGw(gw, { is_locked: !gw.is_locked })}
-                className="text-xs py-1.5 rounded-lg bg-accent text-muted-foreground"
+                onClick={() => finalizeGw(gw)}
+                disabled={finalizing === gw.id}
+                className="w-full text-xs py-1.5 rounded-lg bg-primary/20 text-primary"
               >
-                {gw.is_locked ? <><Lock size={12} className="inline mr-1" />Unlock</> : <><Unlock size={12} className="inline mr-1" />Lock</>}
+                {finalizing === gw.id ? 'Finalizing...' : 'Finalize'}
               </button>
-              {!gw.is_finalized ? (
-                <button
-                  onClick={() => finalizeGw(gw)}
-                  disabled={finalizing === gw.id}
-                  className="text-xs py-1.5 rounded-lg bg-primary/20 text-primary"
-                >
-                  {finalizing === gw.id ? 'Finalizing...' : 'Finalize'}
-                </button>
-              ) : (
-                <button
-                  onClick={() => updateGw(gw, { is_finalized: false, is_locked: false })}
-                  className="text-xs py-1.5 rounded-lg bg-destructive/20 text-destructive"
-                >
-                  Unfinalize
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                onClick={() => updateGw(gw, { is_finalized: false })}
+                className="w-full text-xs py-1.5 rounded-lg bg-destructive/20 text-destructive"
+              >
+                Unfinalize
+              </button>
+            )}
           </div>
         ))}
         {gameweeks.length === 0 && (

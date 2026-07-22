@@ -11,11 +11,6 @@
       "format": "date-time",
       "title": "Deadline"
     },
-    "is_locked": {
-      "type": "boolean",
-      "default": false,
-      "title": "Is Locked"
-    },
     "is_finalized": {
       "type": "boolean",
       "default": false,
