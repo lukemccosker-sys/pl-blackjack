@@ -136,7 +136,7 @@ export default function Picks() {
                     </p>
                   )}
                 </div>
-                {gwFinished && (
+                {locked && (
                   <span className={`text-2xl font-bold ${pts > 0 ? 'text-primary' : 'text-muted-foreground'}`}>{pts}</span>
                 )}
               </div>

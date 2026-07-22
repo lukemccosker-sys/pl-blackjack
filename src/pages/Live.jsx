@@ -98,10 +98,15 @@ export default function Live() {
     <div className="p-4">
       <div className="flex items-center gap-2 mb-4">
         <Radio className="text-primary" size={20} />
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">Live</h1>
           <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
         </div>
+        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+          gameweek.is_finalized ? 'bg-primary/20 text-primary' : 'bg-accent text-muted-foreground'
+        }`}>
+          {gameweek.is_finalized ? 'Final' : 'Live'}
+        </span>
       </div>
 
       {!locked ? (

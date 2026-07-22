@@ -29,13 +29,28 @@ Deno.serve(async (req) => {
     const gameweeks = await base44.asServiceRole.entities.Gameweek.list('number', 50);
     const allFixtures = await base44.asServiceRole.entities.Fixture.list('', 1000);
 
+    const activeGw = gameweeks.find(g => g.is_active);
     const finalizedGws = [];
+
+    // Always sync live stats for the active gameweek, regardless of fixture status
+    if (activeGw) {
+      const statResult = await syncStats(base44, activeGw.number);
+      const gwFixtures = allFixtures.filter(f => f.gameweek === activeGw.number);
+      const allFinished = gwFixtures.length > 0 && gwFixtures.every(f => f.finished);
+      if (allFinished && !activeGw.is_finalized) {
+        await base44.asServiceRole.entities.Gameweek.update(activeGw.id, { is_finalized: true });
+        finalizedGws.push({ gameweek: activeGw.number, ...statResult });
+      }
+    }
+
+    // Finalize other non-finalized gameweeks where all fixtures are finished
     for (const gw of gameweeks) {
-      if (gw.is_finalized) continue;
+      if (gw.is_finalized || (activeGw && gw.number === activeGw.number)) continue;
       const gwFixtures = allFixtures.filter(f => f.gameweek === gw.number);
       if (gwFixtures.length === 0) continue;
       if (gwFixtures.every(f => f.finished)) {
         const statResult = await syncStats(base44, gw.number);
+        await base44.asServiceRole.entities.Gameweek.update(gw.id, { is_finalized: true });
         finalizedGws.push({ gameweek: gw.number, ...statResult });
       }
     }
@@ -289,11 +304,6 @@ async function syncStats(base44, gameweek) {
 
   if (pickUpdates.length > 0) {
     await base44.asServiceRole.entities.Pick.bulkUpdate(pickUpdates);
-  }
-
-  const gws = await base44.asServiceRole.entities.Gameweek.filter({ number: gameweek });
-  if (gws.length > 0) {
-    await base44.asServiceRole.entities.Gameweek.update(gws[0].id, { is_finalized: true });
   }
 
   return { created, updated, picksUpdated: pickUpdates.length };
