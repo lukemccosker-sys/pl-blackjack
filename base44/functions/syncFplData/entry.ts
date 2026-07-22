@@ -297,9 +297,20 @@ async function syncStats(base44, gameweek) {
     });
     const total = points.reduce((sum, p) => sum + (p || 0), 0);
     const threshold = config?.bust_threshold || 21;
-    const isBust = total > threshold;
-    const score = isBust ? 0 : total;
-    return { id: pick.id, total_points: total, is_bust: isBust, score };
+    const bonus = config?.blackjack_bonus || 10;
+    let tier, score;
+    if (total > threshold) {
+      tier = 'bust';
+      score = 0;
+    } else if (total === threshold) {
+      tier = 'blackjack';
+      score = total + bonus;
+    } else {
+      tier = 'safe';
+      score = total;
+    }
+    const isBust = tier === 'bust';
+    return { id: pick.id, total_points: total, is_bust: isBust, score, tier };
   });
 
   if (pickUpdates.length > 0) {

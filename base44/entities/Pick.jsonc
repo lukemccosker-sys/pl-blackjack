@@ -33,6 +33,16 @@
     "score": {
       "type": "number",
       "title": "Score"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "bust",
+        "blackjack",
+        "safe"
+      ],
+      "default": "safe",
+      "title": "Tier"
     }
   },
   "required": [

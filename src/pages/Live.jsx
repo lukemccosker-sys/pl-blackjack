@@ -141,6 +141,9 @@ export default function Live() {
                     {pick.member_name}
                     {pick.member_id === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
                   </span>
+                  {pick.tier === 'blackjack' && !pick.isBust && (
+                    <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">BLACKJACK!</span>
+                  )}
                 </div>
                 <div className="flex items-baseline gap-1">
                   {pick.isBust && <AlertTriangle className="text-destructive" size={16} />}

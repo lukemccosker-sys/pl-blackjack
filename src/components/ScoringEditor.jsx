@@ -11,6 +11,7 @@ const FIELDS = [
   { key: 'points_per_yellow_card', label: 'Points per Yellow Card', min: -10 },
   { key: 'points_per_red_card', label: 'Points per Red Card', min: -10 },
   { key: 'bust_threshold', label: 'Bust Threshold', min: 0 },
+  { key: 'blackjack_bonus', label: 'Blackjack Bonus', min: 0 },
 ];
 
 export default function ScoringEditor() {
@@ -28,7 +29,7 @@ export default function ScoringEditor() {
         const created = await base44.entities.ScoringConfig.create({
           points_per_goal: 3, points_per_assist: 2, points_per_clean_sheet: 2,
           points_per_appearance: 1, points_per_yellow_card: -1, points_per_red_card: -3,
-          bust_threshold: 21, is_active: true,
+          bust_threshold: 21, blackjack_bonus: 10, is_active: true,
         });
         setConfig(created);
       }
@@ -50,6 +51,7 @@ export default function ScoringEditor() {
       points_per_yellow_card: config.points_per_yellow_card,
       points_per_red_card: config.points_per_red_card,
       bust_threshold: config.bust_threshold,
+      blackjack_bonus: config.blackjack_bonus,
     });
     setSaving(false);
     setSaved(true);

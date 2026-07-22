@@ -14,11 +14,23 @@ export function calculatePlayerPoints(stats, config) {
 export function calculatePickTotal(playerPoints, config) {
   const total = playerPoints.reduce((sum, p) => sum + (p || 0), 0);
   const threshold = config?.bust_threshold || 21;
-  const isBust = total > threshold;
+  const bonus = config?.blackjack_bonus || 10;
+  let tier, score;
+  if (total > threshold) {
+    tier = 'bust';
+    score = 0;
+  } else if (total === threshold) {
+    tier = 'blackjack';
+    score = total + bonus;
+  } else {
+    tier = 'safe';
+    score = total;
+  }
   return {
     total,
-    isBust,
-    score: isBust ? 0 : total,
+    isBust: tier === 'bust',
+    score,
+    tier,
   };
 }
 

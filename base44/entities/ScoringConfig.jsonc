@@ -37,6 +37,11 @@
       "default": 21,
       "title": "Bust Threshold"
     },
+    "blackjack_bonus": {
+      "type": "number",
+      "default": 10,
+      "title": "Blackjack Bonus"
+    },
     "is_active": {
       "type": "boolean",
       "default": true,

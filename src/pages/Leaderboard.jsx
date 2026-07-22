@@ -59,18 +59,24 @@ export default function Leaderboard() {
   const seasonTotals = allMembers.map(m => {
     let totalScore = 0;
     let busts = 0;
+    let blackjacks = 0;
     let played = 0;
     finalizedGws.forEach(gw => {
       const pick = allPicks.find(p => p.member_id === m.id && p.gameweek === gw.number);
       if (pick) {
         const s = getPickScore(pick);
         totalScore += s.score;
+        if (s.tier === 'blackjack') blackjacks++;
         if (s.isBust) busts++;
         played++;
       }
     });
-    return { member: m, totalScore, busts, played };
-  }).sort((a, b) => b.totalScore - a.totalScore);
+    return { member: m, totalScore, blackjacks, busts, played };
+  }).sort((a, b) => {
+    if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+    if (b.blackjacks !== a.blackjacks) return b.blackjacks - a.blackjacks;
+    return a.busts - b.busts;
+  });
 
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
 
@@ -143,11 +149,13 @@ export default function Leaderboard() {
                     </span>
                     <div className="flex-1">
                       <p className="font-medium">{pick.member_name}</p>
-                      {score.isBust && (
+                      {score.isBust ? (
                         <p className="text-xs text-destructive flex items-center gap-1">
                           <AlertTriangle size={10} /> BUST · {score.total - (scoringConfig?.bust_threshold || 21)} pts over
                         </p>
-                      )}
+                      ) : score.tier === 'blackjack' ? (
+                        <p className="text-xs text-primary font-semibold">BLACKJACK!</p>
+                      ) : null}
                     </div>
                     <div className="text-right">
                       <p className={`text-2xl font-bold ${score.isBust ? 'text-destructive' : 'text-primary'}`}>
@@ -178,7 +186,9 @@ export default function Leaderboard() {
               <div className="flex-1">
                 <p className="font-medium">{s.member.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {s.played} played{s.busts > 0 && ` · ${s.busts} bust${s.busts > 1 ? 's' : ''}`}
+                  {s.played} played
+                  {s.blackjacks > 0 && ` · ${s.blackjacks} blackjack${s.blackjacks > 1 ? 's' : ''}`}
+                  {s.busts > 0 && ` · ${s.busts} bust${s.busts > 1 ? 's' : ''}`}
                 </p>
               </div>
               <p className="text-2xl font-bold text-primary">{s.totalScore}</p>

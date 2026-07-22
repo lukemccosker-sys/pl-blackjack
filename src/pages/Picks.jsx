@@ -96,7 +96,7 @@ export default function Picks() {
     const stat = playerStats.find(s => s.player_id === p.id);
     return calculatePlayerPoints(stat, scoringConfig);
   });
-  const { total, isBust } = calculatePickTotal(playerPoints, scoringConfig);
+  const { total, isBust, tier } = calculatePickTotal(playerPoints, scoringConfig);
 
   return (
     <div className="p-4 pb-48">
@@ -160,6 +160,7 @@ export default function Picks() {
         saved={saved}
         isLocked={locked}
         hasFive={selectedIds.length === 5}
+        tier={tier}
         isFinalized={gwFinished}
       />
     </div>

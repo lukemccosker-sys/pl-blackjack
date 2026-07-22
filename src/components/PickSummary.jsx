@@ -15,6 +15,7 @@ export default function PickSummary({
   isLocked,
   hasFive,
   isFinalized,
+  tier,
 }) {
   return (
     <div className="fixed bottom-16 left-0 right-0 z-40">
@@ -30,6 +31,10 @@ export default function PickSummary({
           {isBust ? (
             <span className="flex items-center gap-1 text-destructive text-sm font-semibold">
               <AlertTriangle size={16} /> BUST
+            </span>
+          ) : tier === 'blackjack' ? (
+            <span className="text-primary text-sm font-bold tracking-wide">
+              BLACKJACK!
             </span>
           ) : isFinalized ? (
             <span className="flex items-center gap-1 text-primary text-sm font-medium">
