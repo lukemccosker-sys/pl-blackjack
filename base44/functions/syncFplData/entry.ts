@@ -144,7 +144,7 @@ async function syncStats(base44, gameweek) {
   const configs = await base44.asServiceRole.entities.ScoringConfig.filter({ is_active: true });
   const config = configs[0] || {
     points_per_goal: 3, points_per_assist: 2, points_per_clean_sheet: 2,
-    points_per_appearance: 1, points_per_yellow_card: 1, points_per_red_card: 3,
+    points_per_appearance: 1, points_per_yellow_card: -1, points_per_red_card: -3,
   };
 
   const players = await base44.asServiceRole.entities.Player.list('', 600);
@@ -204,5 +204,41 @@ async function syncStats(base44, gameweek) {
     await base44.asServiceRole.entities.PlayerStat.bulkUpdate(batch);
     updated += batch.length;
   }
-  return Response.json({ success: true, created, updated, gameweek });
+
+  const updatedStats = await base44.asServiceRole.entities.PlayerStat.filter({ gameweek });
+  const statMap = {};
+  updatedStats.forEach(s => { statMap[s.player_id] = s; });
+
+  const gwPicks = await base44.asServiceRole.entities.Pick.filter({ gameweek });
+  const pickUpdates = gwPicks.map(pick => {
+    const points = (pick.player_ids || []).map(pid => {
+      const stat = statMap[pid];
+      if (!stat) return 0;
+      const appearance = stat.minutes > 0 ? 1 : 0;
+      return (
+        (stat.goals || 0) * (config.points_per_goal || 0) +
+        (stat.assists || 0) * (config.points_per_assist || 0) +
+        (stat.clean_sheets || 0) * (config.points_per_clean_sheet || 0) +
+        appearance * (config.points_per_appearance || 0) +
+        (stat.yellow_cards || 0) * (config.points_per_yellow_card || 0) +
+        (stat.red_cards || 0) * (config.points_per_red_card || 0)
+      );
+    });
+    const total = points.reduce((sum, p) => sum + (p || 0), 0);
+    const threshold = config?.bust_threshold || 21;
+    const isBust = total > threshold;
+    const score = isBust ? 0 : total;
+    return { id: pick.id, total_points: total, is_bust: isBust, score };
+  });
+
+  if (pickUpdates.length > 0) {
+    await base44.asServiceRole.entities.Pick.bulkUpdate(pickUpdates);
+  }
+
+  const gws = await base44.asServiceRole.entities.Gameweek.filter({ number: gameweek });
+  if (gws.length > 0) {
+    await base44.asServiceRole.entities.Gameweek.update(gws[0].id, { is_finalized: true, is_locked: true });
+  }
+
+  return Response.json({ success: true, created, updated, gameweek, picksUpdated: pickUpdates.length });
 }

@@ -1,0 +1,13 @@
+{
+  "name": "PoolSettings",
+  "type": "object",
+  "properties": {
+    "admin_pin": {
+      "type": "string",
+      "title": "Admin PIN"
+    }
+  },
+  "required": [
+    "admin_pin"
+  ]
+}

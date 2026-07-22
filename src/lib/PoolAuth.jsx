@@ -40,16 +40,26 @@ export function PoolAuthProvider({ children }) {
     if (existing.length > 0) {
       throw new Error('That name is already taken');
     }
-    const all = await base44.entities.PoolMember.list();
-    const isFirst = all.length === 0;
     const m = await base44.entities.PoolMember.create({
       name: trimmed,
       pin: pin.trim(),
-      is_admin: isFirst,
+      is_admin: false,
     });
     setMember(m);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(m));
     return m;
+  };
+
+  const unlockAdmin = async (pin) => {
+    const settings = await base44.entities.PoolSettings.filter({ admin_pin: pin.trim() });
+    if (settings.length === 0) {
+      throw new Error('Incorrect admin PIN');
+    }
+    await base44.entities.PoolMember.update(member.id, { is_admin: true });
+    const newMember = { ...member, is_admin: true };
+    setMember(newMember);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newMember));
+    return newMember;
   };
 
   const logout = () => {
@@ -58,7 +68,7 @@ export function PoolAuthProvider({ children }) {
   };
 
   return (
-    <PoolAuthContext.Provider value={{ member, loading, login, register, logout }}>
+    <PoolAuthContext.Provider value={{ member, loading, login, register, logout, unlockAdmin }}>
       {children}
     </PoolAuthContext.Provider>
   );

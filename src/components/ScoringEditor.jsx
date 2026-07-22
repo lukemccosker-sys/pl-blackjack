@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Save, Check } from 'lucide-react';
 
 const FIELDS = [
-  { key: 'points_per_goal', label: 'Points per Goal' },
-  { key: 'points_per_assist', label: 'Points per Assist' },
-  { key: 'points_per_clean_sheet', label: 'Points per Clean Sheet' },
-  { key: 'points_per_appearance', label: 'Points per Appearance' },
-  { key: 'points_per_yellow_card', label: 'Points per Yellow Card' },
-  { key: 'points_per_red_card', label: 'Points per Red Card' },
-  { key: 'bust_threshold', label: 'Bust Threshold' },
+  { key: 'points_per_goal', label: 'Points per Goal', min: 0 },
+  { key: 'points_per_assist', label: 'Points per Assist', min: 0 },
+  { key: 'points_per_clean_sheet', label: 'Points per Clean Sheet', min: 0 },
+  { key: 'points_per_appearance', label: 'Points per Appearance', min: 0 },
+  { key: 'points_per_yellow_card', label: 'Points per Yellow Card', min: -10 },
+  { key: 'points_per_red_card', label: 'Points per Red Card', min: -10 },
+  { key: 'bust_threshold', label: 'Bust Threshold', min: 0 },
 ];
 
 export default function ScoringEditor() {
@@ -27,7 +27,7 @@ export default function ScoringEditor() {
       } else {
         const created = await base44.entities.ScoringConfig.create({
           points_per_goal: 3, points_per_assist: 2, points_per_clean_sheet: 2,
-          points_per_appearance: 1, points_per_yellow_card: 1, points_per_red_card: 3,
+          points_per_appearance: 1, points_per_yellow_card: -1, points_per_red_card: -3,
           bust_threshold: 21, is_active: true,
         });
         setConfig(created);
@@ -68,7 +68,7 @@ export default function ScoringEditor() {
           <div key={f.key} className="flex items-center justify-between bg-card rounded-xl p-3">
             <label className="text-sm">{f.label}</label>
             <input
-              type="number" min="0"
+              type="number" min={f.min ?? 0}
               value={config[f.key] ?? 0}
               onChange={(e) => handleChange(f.key, e.target.value)}
               className="w-20 bg-accent rounded-lg px-3 py-2 text-center text-sm"
