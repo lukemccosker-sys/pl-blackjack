@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import Login from '@/pages/Login';
+import Stats from '@/pages/Stats';
 import Picks from '@/pages/Picks';
 import Fixtures from '@/pages/Fixtures';
 import Leaderboard from '@/pages/Leaderboard';
@@ -45,7 +46,8 @@ const AuthenticatedApp = () => {
       {/* Add your page Route elements here */}
       <Route path="/login" element={<Login />} />
       <Route element={<Layout />}>
-        <Route path="/" element={<Picks />} />
+        <Route path="/" element={<Stats />} />
+        <Route path="/picks" element={<Picks />} />
         <Route path="/live" element={<Live />} />
         <Route path="/fixtures" element={<Fixtures />} />
         <Route path="/leaderboard" element={<Leaderboard />} />

@@ -218,7 +218,7 @@ async function syncStats(base44, gameweek) {
   const config = configs[0] || {
     points_per_goal: 3, points_per_assist: 2, points_per_clean_sheet: 2,
     points_per_appearance: 1, points_per_yellow_card: -1, points_per_red_card: -3,
-    bust_threshold: 21,
+    points_per_defensive_contribution: 2, bust_threshold: 21,
   };
 
   const players = await base44.asServiceRole.entities.Player.list('', 600);
@@ -244,18 +244,23 @@ async function syncStats(base44, gameweek) {
     const yellowCards = stats.yellow_cards || 0;
     const redCards = stats.red_cards || 0;
     const appearance = minutes > 0 ? 1 : 0;
+    const dcHit = (el.explain || []).some(fx =>
+      fx.stats && fx.stats.some(s => s.identifier === 'defensive_contribution' && s.points > 0)
+    );
     const points =
       goals * (config.points_per_goal || 0) +
       assists * (config.points_per_assist || 0) +
       cleanSheets * (config.points_per_clean_sheet || 0) +
       appearance * (config.points_per_appearance || 0) +
       yellowCards * (config.points_per_yellow_card || 0) +
-      redCards * (config.points_per_red_card || 0);
+      redCards * (config.points_per_red_card || 0) +
+      (dcHit ? (config.points_per_defensive_contribution || 0) : 0);
 
     const statData = {
       player_id: player.id, player_name: player.web_name, fpl_id: el.id,
       gameweek, goals, assists, clean_sheets: cleanSheets, minutes,
-      yellow_cards: yellowCards, red_cards: redCards, points,
+      yellow_cards: yellowCards, red_cards: redCards,
+      defensive_contribution_hit: dcHit, points,
     };
     if (existingMap[el.id]) {
       toUpdate.push({ id: existingMap[el.id].id, ...statData });
@@ -292,7 +297,8 @@ async function syncStats(base44, gameweek) {
         (stat.clean_sheets || 0) * (config.points_per_clean_sheet || 0) +
         appearance * (config.points_per_appearance || 0) +
         (stat.yellow_cards || 0) * (config.points_per_yellow_card || 0) +
-        (stat.red_cards || 0) * (config.points_per_red_card || 0)
+        (stat.red_cards || 0) * (config.points_per_red_card || 0) +
+        (stat.defensive_contribution_hit ? (config.points_per_defensive_contribution || 0) : 0)
       );
     });
     const total = points.reduce((sum, p) => sum + (p || 0), 0);

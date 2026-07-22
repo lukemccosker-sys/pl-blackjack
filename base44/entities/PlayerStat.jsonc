@@ -48,6 +48,11 @@
       "default": 0,
       "title": "Red Cards"
     },
+    "defensive_contribution_hit": {
+      "type": "boolean",
+      "default": false,
+      "title": "Defensive Contribution Hit"
+    },
     "points": {
       "type": "number",
       "default": 0,

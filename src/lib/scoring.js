@@ -7,7 +7,8 @@ export function calculatePlayerPoints(stats, config) {
     (stats.clean_sheets || 0) * (config.points_per_clean_sheet || 0) +
     appearance * (config.points_per_appearance || 0) +
     (stats.yellow_cards || 0) * (config.points_per_yellow_card || 0) +
-    (stats.red_cards || 0) * (config.points_per_red_card || 0)
+    (stats.red_cards || 0) * (config.points_per_red_card || 0) +
+    (stats.defensive_contribution_hit ? (config.points_per_defensive_contribution || 0) : 0)
   );
 }
 

@@ -32,6 +32,11 @@
       "default": 3,
       "title": "Points Per Red Card"
     },
+    "points_per_defensive_contribution": {
+      "type": "number",
+      "default": 2,
+      "title": "Points Per Defensive Contribution"
+    },
     "bust_threshold": {
       "type": "number",
       "default": 21,

@@ -1,13 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Hand, Calendar, Trophy, Settings, Radio } from 'lucide-react';
+import { Hand, Calendar, Trophy, Settings, Radio, BarChart3 } from 'lucide-react';
 import { usePoolAuth } from '@/lib/PoolAuth';
 
 export default function BottomNav() {
   const { member } = usePoolAuth();
 
   const links = [
-    { to: '/', label: 'Picks', icon: Hand },
+    { to: '/', label: 'Stats', icon: BarChart3 },
+    { to: '/picks', label: 'Picks', icon: Hand },
     { to: '/live', label: 'Live', icon: Radio },
     { to: '/fixtures', label: 'Fixtures', icon: Calendar },
     { to: '/leaderboard', label: 'Standings', icon: Trophy },
