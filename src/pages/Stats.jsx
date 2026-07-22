@@ -54,12 +54,14 @@ export default function Stats() {
       aggregated[s.player_id] = {
         player_id: s.player_id,
         goals: 0, assists: 0, clean_sheets: 0, dc_hits: 0,
+        _gws: new Set(),
       };
     }
     aggregated[s.player_id].goals += s.goals || 0;
     aggregated[s.player_id].assists += s.assists || 0;
     aggregated[s.player_id].clean_sheets += s.clean_sheets || 0;
     aggregated[s.player_id].dc_hits += s.defensive_contribution_hit ? 1 : 0;
+    if (s.gameweek) aggregated[s.player_id]._gws.add(s.gameweek);
   });
 
   const getTop5 = (key) =>
@@ -112,14 +114,23 @@ export default function Stats() {
                   const player = playerMap[a.player_id];
                   if (!player) return null;
                   return (
-                    <div key={a.player_id} className="flex items-center gap-3 bg-card rounded-xl p-2.5">
+                    <div
+                      key={a.player_id}
+                      className="flex items-center gap-3 bg-card rounded-xl p-2.5"
+                      title={scope === 'season' ? `Based on ${a._gws.size} gameweek${a._gws.size === 1 ? '' : 's'}` : undefined}
+                    >
                       <span className={`w-5 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>
                         {i + 1}
                       </span>
                       <ClubBadge code={player.club_code} name={player.club} size={28} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{player.web_name}</p>
-                        <p className="text-xs text-muted-foreground">{player.position} · {player.club_short}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {player.position} · {player.club_short}
+                          {scope === 'season' && a._gws.size > 0 && (
+                            <span className="text-muted-foreground/60"> · {a._gws.size} GW</span>
+                          )}
+                        </p>
                       </div>
                       <span className="text-lg font-bold text-primary">{a[key]}{suffix}</span>
                     </div>
