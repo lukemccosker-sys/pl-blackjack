@@ -291,6 +291,10 @@ async function syncFixtures(base44, bsData) {
   const teams = {};
   bsData.teams.forEach(t => { teams[t.id] = t; });
 
+  const players = await base44.asServiceRole.entities.Player.list('', 600);
+  const playerMap = {};
+  players.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
+
   const existing = await base44.asServiceRole.entities.Fixture.list('', 1000);
   const existingMap = {};
   existing.forEach(f => { if (f.fpl_id) existingMap[f.fpl_id] = f; });
@@ -300,6 +304,15 @@ async function syncFixtures(base44, bsData) {
   fixtures.forEach(fx => {
     const homeTeam = teams[fx.team_h];
     const awayTeam = teams[fx.team_a];
+    const fxStats = fx.stats || [];
+    const goalsEntry = fxStats.find(s => s.identifier === 'goals_scored');
+    const assistsEntry = fxStats.find(s => s.identifier === 'assists');
+    const mapStatList = (items) => (items || []).map(item => {
+      const player = playerMap[item.element];
+      if (!player) return null;
+      return { player: player.id, name: player.web_name, count: item.value };
+    }).filter(Boolean);
+
     const fixtureData = {
       fpl_id: fx.id,
       gameweek: fx.event || 0,
@@ -311,6 +324,10 @@ async function syncFixtures(base44, bsData) {
       home_score: fx.team_h_score ?? null,
       away_score: fx.team_a_score ?? null,
       finished: fx.finished || false,
+      home_goalscorers: mapStatList(goalsEntry?.h),
+      away_goalscorers: mapStatList(goalsEntry?.a),
+      home_assists: mapStatList(assistsEntry?.h),
+      away_assists: mapStatList(assistsEntry?.a),
     };
     if (existingMap[fx.id]) {
       toUpdate.push({ id: existingMap[fx.id].id, ...fixtureData });

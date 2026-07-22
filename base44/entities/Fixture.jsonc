@@ -43,6 +43,94 @@
       "type": "boolean",
       "default": false,
       "title": "Finished"
+    },
+    "home_goalscorers": {
+      "type": "array",
+      "default": [],
+      "title": "Home Goalscorers",
+      "items": {
+        "type": "object",
+        "properties": {
+          "player": {
+            "type": "string",
+            "title": "Player ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Player Name"
+          },
+          "count": {
+            "type": "number",
+            "title": "Count"
+          }
+        }
+      }
+    },
+    "away_goalscorers": {
+      "type": "array",
+      "default": [],
+      "title": "Away Goalscorers",
+      "items": {
+        "type": "object",
+        "properties": {
+          "player": {
+            "type": "string",
+            "title": "Player ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Player Name"
+          },
+          "count": {
+            "type": "number",
+            "title": "Count"
+          }
+        }
+      }
+    },
+    "home_assists": {
+      "type": "array",
+      "default": [],
+      "title": "Home Assists",
+      "items": {
+        "type": "object",
+        "properties": {
+          "player": {
+            "type": "string",
+            "title": "Player ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Player Name"
+          },
+          "count": {
+            "type": "number",
+            "title": "Count"
+          }
+        }
+      }
+    },
+    "away_assists": {
+      "type": "array",
+      "default": [],
+      "title": "Away Assists",
+      "items": {
+        "type": "object",
+        "properties": {
+          "player": {
+            "type": "string",
+            "title": "Player ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Player Name"
+          },
+          "count": {
+            "type": "number",
+            "title": "Count"
+          }
+        }
+      }
     }
   },
   "required": [
