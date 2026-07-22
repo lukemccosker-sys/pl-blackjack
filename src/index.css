@@ -6,43 +6,43 @@
 
 @layer base {
   :root {
-    --background: 270 76% 5%;
+    --background: 271 45% 6%;
     --foreground: 0 0% 98%;
-    --card: 270 40% 9%;
+    --card: 271 40% 11%;
     --card-foreground: 0 0% 98%;
-    --popover: 270 40% 9%;
+    --popover: 271 40% 11%;
     --popover-foreground: 0 0% 98%;
-    --primary: 158 100% 47%;
-    --primary-foreground: 270 76% 5%;
-    --secondary: 270 30% 14%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 271 55% 15%;
+    --secondary: 271 30% 16%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 270 30% 14%;
-    --muted-foreground: 0 0% 64%;
-    --accent: 270 30% 16%;
+    --muted: 271 30% 16%;
+    --muted-foreground: 271 15% 65%;
+    --accent: 271 35% 20%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 270 30% 16%;
-    --input: 270 30% 16%;
-    --ring: 158 100% 47%;
-    --chart-1: 158 100% 47%;
-    --chart-2: 190 95% 50%;
-    --chart-3: 330 95% 60%;
-    --chart-4: 43 90% 60%;
-    --chart-5: 280 70% 65%;
+    --border: 271 30% 18%;
+    --input: 271 30% 18%;
+    --ring: 0 0% 100%;
+    --chart-1: 271 55% 55%;
+    --chart-2: 0 0% 90%;
+    --chart-3: 330 85% 60%;
+    --chart-4: 200 90% 55%;
+    --chart-5: 43 90% 60%;
     --radius: 0.75rem;
     --font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 270 40% 9%;
-    --sidebar-foreground: 0 0% 64%;
-    --sidebar-primary: 158 100% 47%;
-    --sidebar-primary-foreground: 270 76% 5%;
-    --sidebar-accent: 270 30% 14%;
+    --sidebar-background: 271 40% 11%;
+    --sidebar-foreground: 271 15% 65%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 271 55% 15%;
+    --sidebar-accent: 271 30% 16%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 270 30% 16%;
-    --sidebar-ring: 158 100% 47%;
+    --sidebar-border: 271 30% 18%;
+    --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
