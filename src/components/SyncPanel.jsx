@@ -67,6 +67,11 @@ export default function SyncPanel({ member }) {
           <p className="text-primary flex items-center gap-1 font-medium">
             <Check size={14} /> Sync complete
           </p>
+          {result.report?.seasonStatus && (
+            <p className="text-sm font-medium text-foreground bg-accent/50 rounded-lg px-3 py-2">
+              {result.report.seasonStatus}
+            </p>
+          )}
           <div className="space-y-1 text-muted-foreground">
             <p>Players: {result.bootstrap?.playersCreated || 0} new, {result.bootstrap?.playersUpdated || 0} updated, {result.bootstrap?.playersDeleted || 0} removed</p>
             <p>Gameweeks: {result.bootstrap?.gwsCreated || 0} new, {result.bootstrap?.gwsUpdated || 0} updated</p>

@@ -130,6 +130,35 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Update local gameweek objects to reflect this run's sync results
+    succeeded.forEach(s => {
+      const gw = gameweeks.find(g => g.number === s.gameweek);
+      if (gw) { gw.stats_synced = true; gw.is_finalized = true; }
+    });
+
+    // Compute one-line season status for the report
+    const reportSeason = activeGw?.season || (gameweeks.length > 0 ? gameweeks[gameweeks.length - 1].season : '') || '';
+    const finishedGws = gameweeks.filter(gw => {
+      if (currentSeason && gw.season !== currentSeason) return false;
+      const gwFixtures = allFixtures.filter(f => f.gameweek === gw.number);
+      return gwFixtures.length > 0 && gwFixtures.every(f => f.finished);
+    });
+    const totalFinished = finishedGws.length;
+
+    let seasonStatus;
+    if (!reportSeason) {
+      seasonStatus = 'No season data yet — run sync to populate';
+    } else if (!activeGw && totalFinished === 0) {
+      seasonStatus = `Season ${reportSeason} — no gameweek started yet`;
+    } else if (activeGw) {
+      const priorFinished = finishedGws.filter(gw => gw.number !== activeGw.number);
+      const priorSynced = priorFinished.filter(gw => gw.stats_synced).length;
+      seasonStatus = `Season ${reportSeason} — Gameweek ${activeGw.number} active, ${priorSynced} of ${priorFinished.length} prior gameweeks synced`;
+    } else {
+      const syncedFinished = finishedGws.filter(gw => gw.stats_synced).length;
+      seasonStatus = `Season ${reportSeason} — ${syncedFinished} of ${totalFinished} gameweeks synced`;
+    }
+
     const stillRemaining = remainingUnsynced.length;
 
     return Response.json({
@@ -143,6 +172,7 @@ Deno.serve(async (req) => {
         failed,
         active: activeReport,
         seasonBackfill: { gameweeksUpdated: gwSeasonBackfilled, playerStatsUpdated: statSeasonBackfilled },
+        seasonStatus,
         backfill: {
           maxPerRun: MAX_BACKFILL_PER_RUN,
           processedThisRun: backfillProcessed,
