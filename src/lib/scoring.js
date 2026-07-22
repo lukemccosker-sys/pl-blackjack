@@ -33,3 +33,9 @@ export function isDeadlinePassed(gw) {
   if (!gw.deadline) return false;
   return new Date(gw.deadline) < new Date();
 }
+
+export function isGameweekFinished(fixtures, gameweekNumber) {
+  const gwFixtures = fixtures.filter(f => f.gameweek === gameweekNumber);
+  if (gwFixtures.length === 0) return false;
+  return gwFixtures.every(f => f.finished);
+}

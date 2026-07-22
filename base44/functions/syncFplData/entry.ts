@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { action, gameweek, member_id } = body;
+    const { member_id } = body;
 
     if (!member_id) {
       return Response.json({ error: 'Member ID required' }, { status: 400 });
@@ -22,16 +22,30 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    if (action === 'players') {
-      return await syncPlayers(base44);
-    } else if (action === 'fixtures') {
-      return await syncFixtures(base44);
-    } else if (action === 'stats') {
-      if (!gameweek) return Response.json({ error: 'Gameweek required' }, { status: 400 });
-      return await syncStats(base44, gameweek);
-    } else {
-      return Response.json({ error: 'Invalid action' }, { status: 400 });
+    const bsData = await fplFetch('/bootstrap-static/');
+    const bootstrapResult = await syncBootstrap(base44, bsData);
+    const fixturesResult = await syncFixtures(base44, bsData);
+
+    const gameweeks = await base44.asServiceRole.entities.Gameweek.list('number', 50);
+    const allFixtures = await base44.asServiceRole.entities.Fixture.list('', 1000);
+
+    const finalizedGws = [];
+    for (const gw of gameweeks) {
+      if (gw.is_finalized) continue;
+      const gwFixtures = allFixtures.filter(f => f.gameweek === gw.number);
+      if (gwFixtures.length === 0) continue;
+      if (gwFixtures.every(f => f.finished)) {
+        const statResult = await syncStats(base44, gw.number);
+        finalizedGws.push({ gameweek: gw.number, ...statResult });
+      }
     }
+
+    return Response.json({
+      success: true,
+      bootstrap: bootstrapResult,
+      fixtures: fixturesResult,
+      gameweeksFinalized: finalizedGws,
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
@@ -45,18 +59,17 @@ async function fplFetch(path) {
   return resp.json();
 }
 
-async function syncPlayers(base44) {
-  const data = await fplFetch('/bootstrap-static/');
+async function syncBootstrap(base44, data) {
   const teams = {};
   data.teams.forEach(t => { teams[t.id] = t; });
   const positionMap = { 1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
-  const existing = await base44.asServiceRole.entities.Player.list('', 600);
-  const existingMap = {};
-  existing.forEach(p => { if (p.fpl_id) existingMap[p.fpl_id] = p; });
+  const existingPlayers = await base44.asServiceRole.entities.Player.list('', 600);
+  const playerMap = {};
+  existingPlayers.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
 
-  const toCreate = [];
-  const toUpdate = [];
+  const playersToCreate = [];
+  const playersToUpdate = [];
   data.elements.forEach(el => {
     const team = teams[el.team];
     const playerData = {
@@ -69,32 +82,54 @@ async function syncPlayers(base44) {
       position: positionMap[el.element_type] || 'MID',
       price: (el.now_cost || 0) / 10,
     };
-    if (existingMap[el.id]) {
-      toUpdate.push({ id: existingMap[el.id].id, ...playerData });
+    if (playerMap[el.id]) {
+      playersToUpdate.push({ id: playerMap[el.id].id, ...playerData });
     } else {
-      toCreate.push(playerData);
+      playersToCreate.push(playerData);
     }
   });
 
-  let created = 0, updated = 0;
-  for (let i = 0; i < toCreate.length; i += 500) {
-    const batch = toCreate.slice(i, i + 500);
+  let playersCreated = 0, playersUpdated = 0;
+  for (let i = 0; i < playersToCreate.length; i += 500) {
+    const batch = playersToCreate.slice(i, i + 500);
     await base44.asServiceRole.entities.Player.bulkCreate(batch);
-    created += batch.length;
+    playersCreated += batch.length;
   }
-  for (let i = 0; i < toUpdate.length; i += 500) {
-    const batch = toUpdate.slice(i, i + 500);
+  for (let i = 0; i < playersToUpdate.length; i += 500) {
+    const batch = playersToUpdate.slice(i, i + 500);
     await base44.asServiceRole.entities.Player.bulkUpdate(batch);
-    updated += batch.length;
+    playersUpdated += batch.length;
   }
-  return Response.json({ success: true, created, updated, total: data.elements.length });
+
+  const existingGws = await base44.asServiceRole.entities.Gameweek.list('number', 50);
+  const gwMap = {};
+  existingGws.forEach(g => { gwMap[g.number] = g; });
+
+  const gwsToCreate = [];
+  const gwsToUpdate = [];
+  data.events.forEach(ev => {
+    if (gwMap[ev.id]) {
+      gwsToUpdate.push({ id: gwMap[ev.id].id, deadline: ev.deadline_time, is_active: ev.is_current || false });
+    } else {
+      gwsToCreate.push({ number: ev.id, deadline: ev.deadline_time, is_active: ev.is_current || false });
+    }
+  });
+
+  let gwsCreated = 0, gwsUpdated = 0;
+  if (gwsToCreate.length > 0) {
+    await base44.asServiceRole.entities.Gameweek.bulkCreate(gwsToCreate);
+    gwsCreated = gwsToCreate.length;
+  }
+  if (gwsToUpdate.length > 0) {
+    await base44.asServiceRole.entities.Gameweek.bulkUpdate(gwsToUpdate);
+    gwsUpdated = gwsToUpdate.length;
+  }
+
+  return { playersCreated, playersUpdated, gwsCreated, gwsUpdated };
 }
 
-async function syncFixtures(base44) {
-  const [fixtures, bsData] = await Promise.all([
-    fplFetch('/fixtures/'),
-    fplFetch('/bootstrap-static/'),
-  ]);
+async function syncFixtures(base44, bsData) {
+  const fixtures = await fplFetch('/fixtures/');
   const teams = {};
   bsData.teams.forEach(t => { teams[t.id] = t; });
 
@@ -137,7 +172,7 @@ async function syncFixtures(base44) {
     await base44.asServiceRole.entities.Fixture.bulkUpdate(batch);
     updated += batch.length;
   }
-  return Response.json({ success: true, created, updated, total: fixtures.length });
+  return { created, updated };
 }
 
 async function syncStats(base44, gameweek) {
@@ -145,6 +180,7 @@ async function syncStats(base44, gameweek) {
   const config = configs[0] || {
     points_per_goal: 3, points_per_assist: 2, points_per_clean_sheet: 2,
     points_per_appearance: 1, points_per_yellow_card: -1, points_per_red_card: -3,
+    bust_threshold: 21,
   };
 
   const players = await base44.asServiceRole.entities.Player.list('', 600);
@@ -179,11 +215,8 @@ async function syncStats(base44, gameweek) {
       redCards * (config.points_per_red_card || 0);
 
     const statData = {
-      player_id: player.id,
-      player_name: player.web_name,
-      fpl_id: el.id,
-      gameweek,
-      goals, assists, clean_sheets: cleanSheets, minutes,
+      player_id: player.id, player_name: player.web_name, fpl_id: el.id,
+      gameweek, goals, assists, clean_sheets: cleanSheets, minutes,
       yellow_cards: yellowCards, red_cards: redCards, points,
     };
     if (existingMap[el.id]) {
@@ -240,5 +273,5 @@ async function syncStats(base44, gameweek) {
     await base44.asServiceRole.entities.Gameweek.update(gws[0].id, { is_finalized: true, is_locked: true });
   }
 
-  return Response.json({ success: true, created, updated, gameweek, picksUpdated: pickUpdates.length });
+  return { created, updated, picksUpdated: pickUpdates.length };
 }

@@ -1,78 +1,56 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Users, Calendar, BarChart3, Check, AlertCircle } from 'lucide-react';
+import { RefreshCw, Check, AlertCircle } from 'lucide-react';
 
 export default function SyncPanel({ member }) {
-  const [syncing, setSyncing] = useState(null);
-  const [results, setResults] = useState({});
-  const [syncGw, setSyncGw] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
-  const handleSync = async (action, gameweek) => {
-    setSyncing(action);
+  const handleSync = async () => {
+    setSyncing(true);
+    setResult(null);
+    setError(null);
     try {
-      const resp = await base44.functions.invoke('syncFplData', {
-        action,
-        gameweek: gameweek ? Number(gameweek) : undefined,
-        member_id: member.id,
-      });
-      setResults(prev => ({ ...prev, [action]: resp.data }));
+      const resp = await base44.functions.invoke('syncFplData', { member_id: member.id });
+      setResult(resp.data);
     } catch (err) {
-      setResults(prev => ({ ...prev, [action]: { error: err.message } }));
+      setError(err.message || 'Sync failed');
     } finally {
-      setSyncing(null);
+      setSyncing(false);
     }
   };
 
-  const cards = [
-    { action: 'players', icon: Users, title: 'Sync Players', desc: 'Fetch all Premier League players from the FPL API' },
-    { action: 'fixtures', icon: Calendar, title: 'Sync Fixtures', desc: 'Fetch all match fixtures with kickoff times and scores' },
-    { action: 'stats', icon: BarChart3, title: 'Sync Stats', desc: 'Fetch player stats for a specific gameweek', needsGw: true },
-  ];
-
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground mb-2">
-        Pull live data from the Fantasy Premier League API. Sync players and fixtures first, then stats after matches are played.
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Pulls live data from the Fantasy Premier League API: players, gameweeks, fixtures, and stats for finished gameweeks. Run regularly (e.g. daily) to keep everything current.
       </p>
-      {cards.map(c => {
-        const Icon = c.icon;
-        const result = results[c.action];
-        return (
-          <div key={c.action} className="bg-card rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Icon size={18} className="text-primary" />
-              <h3 className="font-medium">{c.title}</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">{c.desc}</p>
-            {c.needsGw && (
-              <input
-                type="number" value={syncGw}
-                onChange={(e) => setSyncGw(e.target.value)}
-                placeholder="GW #"
-                className="w-24 bg-accent rounded-lg px-3 py-2 text-sm mb-3 mr-2"
-              />
-            )}
-            <Button
-              onClick={() => handleSync(c.action, c.needsGw ? syncGw : null)}
-              disabled={syncing !== null || (c.needsGw && !syncGw)}
-              size="sm" variant="outline"
-            >
-              <RefreshCw size={14} className={syncing === c.action ? 'animate-spin' : ''} />
-              {syncing === c.action ? 'Syncing...' : 'Sync Now'}
-            </Button>
-            {result && (
-              <div className={`mt-2 text-sm ${result.error ? 'text-destructive' : 'text-primary'}`}>
-                {result.error ? (
-                  <span className="flex items-center gap-1"><AlertCircle size={14} /> {result.error}</span>
-                ) : (
-                  <span className="flex items-center gap-1"><Check size={14} /> {result.created || 0} created, {result.updated || 0} updated</span>
-                )}
-              </div>
+      <Button onClick={handleSync} disabled={syncing} className="w-full">
+        <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+        {syncing ? 'Syncing...' : 'Sync Now'}
+      </Button>
+      {result && (
+        <div className="bg-card rounded-xl p-4 space-y-2 text-sm">
+          <p className="text-primary flex items-center gap-1 font-medium">
+            <Check size={14} /> Sync complete
+          </p>
+          <div className="space-y-1 text-muted-foreground">
+            <p>Players: {result.bootstrap?.playersCreated || 0} new, {result.bootstrap?.playersUpdated || 0} updated</p>
+            <p>Gameweeks: {result.bootstrap?.gwsCreated || 0} new, {result.bootstrap?.gwsUpdated || 0} updated</p>
+            <p>Fixtures: {result.fixtures?.created || 0} new, {result.fixtures?.updated || 0} updated</p>
+            {result.gameweeksFinalized?.length > 0 && (
+              <p className="text-primary">Finalized: GW {result.gameweeksFinalized.map(g => g.gameweek).join(', ')}</p>
             )}
           </div>
-        );
-      })}
+        </div>
+      )}
+      {error && (
+        <div className="bg-card rounded-xl p-4 text-sm text-destructive flex items-center gap-1">
+          <AlertCircle size={14} /> {error}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { usePoolAuth } from '@/lib/PoolAuth';
-import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
+import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed, isGameweekFinished } from '@/lib/scoring';
 import PlayerSearch from '@/components/PlayerSearch';
 import PickSummary from '@/components/PickSummary';
 import ClubBadge from '@/components/ClubBadge';
@@ -14,6 +14,7 @@ export default function Picks() {
   const [players, setPlayers] = useState([]);
   const [existingPick, setExistingPick] = useState(null);
   const [playerStats, setPlayerStats] = useState([]);
+  const [fixtures, setFixtures] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,15 +35,17 @@ export default function Picks() {
       setScoringConfig(configs[0] || null);
       setPlayers(allPlayers);
       if (active && member) {
-        const [picks, stats] = await Promise.all([
+        const [picks, stats, gwFixtures] = await Promise.all([
           base44.entities.Pick.filter({ member_id: member.id, gameweek: active.number }),
           base44.entities.PlayerStat.filter({ gameweek: active.number }),
+          base44.entities.Fixture.filter({ gameweek: active.number }),
         ]);
         if (picks.length > 0) {
           setExistingPick(picks[0]);
           setSelectedIds(picks[0].player_ids || []);
         }
         setPlayerStats(stats);
+        setFixtures(gwFixtures);
       }
     } catch (err) {
       console.error(err);
@@ -52,6 +55,7 @@ export default function Picks() {
   };
 
   const locked = isDeadlinePassed(gameweek);
+  const gwFinished = isGameweekFinished(fixtures, gameweek.number);
 
   const handleToggle = (player) => {
     if (locked) return;
@@ -132,7 +136,7 @@ export default function Picks() {
                     </p>
                   )}
                 </div>
-                {gameweek.is_finalized && (
+                {gwFinished && (
                   <span className={`text-2xl font-bold ${pts > 0 ? 'text-primary' : 'text-muted-foreground'}`}>{pts}</span>
                 )}
               </div>
@@ -156,7 +160,7 @@ export default function Picks() {
         saved={saved}
         isLocked={locked}
         hasFive={selectedIds.length === 5}
-        isFinalized={gameweek.is_finalized}
+        isFinalized={gwFinished}
       />
     </div>
   );

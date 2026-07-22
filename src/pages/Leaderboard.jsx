@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { calculatePlayerPoints, calculatePickTotal } from '@/lib/scoring';
+import { calculatePlayerPoints, calculatePickTotal, isGameweekFinished } from '@/lib/scoring';
 import { AlertTriangle } from 'lucide-react';
 
 export default function Leaderboard() {
@@ -11,18 +11,20 @@ export default function Leaderboard() {
   const [allStats, setAllStats] = useState([]);
   const [scoringConfig, setScoringConfig] = useState(null);
   const [allMembers, setAllMembers] = useState([]);
+  const [allFixtures, setAllFixtures] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadInitial(); }, []);
 
   const loadInitial = async () => {
     try {
-      const [gws, configs, members, picks, stats] = await Promise.all([
+      const [gws, configs, members, picks, stats, fixtures] = await Promise.all([
         base44.entities.Gameweek.list('number', 50),
         base44.entities.ScoringConfig.filter({ is_active: true }),
         base44.entities.PoolMember.list('', 50),
         base44.entities.Pick.list('', 1000),
         base44.entities.PlayerStat.list('', 2000),
+        base44.entities.Fixture.list('', 500),
       ]);
       const sorted = gws.sort((a, b) => a.number - b.number);
       setGameweeks(sorted);
@@ -30,10 +32,11 @@ export default function Leaderboard() {
       setAllMembers(members);
       setAllPicks(picks);
       setAllStats(stats);
-      const finalized = sorted.filter(g => g.is_finalized);
-      const latestFinal = finalized[finalized.length - 1];
+      setAllFixtures(fixtures);
+      const finishedGws = sorted.filter(g => isGameweekFinished(fixtures, g.number));
+      const latestFinished = finishedGws[finishedGws.length - 1];
       const active = sorted.find(g => g.is_active) || sorted[sorted.length - 1];
-      setSelectedGw((latestFinal || active)?.number);
+      setSelectedGw((latestFinished || active)?.number);
     } catch (err) {
       console.error(err);
     } finally {
@@ -55,7 +58,7 @@ export default function Leaderboard() {
   const gwPicks = allPicks.filter(p => p.gameweek === selectedGw);
   const gwSorted = [...gwPicks].sort((a, b) => getPickScore(b).score - getPickScore(a).score);
 
-  const finalizedGws = gameweeks.filter(g => g.is_finalized);
+  const finalizedGws = gameweeks.filter(g => isGameweekFinished(allFixtures, g.number));
   const seasonTotals = allMembers.map(m => {
     let totalScore = 0;
     let busts = 0;
@@ -113,7 +116,12 @@ export default function Leaderboard() {
             </select>
           )}
 
-          {gwSorted.length === 0 ? (
+          {!isGameweekFinished(allFixtures, selectedGw) ? (
+            <div className="text-center text-muted-foreground py-12">
+              <p className="font-medium mb-1">Not played yet</p>
+              <p className="text-sm">Matches still in progress or not yet played</p>
+            </div>
+          ) : gwSorted.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No picks for this gameweek yet</p>
           ) : (
             <div className="space-y-2">
