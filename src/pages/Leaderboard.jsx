@@ -133,7 +133,7 @@ export default function Leaderboard() {
                       <p className="font-medium">{pick.member_name}</p>
                       {score.isBust && (
                         <p className="text-xs text-destructive flex items-center gap-1">
-                          <AlertTriangle size={10} /> BUST · {score.total} pts over
+                          <AlertTriangle size={10} /> BUST · {score.total - (scoringConfig?.bust_threshold || 21)} pts over
                         </p>
                       )}
                     </div>
