@@ -54,6 +54,9 @@ export default function Picks() {
     }
   };
 
+  if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
+  if (!gameweek) return <div className="p-6 text-center text-muted-foreground">No active gameweek yet. Ask your admin to set one up.</div>;
+
   const locked = isDeadlinePassed(gameweek);
   const gwFinished = isGameweekFinished(fixtures, gameweek.number);
 
@@ -87,9 +90,6 @@ export default function Picks() {
       setSaving(false);
     }
   };
-
-  if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
-  if (!gameweek) return <div className="p-6 text-center text-muted-foreground">No active gameweek yet. Ask your admin to set one up.</div>;
 
   const selectedPlayers = selectedIds.map(id => players.find(p => p.id === id)).filter(Boolean);
   const playerPoints = selectedPlayers.map(p => {
