@@ -194,6 +194,12 @@ async function fplFetch(path) {
   return resp.json();
 }
 
+// Fetch all players without truncation. FPL seasons typically have ~600-700
+// players; use a high limit with margin for growth (new signings, loans).
+async function fetchAllPlayers(base44) {
+  return await base44.asServiceRole.entities.Player.list('', 2000);
+}
+
 function deriveSeason(deadlineStr) {
   if (!deadlineStr) return '';
   const d = new Date(deadlineStr);
@@ -210,7 +216,7 @@ async function syncBootstrap(base44, data) {
   data.teams.forEach(t => { teams[t.id] = t; });
   const positionMap = { 1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
-  const existingPlayers = await base44.asServiceRole.entities.Player.list('', 600);
+  const existingPlayers = await fetchAllPlayers(base44);
   const playerMap = {};
   existingPlayers.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
 
@@ -291,7 +297,7 @@ async function syncFixtures(base44, bsData) {
   const teams = {};
   bsData.teams.forEach(t => { teams[t.id] = t; });
 
-  const players = await base44.asServiceRole.entities.Player.list('', 600);
+  const players = await fetchAllPlayers(base44);
   const playerMap = {};
   players.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
 
@@ -311,7 +317,12 @@ async function syncFixtures(base44, bsData) {
     const assistsEntry = fxStats.find(s => s.identifier === 'assists');
     const mapStatList = (items, isOG = false) => (items || []).map(item => {
       const player = playerMap[item.element];
-      if (!player) return null;
+      if (!player) {
+        const homeName = homeTeam?.name || 'Home';
+        const awayName = awayTeam?.name || 'Away';
+        scorerWarnings.push(`GW${fx.event || '?'} ${homeName} vs ${awayName}: unmatched player id ${item.element}`);
+        return null;
+      }
       return { player: player.id, name: player.web_name, count: item.value, is_own_goal: isOG };
     }).filter(Boolean);
 
@@ -398,7 +409,7 @@ async function syncStats(base44, gameweek, season) {
     points_per_defensive_contribution: 2, bust_threshold: 21,
   };
 
-  const players = await base44.asServiceRole.entities.Player.list('', 600);
+  const players = await fetchAllPlayers(base44);
   const playerMap = {};
   players.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
 
