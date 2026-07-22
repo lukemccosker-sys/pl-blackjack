@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
+import { calculatePlayerPoints, calculatePickTotal } from '../../shared/scoring.js';
 
 const FPL_BASE = 'https://fantasy.premierleague.com/api';
 
@@ -404,7 +405,9 @@ async function syncFixtures(base44, bsData) {
 async function syncStats(base44, gameweek, season) {
   const configs = await base44.asServiceRole.entities.ScoringConfig.filter({ is_active: true });
   const config = configs[0] || {
-    points_per_goal: 3, points_per_assist: 2, points_per_clean_sheet: 2,
+    points_per_goal_gk: 10, points_per_goal_def: 6, points_per_goal_mid: 5, points_per_goal_fwd: 4,
+    points_per_cleansheet_gk: 4, points_per_cleansheet_def: 4, points_per_cleansheet_mid: 1, points_per_cleansheet_fwd: 0,
+    points_per_assist: 2,
     points_per_appearance: 1, points_per_yellow_card: -1, points_per_red_card: -3,
     points_per_defensive_contribution: 2, bust_threshold: 21,
   };
@@ -435,20 +438,19 @@ async function syncStats(base44, gameweek, season) {
     const dcHit = (el.explain || []).some(fx =>
       fx.stats && fx.stats.some(s => s.identifier === 'defensive_contribution' && s.points > 0)
     );
-    const points =
-      goals * (config.points_per_goal || 0) +
-      assists * (config.points_per_assist || 0) +
-      cleanSheets * (config.points_per_clean_sheet || 0) +
-      appearance * (config.points_per_appearance || 0) +
-      yellowCards * (config.points_per_yellow_card || 0) +
-      redCards * (config.points_per_red_card || 0) +
-      (dcHit ? (config.points_per_defensive_contribution || 0) : 0);
+    const points = calculatePlayerPoints({
+      goals, assists, clean_sheets: cleanSheets, minutes,
+      yellow_cards: yellowCards, red_cards: redCards,
+      defensive_contribution_hit: dcHit,
+      position: player.position,
+    }, config);
 
     const statData = {
       player_id: player.id, player_name: player.web_name, fpl_id: el.id,
       gameweek, season, goals, assists, clean_sheets: cleanSheets, minutes,
       yellow_cards: yellowCards, red_cards: redCards,
       defensive_contribution_hit: dcHit, points,
+      position: player.position,
     };
     if (existingMap[el.id]) {
       toUpdate.push({ id: existingMap[el.id].id, ...statData });
@@ -475,35 +477,10 @@ async function syncStats(base44, gameweek, season) {
 
   const gwPicks = await base44.asServiceRole.entities.Pick.filter({ gameweek });
   const pickUpdates = gwPicks.map(pick => {
-    const points = (pick.player_ids || []).map(pid => {
-      const stat = statMap[pid];
-      if (!stat) return 0;
-      const appearance = stat.minutes > 0 ? 1 : 0;
-      return (
-        (stat.goals || 0) * (config.points_per_goal || 0) +
-        (stat.assists || 0) * (config.points_per_assist || 0) +
-        (stat.clean_sheets || 0) * (config.points_per_clean_sheet || 0) +
-        appearance * (config.points_per_appearance || 0) +
-        (stat.yellow_cards || 0) * (config.points_per_yellow_card || 0) +
-        (stat.red_cards || 0) * (config.points_per_red_card || 0) +
-        (stat.defensive_contribution_hit ? (config.points_per_defensive_contribution || 0) : 0)
-      );
+    const playerPoints = (pick.player_ids || []).map(pid => {
+      return calculatePlayerPoints(statMap[pid], config);
     });
-    const total = points.reduce((sum, p) => sum + (p || 0), 0);
-    const threshold = config?.bust_threshold || 21;
-    const bonus = config?.blackjack_bonus || 10;
-    let tier, score;
-    if (total > threshold) {
-      tier = 'bust';
-      score = 0;
-    } else if (total === threshold) {
-      tier = 'blackjack';
-      score = total + bonus;
-    } else {
-      tier = 'safe';
-      score = total;
-    }
-    const isBust = tier === 'bust';
+    const { total, isBust, score, tier } = calculatePickTotal(playerPoints, config);
     return { id: pick.id, total_points: total, is_bust: isBust, score, tier };
   });
 

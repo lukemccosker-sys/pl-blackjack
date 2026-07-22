@@ -22,6 +22,16 @@
       "type": "string",
       "title": "Season"
     },
+    "position": {
+      "type": "string",
+      "enum": [
+        "GK",
+        "DEF",
+        "MID",
+        "FWD"
+      ],
+      "title": "Position"
+    },
     "goals": {
       "type": "number",
       "default": 0,

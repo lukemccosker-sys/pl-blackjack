@@ -2,20 +2,50 @@
   "name": "ScoringConfig",
   "type": "object",
   "properties": {
-    "points_per_goal": {
+    "points_per_goal_gk": {
       "type": "number",
-      "default": 3,
-      "title": "Points Per Goal"
+      "default": 10,
+      "title": "Points Per Goal (GK)"
+    },
+    "points_per_goal_def": {
+      "type": "number",
+      "default": 6,
+      "title": "Points Per Goal (DEF)"
+    },
+    "points_per_goal_mid": {
+      "type": "number",
+      "default": 5,
+      "title": "Points Per Goal (MID)"
+    },
+    "points_per_goal_fwd": {
+      "type": "number",
+      "default": 4,
+      "title": "Points Per Goal (FWD)"
+    },
+    "points_per_cleansheet_gk": {
+      "type": "number",
+      "default": 4,
+      "title": "Points Per Clean Sheet (GK)"
+    },
+    "points_per_cleansheet_def": {
+      "type": "number",
+      "default": 4,
+      "title": "Points Per Clean Sheet (DEF)"
+    },
+    "points_per_cleansheet_mid": {
+      "type": "number",
+      "default": 1,
+      "title": "Points Per Clean Sheet (MID)"
+    },
+    "points_per_cleansheet_fwd": {
+      "type": "number",
+      "default": 0,
+      "title": "Points Per Clean Sheet (FWD)"
     },
     "points_per_assist": {
       "type": "number",
       "default": 2,
       "title": "Points Per Assist"
-    },
-    "points_per_clean_sheet": {
-      "type": "number",
-      "default": 2,
-      "title": "Points Per Clean Sheet"
     },
     "points_per_appearance": {
       "type": "number",

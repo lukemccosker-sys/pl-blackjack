@@ -1,39 +1,12 @@
-export function calculatePlayerPoints(stats, config) {
-  if (!stats || !config) return 0;
-  const appearance = stats.minutes > 0 ? 1 : 0;
-  return (
-    (stats.goals || 0) * (config.points_per_goal || 0) +
-    (stats.assists || 0) * (config.points_per_assist || 0) +
-    (stats.clean_sheets || 0) * (config.points_per_clean_sheet || 0) +
-    appearance * (config.points_per_appearance || 0) +
-    (stats.yellow_cards || 0) * (config.points_per_yellow_card || 0) +
-    (stats.red_cards || 0) * (config.points_per_red_card || 0) +
-    (stats.defensive_contribution_hit ? (config.points_per_defensive_contribution || 0) : 0)
-  );
-}
-
-export function calculatePickTotal(playerPoints, config) {
-  const total = playerPoints.reduce((sum, p) => sum + (p || 0), 0);
-  const threshold = config?.bust_threshold || 21;
-  const bonus = config?.blackjack_bonus || 10;
-  let tier, score;
-  if (total > threshold) {
-    tier = 'bust';
-    score = 0;
-  } else if (total === threshold) {
-    tier = 'blackjack';
-    score = total + bonus;
-  } else {
-    tier = 'safe';
-    score = total;
-  }
-  return {
-    total,
-    isBust: tier === 'bust',
-    score,
-    tier,
-  };
-}
+/**
+ * Client scoring utilities.
+ *
+ * The core scoring math (calculatePlayerPoints, calculatePickTotal) is
+ * imported from base44/shared/scoring.js — the SAME module the backend
+ * sync function uses. This ensures client previews and server calculations
+ * never drift. Do not duplicate the scoring math here.
+ */
+export { calculatePlayerPoints, calculatePickTotal } from '../../base44/shared/scoring.js';
 
 export function formatGameweekLabel(gw) {
   if (!gw) return '';
