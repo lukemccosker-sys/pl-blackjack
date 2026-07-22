@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     // Always sync live stats for the active gameweek, regardless of fixture status
     if (activeGw) {
-      const statResult = await syncStats(base44, activeGw.number);
+      const statResult = await syncStats(base44, activeGw.number, deriveSeason(activeGw.deadline));
       const gwFixtures = allFixtures.filter(f => f.gameweek === activeGw.number);
       const allFinished = gwFixtures.length > 0 && gwFixtures.every(f => f.finished);
       if (allFinished && !activeGw.is_finalized) {
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       const gwFixtures = allFixtures.filter(f => f.gameweek === gw.number);
       if (gwFixtures.length === 0) continue;
       if (gwFixtures.every(f => f.finished)) {
-        const statResult = await syncStats(base44, gw.number);
+        const statResult = await syncStats(base44, gw.number, deriveSeason(gw.deadline));
         await base44.asServiceRole.entities.Gameweek.update(gw.id, { is_finalized: true });
         finalizedGws.push({ gameweek: gw.number, ...statResult });
       }
@@ -72,6 +72,17 @@ async function fplFetch(path) {
   });
   if (!resp.ok) throw new Error(`FPL API error: ${resp.status}`);
   return resp.json();
+}
+
+function deriveSeason(deadlineStr) {
+  if (!deadlineStr) return '';
+  const d = new Date(deadlineStr);
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth();
+  if (month >= 7) {
+    return `${year}-${String((year + 1) % 100).padStart(2, '0')}`;
+  }
+  return `${year - 1}-${String(year % 100).padStart(2, '0')}`;
 }
 
 async function syncBootstrap(base44, data) {
@@ -123,10 +134,11 @@ async function syncBootstrap(base44, data) {
   const gwsToCreate = [];
   const gwsToUpdate = [];
   data.events.forEach(ev => {
+    const season = deriveSeason(ev.deadline_time);
     if (gwMap[ev.id]) {
-      gwsToUpdate.push({ id: gwMap[ev.id].id, deadline: ev.deadline_time, is_active: ev.is_current || false });
+      gwsToUpdate.push({ id: gwMap[ev.id].id, deadline: ev.deadline_time, is_active: ev.is_current || false, season });
     } else {
-      gwsToCreate.push({ number: ev.id, deadline: ev.deadline_time, is_active: ev.is_current || false });
+      gwsToCreate.push({ number: ev.id, deadline: ev.deadline_time, is_active: ev.is_current || false, season });
     }
   });
 
@@ -213,7 +225,7 @@ async function syncFixtures(base44, bsData) {
   return { created, updated, fixturesDeleted };
 }
 
-async function syncStats(base44, gameweek) {
+async function syncStats(base44, gameweek, season) {
   const configs = await base44.asServiceRole.entities.ScoringConfig.filter({ is_active: true });
   const config = configs[0] || {
     points_per_goal: 3, points_per_assist: 2, points_per_clean_sheet: 2,
@@ -258,7 +270,7 @@ async function syncStats(base44, gameweek) {
 
     const statData = {
       player_id: player.id, player_name: player.web_name, fpl_id: el.id,
-      gameweek, goals, assists, clean_sheets: cleanSheets, minutes,
+      gameweek, season, goals, assists, clean_sheets: cleanSheets, minutes,
       yellow_cards: yellowCards, red_cards: redCards,
       defensive_contribution_hit: dcHit, points,
     };

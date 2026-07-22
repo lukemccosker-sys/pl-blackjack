@@ -11,6 +11,10 @@
       "format": "date-time",
       "title": "Deadline"
     },
+    "season": {
+      "type": "string",
+      "title": "Season"
+    },
     "is_finalized": {
       "type": "boolean",
       "default": false,

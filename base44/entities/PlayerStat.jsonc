@@ -18,6 +18,10 @@
       "type": "number",
       "title": "Gameweek"
     },
+    "season": {
+      "type": "string",
+      "title": "Season"
+    },
     "goals": {
       "type": "number",
       "default": 0,

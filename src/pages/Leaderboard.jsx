@@ -56,7 +56,9 @@ export default function Leaderboard() {
   const gwSorted = [...gwPicks].sort((a, b) => getPickScore(b).score - getPickScore(a).score);
   const selectedGwObj = gameweeks.find(g => g.number === selectedGw);
 
-  const finalizedGws = gameweeks.filter(g => g.is_finalized);
+  const currentSeasonGw = gameweeks.find(g => g.is_active) || gameweeks[gameweeks.length - 1];
+  const currentSeason = currentSeasonGw?.season;
+  const finalizedGws = gameweeks.filter(g => g.is_finalized && (!currentSeason || g.season === currentSeason));
   const seasonTotals = allMembers.map(m => {
     let totalScore = 0;
     let busts = 0;
