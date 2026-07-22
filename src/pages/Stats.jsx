@@ -13,6 +13,8 @@ const TABLES = [
 export default function Stats() {
   const [players, setPlayers] = useState([]);
   const [stats, setStats] = useState([]);
+  const [activeGwNumber, setActiveGwNumber] = useState(null);
+  const [scope, setScope] = useState('season');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export default function Stats() {
         const sortedGws = gws.sort((a, b) => a.number - b.number);
         const activeGw = sortedGws.find(g => g.is_active) || sortedGws[sortedGws.length - 1];
         const currentSeason = activeGw?.season;
+        setActiveGwNumber(activeGw?.number || null);
         setPlayers(allPlayers);
         setStats(currentSeason ? allStats.filter(s => s.season === currentSeason) : allStats);
       } catch (err) {
@@ -41,8 +44,12 @@ export default function Stats() {
   const playerMap = {};
   players.forEach(p => { playerMap[p.id] = p; });
 
+  const scopedStats = scope === 'gameweek' && activeGwNumber
+    ? stats.filter(s => s.gameweek === activeGwNumber)
+    : stats;
+
   const aggregated = {};
-  stats.forEach(s => {
+  scopedStats.forEach(s => {
     if (!aggregated[s.player_id]) {
       aggregated[s.player_id] = {
         player_id: s.player_id,
@@ -69,8 +76,29 @@ export default function Stats() {
         <BarChart3 className="text-primary" size={20} />
         <div>
           <h1 className="text-2xl font-bold">Stats</h1>
-          <p className="text-sm text-muted-foreground">Season totals across all gameweeks</p>
+          <p className="text-sm text-muted-foreground">
+            {scope === 'gameweek' ? `Gameweek ${activeGwNumber || '—'}` : 'Season totals across all gameweeks'}
+          </p>
         </div>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setScope('season')}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+            scope === 'season' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'
+          }`}
+        >
+          Season Total
+        </button>
+        <button
+          onClick={() => setScope('gameweek')}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+            scope === 'gameweek' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'
+          }`}
+        >
+          This Gameweek
+        </button>
       </div>
 
       <div className="space-y-6">
