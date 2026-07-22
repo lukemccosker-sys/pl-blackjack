@@ -29,27 +29,76 @@ Deno.serve(async (req) => {
     const gameweeks = await base44.asServiceRole.entities.Gameweek.list('number', 50);
     const allFixtures = await base44.asServiceRole.entities.Fixture.list('', 1000);
 
+    // --- Season backfill: Gameweeks missing a season field ---
+    const gwsWithoutSeason = gameweeks.filter(gw => !gw.season && gw.deadline);
+    let gwSeasonBackfilled = 0;
+    if (gwsWithoutSeason.length > 0) {
+      const gwSeasonUpdates = gwsWithoutSeason.map(gw => ({
+        id: gw.id,
+        season: deriveSeason(gw.deadline),
+      }));
+      for (let i = 0; i < gwSeasonUpdates.length; i += 500) {
+        await base44.asServiceRole.entities.Gameweek.bulkUpdate(gwSeasonUpdates.slice(i, i + 500));
+      }
+      gwSeasonBackfilled = gwSeasonUpdates.length;
+      gwSeasonUpdates.forEach(u => {
+        const gw = gameweeks.find(g => g.id === u.id);
+        if (gw) gw.season = u.season;
+      });
+    }
+
+    // --- Season backfill: PlayerStats missing a season field ---
+    const seasonByGw = {};
+    gameweeks.forEach(gw => { if (gw.season) seasonByGw[gw.number] = gw.season; });
+    let statSeasonBackfilled = 0;
+    for (const gw of gameweeks) {
+      const season = seasonByGw[gw.number];
+      if (!season) continue;
+      try {
+        const stats = await base44.asServiceRole.entities.PlayerStat.filter({ gameweek: gw.number });
+        const needingSeason = stats.filter(s => !s.season);
+        if (needingSeason.length > 0) {
+          const updates = needingSeason.map(s => ({ id: s.id, season }));
+          for (let i = 0; i < updates.length; i += 500) {
+            await base44.asServiceRole.entities.PlayerStat.bulkUpdate(updates.slice(i, i + 500));
+          }
+          statSeasonBackfilled += needingSeason.length;
+        }
+      } catch (e) {
+        // season backfill is best-effort; don't block sync
+      }
+    }
+
     const activeGw = gameweeks.find(g => g.is_active);
     const currentSeason = activeGw?.season;
-    const syncedGws = [];
+    const attempted = [];
+    const succeeded = [];
+    const failed = [];
+    let activeReport = null;
 
     // 1. Always sync live stats for the active (in-progress) gameweek, but
     //    don't mark it stats_synced unless all its fixtures are finished.
     if (activeGw) {
-      const statResult = await syncStats(base44, activeGw.number, deriveSeason(activeGw.deadline));
-      const gwFixtures = allFixtures.filter(f => f.gameweek === activeGw.number);
-      const allFinished = gwFixtures.length > 0 && gwFixtures.every(f => f.finished);
-      if (allFinished) {
-        await base44.asServiceRole.entities.Gameweek.update(activeGw.id, {
-          is_finalized: true, stats_synced: true,
-        });
-        syncedGws.push({ gameweek: activeGw.number, ...statResult });
+      attempted.push(activeGw.number);
+      try {
+        const statResult = await syncStats(base44, activeGw.number, deriveSeason(activeGw.deadline));
+        const gwFixtures = allFixtures.filter(f => f.gameweek === activeGw.number);
+        const allFinished = gwFixtures.length > 0 && gwFixtures.every(f => f.finished);
+        if (allFinished) {
+          await base44.asServiceRole.entities.Gameweek.update(activeGw.id, {
+            is_finalized: true, stats_synced: true,
+          });
+          succeeded.push({ gameweek: activeGw.number, ...statResult });
+        }
+        activeReport = { gameweek: activeGw.number, synced: true, finalized: allFinished };
+      } catch (err) {
+        activeReport = { gameweek: activeGw.number, synced: false, error: err.message };
       }
     }
 
     // 2. Backfill stats for every OTHER finished gameweek in the current
-    //    season that hasn't been marked stats_synced yet. Skip the active
-    //    gameweek (handled above) and any gameweek with no fixtures.
+    //    season that hasn't been marked stats_synced yet. Each gameweek is
+    //    wrapped in its own try/catch so one failure doesn't block the rest.
     for (const gw of gameweeks) {
       if (gw.stats_synced) continue;
       if (activeGw && gw.number === activeGw.number) continue;
@@ -58,18 +107,30 @@ Deno.serve(async (req) => {
       if (gwFixtures.length === 0) continue;
       if (!gwFixtures.every(f => f.finished)) continue;
 
-      const statResult = await syncStats(base44, gw.number, deriveSeason(gw.deadline));
-      await base44.asServiceRole.entities.Gameweek.update(gw.id, {
-        is_finalized: true, stats_synced: true,
-      });
-      syncedGws.push({ gameweek: gw.number, ...statResult });
+      attempted.push(gw.number);
+      try {
+        const statResult = await syncStats(base44, gw.number, deriveSeason(gw.deadline));
+        await base44.asServiceRole.entities.Gameweek.update(gw.id, {
+          is_finalized: true, stats_synced: true,
+        });
+        succeeded.push({ gameweek: gw.number, ...statResult });
+      } catch (err) {
+        failed.push({ gameweek: gw.number, error: err.message });
+      }
     }
 
     return Response.json({
       success: true,
       bootstrap: bootstrapResult,
       fixtures: fixturesResult,
-      gameweeksSynced: syncedGws,
+      gameweeksSynced: succeeded,
+      report: {
+        attempted,
+        succeeded: succeeded.map(s => ({ gameweek: s.gameweek, created: s.created, updated: s.updated, picksUpdated: s.picksUpdated })),
+        failed,
+        active: activeReport,
+        seasonBackfill: { gameweeksUpdated: gwSeasonBackfilled, playerStatsUpdated: statSeasonBackfilled },
+      },
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

@@ -63,7 +63,7 @@ export default function SyncPanel({ member }) {
         {syncing ? 'Syncing...' : 'Sync Now'}
       </Button>
       {result && (
-        <div className="bg-card rounded-xl p-4 space-y-2 text-sm">
+        <div className="bg-card rounded-xl p-4 space-y-3 text-sm">
           <p className="text-primary flex items-center gap-1 font-medium">
             <Check size={14} /> Sync complete
           </p>
@@ -71,10 +71,51 @@ export default function SyncPanel({ member }) {
             <p>Players: {result.bootstrap?.playersCreated || 0} new, {result.bootstrap?.playersUpdated || 0} updated, {result.bootstrap?.playersDeleted || 0} removed</p>
             <p>Gameweeks: {result.bootstrap?.gwsCreated || 0} new, {result.bootstrap?.gwsUpdated || 0} updated</p>
             <p>Fixtures: {result.fixtures?.created || 0} new, {result.fixtures?.updated || 0} updated, {result.fixtures?.fixturesDeleted || 0} removed</p>
-            {result.gameweeksSynced?.length > 0 && (
-              <p className="text-primary">Stats synced: GW {result.gameweeksSynced.map(g => g.gameweek).join(', ')}</p>
-            )}
           </div>
+
+          {result.report?.seasonBackfill && (result.report.seasonBackfill.gameweeksUpdated > 0 || result.report.seasonBackfill.playerStatsUpdated > 0) && (
+            <div className="border-t border-border pt-2">
+              <p className="text-xs text-muted-foreground">
+                Season backfill: {result.report.seasonBackfill.gameweeksUpdated} gameweek(s), {result.report.seasonBackfill.playerStatsUpdated} player stat(s) patched
+              </p>
+            </div>
+          )}
+
+          {result.report && (
+            <div className="border-t border-border pt-2 space-y-1.5">
+              <p className="font-medium text-xs uppercase tracking-wide text-muted-foreground">Gameweek Stats Sync</p>
+              {result.report.attempted?.length > 0 ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Attempted: GW {result.report.attempted.join(', ')}
+                  </p>
+                  {result.report.active && (
+                    <p className={`text-xs flex items-center gap-1 ${result.report.active.synced ? 'text-primary' : 'text-destructive'}`}>
+                      {result.report.active.synced
+                        ? <><Check size={12} /> Active GW {result.report.active.gameweek}: live stats synced{result.report.active.finalized ? ' (finalized)' : ''}</>
+                        : <><AlertCircle size={12} /> Active GW {result.report.active.gameweek}: {result.report.active.error}</>}
+                    </p>
+                  )}
+                  {result.report.succeeded?.length > 0 && (
+                    <p className="text-xs text-primary flex items-center gap-1">
+                      <Check size={12} /> Succeeded: {result.report.succeeded.map(s => `GW ${s.gameweek} (${s.created}c/${s.updated}u/${s.picksUpdated}p)`).join(', ')}
+                    </p>
+                  )}
+                  {result.report.failed?.length > 0 && (
+                    <div className="space-y-1">
+                      {result.report.failed.map(f => (
+                        <p key={f.gameweek} className="text-xs text-destructive flex items-start gap-1">
+                          <AlertCircle size={12} className="mt-0.5 shrink-0" /> GW {f.gameweek} failed: {f.error}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">No finished gameweeks to sync</p>
+              )}
+            </div>
+          )}
         </div>
       )}
       {error && (
