@@ -80,19 +80,23 @@ export default function Fixtures() {
                 </div>
               </div>
               {hasMatchStats(f) && (
-                <div className="mt-3 pt-3 border-t border-border space-y-1">
-                  {f.home_goalscorers?.length > 0 && (
-                    <p className="text-xs text-muted-foreground">⚽ {formatScorers(f.home_goalscorers)}</p>
-                  )}
-                  {f.home_assists?.length > 0 && (
-                    <p className="text-xs text-muted-foreground">🅰️ {formatScorers(f.home_assists)}</p>
-                  )}
-                  {f.away_goalscorers?.length > 0 && (
-                    <p className="text-xs text-muted-foreground">⚽ {formatScorers(f.away_goalscorers)}</p>
-                  )}
-                  {f.away_assists?.length > 0 && (
-                    <p className="text-xs text-muted-foreground">🅰️ {formatScorers(f.away_assists)}</p>
-                  )}
+                <div className="mt-3 pt-3 border-t border-border grid grid-cols-2 gap-2">
+                  <div className="text-right space-y-1">
+                    {f.home_goalscorers?.length > 0 && (
+                      <p className="text-xs text-muted-foreground">⚽ {formatScorers(f.home_goalscorers)}</p>
+                    )}
+                    {f.home_assists?.length > 0 && (
+                      <p className="text-xs text-muted-foreground">🅰️ {formatScorers(f.home_assists)}</p>
+                    )}
+                  </div>
+                  <div className="text-left space-y-1">
+                    {f.away_goalscorers?.length > 0 && (
+                      <p className="text-xs text-muted-foreground">⚽ {formatScorers(f.away_goalscorers)}</p>
+                    )}
+                    {f.away_assists?.length > 0 && (
+                      <p className="text-xs text-muted-foreground">🅰️ {formatScorers(f.away_assists)}</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
