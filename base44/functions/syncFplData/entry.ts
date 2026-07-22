@@ -99,6 +99,11 @@ Deno.serve(async (req) => {
     // 2. Backfill stats for every OTHER finished gameweek in the current
     //    season that hasn't been marked stats_synced yet. Each gameweek is
     //    wrapped in its own try/catch so one failure doesn't block the rest.
+    //    Cap at 3 gameweeks per sync run to avoid timeouts — press Sync
+    //    again to continue from the next unsynced gameweek.
+    const MAX_BACKFILL_PER_RUN = 3;
+    let backfillProcessed = 0;
+    const remainingUnsynced = [];
     for (const gw of gameweeks) {
       if (gw.stats_synced) continue;
       if (activeGw && gw.number === activeGw.number) continue;
@@ -107,7 +112,13 @@ Deno.serve(async (req) => {
       if (gwFixtures.length === 0) continue;
       if (!gwFixtures.every(f => f.finished)) continue;
 
+      if (backfillProcessed >= MAX_BACKFILL_PER_RUN) {
+        remainingUnsynced.push(gw.number);
+        continue;
+      }
+
       attempted.push(gw.number);
+      backfillProcessed++;
       try {
         const statResult = await syncStats(base44, gw.number, deriveSeason(gw.deadline));
         await base44.asServiceRole.entities.Gameweek.update(gw.id, {
@@ -118,6 +129,8 @@ Deno.serve(async (req) => {
         failed.push({ gameweek: gw.number, error: err.message });
       }
     }
+
+    const stillRemaining = remainingUnsynced.length;
 
     return Response.json({
       success: true,
@@ -130,6 +143,12 @@ Deno.serve(async (req) => {
         failed,
         active: activeReport,
         seasonBackfill: { gameweeksUpdated: gwSeasonBackfilled, playerStatsUpdated: statSeasonBackfilled },
+        backfill: {
+          maxPerRun: MAX_BACKFILL_PER_RUN,
+          processedThisRun: backfillProcessed,
+          stillRemaining,
+          remainingGameweeks: remainingUnsynced,
+        },
       },
     });
   } catch (error) {

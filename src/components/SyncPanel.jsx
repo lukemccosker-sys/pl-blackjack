@@ -110,6 +110,17 @@ export default function SyncPanel({ member }) {
                       ))}
                     </div>
                   )}
+                  {result.report.backfill?.stillRemaining > 0 && (
+                    <div className="bg-accent/50 rounded-lg px-3 py-2 mt-1">
+                      <p className="text-xs text-yellow-400 flex items-center gap-1 font-medium">
+                        <AlertCircle size={12} />
+                        {result.report.backfill.processedThisRun} of {result.report.backfill.processedThisRun + result.report.backfill.stillRemaining} finished gameweeks synced — press Sync again to continue
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Remaining: GW {result.report.backfill.remainingGameweeks.join(', ')}
+                      </p>
+                    </div>
+                  )}
                 </>
               ) : (
                 <p className="text-xs text-muted-foreground">No finished gameweeks to sync</p>
