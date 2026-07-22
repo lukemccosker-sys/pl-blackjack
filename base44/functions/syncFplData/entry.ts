@@ -30,36 +30,46 @@ Deno.serve(async (req) => {
     const allFixtures = await base44.asServiceRole.entities.Fixture.list('', 1000);
 
     const activeGw = gameweeks.find(g => g.is_active);
-    const finalizedGws = [];
+    const currentSeason = activeGw?.season;
+    const syncedGws = [];
 
-    // Always sync live stats for the active gameweek, regardless of fixture status
+    // 1. Always sync live stats for the active (in-progress) gameweek, but
+    //    don't mark it stats_synced unless all its fixtures are finished.
     if (activeGw) {
       const statResult = await syncStats(base44, activeGw.number, deriveSeason(activeGw.deadline));
       const gwFixtures = allFixtures.filter(f => f.gameweek === activeGw.number);
       const allFinished = gwFixtures.length > 0 && gwFixtures.every(f => f.finished);
-      if (allFinished && !activeGw.is_finalized) {
-        await base44.asServiceRole.entities.Gameweek.update(activeGw.id, { is_finalized: true });
-        finalizedGws.push({ gameweek: activeGw.number, ...statResult });
+      if (allFinished) {
+        await base44.asServiceRole.entities.Gameweek.update(activeGw.id, {
+          is_finalized: true, stats_synced: true,
+        });
+        syncedGws.push({ gameweek: activeGw.number, ...statResult });
       }
     }
 
-    // Finalize other non-finalized gameweeks where all fixtures are finished
+    // 2. Backfill stats for every OTHER finished gameweek in the current
+    //    season that hasn't been marked stats_synced yet. Skip the active
+    //    gameweek (handled above) and any gameweek with no fixtures.
     for (const gw of gameweeks) {
-      if (gw.is_finalized || (activeGw && gw.number === activeGw.number)) continue;
+      if (gw.stats_synced) continue;
+      if (activeGw && gw.number === activeGw.number) continue;
+      if (currentSeason && gw.season !== currentSeason) continue;
       const gwFixtures = allFixtures.filter(f => f.gameweek === gw.number);
       if (gwFixtures.length === 0) continue;
-      if (gwFixtures.every(f => f.finished)) {
-        const statResult = await syncStats(base44, gw.number, deriveSeason(gw.deadline));
-        await base44.asServiceRole.entities.Gameweek.update(gw.id, { is_finalized: true });
-        finalizedGws.push({ gameweek: gw.number, ...statResult });
-      }
+      if (!gwFixtures.every(f => f.finished)) continue;
+
+      const statResult = await syncStats(base44, gw.number, deriveSeason(gw.deadline));
+      await base44.asServiceRole.entities.Gameweek.update(gw.id, {
+        is_finalized: true, stats_synced: true,
+      });
+      syncedGws.push({ gameweek: gw.number, ...statResult });
     }
 
     return Response.json({
       success: true,
       bootstrap: bootstrapResult,
       fixtures: fixturesResult,
-      gameweeksFinalized: finalizedGws,
+      gameweeksSynced: syncedGws,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

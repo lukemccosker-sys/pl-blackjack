@@ -24,6 +24,11 @@
       "type": "boolean",
       "default": false,
       "title": "Is Active"
+    },
+    "stats_synced": {
+      "type": "boolean",
+      "default": false,
+      "title": "Stats Synced"
     }
   },
   "required": [

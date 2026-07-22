@@ -26,6 +26,11 @@ export default function SyncPanel({ member }) {
     setResetResult(null);
     try {
       await base44.entities.PlayerStat.deleteMany({ gameweek: Number(resetGw) });
+      const gw = gameweeks.find(g => String(g.number) === resetGw);
+      if (gw) {
+        await base44.entities.Gameweek.update(gw.id, { stats_synced: false });
+        setGameweeks(prev => prev.map(g => g.id === gw.id ? { ...g, stats_synced: false } : g));
+      }
       setResetResult({ gameweek: resetGw, success: true });
     } catch (err) {
       setResetResult({ gameweek: resetGw, error: err.message || 'Reset failed' });
@@ -66,8 +71,8 @@ export default function SyncPanel({ member }) {
             <p>Players: {result.bootstrap?.playersCreated || 0} new, {result.bootstrap?.playersUpdated || 0} updated, {result.bootstrap?.playersDeleted || 0} removed</p>
             <p>Gameweeks: {result.bootstrap?.gwsCreated || 0} new, {result.bootstrap?.gwsUpdated || 0} updated</p>
             <p>Fixtures: {result.fixtures?.created || 0} new, {result.fixtures?.updated || 0} updated, {result.fixtures?.fixturesDeleted || 0} removed</p>
-            {result.gameweeksFinalized?.length > 0 && (
-              <p className="text-primary">Finalized: GW {result.gameweeksFinalized.map(g => g.gameweek).join(', ')}</p>
+            {result.gameweeksSynced?.length > 0 && (
+              <p className="text-primary">Stats synced: GW {result.gameweeksSynced.map(g => g.gameweek).join(', ')}</p>
             )}
           </div>
         </div>
