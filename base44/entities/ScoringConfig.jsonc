@@ -54,12 +54,12 @@
     },
     "points_per_yellow_card": {
       "type": "number",
-      "default": 1,
+      "default": 2,
       "title": "Points Per Yellow Card"
     },
     "points_per_red_card": {
       "type": "number",
-      "default": 3,
+      "default": 5,
       "title": "Points Per Red Card"
     },
     "points_per_defensive_contribution": {
