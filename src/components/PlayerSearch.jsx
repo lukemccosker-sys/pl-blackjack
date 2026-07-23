@@ -7,7 +7,7 @@ import { POSITIONS, POSITION_LABELS } from '@/lib/plData';
 
 export default function PlayerSearch({ players, selectedIds, onToggle }) {
   const [query, setQuery] = useState('');
-  const [groupBy, setGroupBy] = useState('club');
+  const [groupBy, setGroupBy] = useState('position');
 
   const filtered = useMemo(() => {
     if (!query.trim()) return players;
@@ -26,6 +26,12 @@ export default function PlayerSearch({ players, selectedIds, onToggle }) {
       if (!g[key]) g[key] = [];
       g[key].push(p);
     });
+    const posOrder = (a, b) => {
+      const ia = POSITIONS.indexOf(a.position);
+      const ib = POSITIONS.indexOf(b.position);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    };
+    Object.values(g).forEach(arr => arr.sort(posOrder));
     return g;
   }, [filtered, groupBy]);
 
