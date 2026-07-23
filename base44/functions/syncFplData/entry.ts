@@ -72,8 +72,61 @@ Deno.serve(async (req) => {
       }
     }
 
-    const activeGw = gameweeks.find(g => g.is_active);
-    const currentSeason = activeGw?.season;
+    // --- Compute the REAL active gameweek from fixture data ---
+    // FPL's is_current flag can be wrong or lagging, especially around
+    // season boundaries. Instead of trusting it, compute the active GW as:
+    // within the current season, the lowest-numbered gameweek that does NOT
+    // have all its fixtures marked finished.
+    const fplActiveGw = gameweeks.find(g => g.is_active);
+    const currentSeason = fplActiveGw?.season || (gameweeks.length > 0 ? gameweeks[gameweeks.length - 1].season : '') || '';
+
+    let computedActiveGw = null;
+    const seasonGws = gameweeks
+      .filter(gw => !currentSeason || gw.season === currentSeason)
+      .sort((a, b) => a.number - b.number);
+    for (const gw of seasonGws) {
+      const gwFixtures = allFixtures.filter(f => f.gameweek === gw.number);
+      if (gwFixtures.length === 0) continue;
+      if (!gwFixtures.every(f => f.finished)) {
+        computedActiveGw = gw;
+        break;
+      }
+    }
+    // Pre-season fallback: if no GW with fixtures was found but FPL reports
+    // an active GW with no fixtures yet, trust FPL (fixtures may not be
+    // scheduled for the new season). If FPL's GW has all fixtures finished,
+    // the season is over — don't fall back.
+    if (!computedActiveGw && fplActiveGw) {
+      const fplGwFixtures = allFixtures.filter(f => f.gameweek === fplActiveGw.number);
+      if (fplGwFixtures.length === 0) {
+        computedActiveGw = fplActiveGw;
+      }
+    }
+
+    // Correct is_active on all gameweeks to match the computed result,
+    // so client pages (Home, Live, Stats, Picks, Leaderboard) reading
+    // is_active get the right value without any client-side changes.
+    const gwActiveUpdates = [];
+    gameweeks.forEach(gw => {
+      const shouldBeActive = computedActiveGw && gw.id === computedActiveGw.id;
+      if (gw.is_active !== shouldBeActive) {
+        gwActiveUpdates.push({ id: gw.id, is_active: shouldBeActive });
+        gw.is_active = shouldBeActive;
+      }
+    });
+    if (gwActiveUpdates.length > 0) {
+      await base44.asServiceRole.entities.Gameweek.bulkUpdate(gwActiveUpdates);
+    }
+
+    const activeGw = computedActiveGw;
+    let activeDiscrepancy = null;
+    if (fplActiveGw && computedActiveGw && fplActiveGw.number !== computedActiveGw.number) {
+      activeDiscrepancy = {
+        fplCurrent: fplActiveGw.number,
+        computedActive: computedActiveGw.number,
+        message: `FPL reports GW${fplActiveGw.number} as current, but GW${computedActiveGw.number} is the actual first unfinished gameweek — using GW${computedActiveGw.number}`,
+      };
+    }
     const attempted = [];
     const succeeded = [];
     const failed = [];
@@ -180,6 +233,7 @@ Deno.serve(async (req) => {
         succeeded: succeeded.map(s => ({ gameweek: s.gameweek, created: s.created, updated: s.updated, picksUpdated: s.picksUpdated })),
         failed,
         active: activeReport,
+        activeDiscrepancy,
         seasonBackfill: { gameweeksUpdated: gwSeasonBackfilled, playerStatsUpdated: statSeasonBackfilled },
         seasonStatus,
         backfill: {
