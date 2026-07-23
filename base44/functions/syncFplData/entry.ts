@@ -326,7 +326,16 @@ async function syncBootstrap(base44, data) {
   data.events.forEach(ev => {
     const season = deriveSeason(ev.deadline_time);
     if (gwMap[ev.id]) {
-      gwsToUpdate.push({ id: gwMap[ev.id].id, deadline: ev.deadline_time, is_active: ev.is_current || false, season });
+      const existing = gwMap[ev.id];
+      const update = { id: existing.id, deadline: ev.deadline_time, is_active: ev.is_current || false, season };
+      // Season transition: a gameweek row reused across seasons must start
+      // fresh — reset stats_synced and is_finalized so stale state from
+      // the previous season doesn't leak into the new one.
+      if (existing.season && existing.season !== season) {
+        update.stats_synced = false;
+        update.is_finalized = false;
+      }
+      gwsToUpdate.push(update);
     } else {
       gwsToCreate.push({ number: ev.id, deadline: ev.deadline_time, is_active: ev.is_current || false, season });
     }
