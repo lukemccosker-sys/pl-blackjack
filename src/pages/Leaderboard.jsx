@@ -16,6 +16,23 @@ export default function Leaderboard() {
 
   useEffect(() => { loadInitial(); }, []);
 
+  useEffect(() => {
+    let timer = null;
+    const unsubStats = base44.entities.PlayerStat.subscribe(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => loadInitial(), 500);
+    });
+    const unsubGws = base44.entities.Gameweek.subscribe(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => loadInitial(), 500);
+    });
+    return () => {
+      unsubStats();
+      unsubGws();
+      clearTimeout(timer);
+    };
+  }, []);
+
   const loadInitial = async () => {
     try {
       const [gws, configs, members, picks, stats] = await Promise.all([
@@ -33,7 +50,7 @@ export default function Leaderboard() {
       setAllStats(stats);
       const active = sorted.find(g => g.is_active);
       const latestFinalized = sorted.filter(g => g.is_finalized).pop();
-      setSelectedGw((active || latestFinalized || sorted[sorted.length - 1])?.number);
+      setSelectedGw(prev => prev ?? (active || latestFinalized || sorted[sorted.length - 1])?.number);
     } catch (err) {
       console.error(err);
     } finally {

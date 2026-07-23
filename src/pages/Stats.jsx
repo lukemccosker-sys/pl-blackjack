@@ -18,26 +18,43 @@ export default function Stats() {
   const [scope, setScope] = useState('season');
   const [loading, setLoading] = useState(true);
 
+  const loadData = async () => {
+    try {
+      const [allPlayers, gws, allStats] = await Promise.all([
+        fetchAllPlayers(base44.entities),
+        base44.entities.Gameweek.list('number', 50),
+        base44.entities.PlayerStat.list('', 5000),
+      ]);
+      const sortedGws = gws.sort((a, b) => a.number - b.number);
+      const activeGw = sortedGws.find(g => g.is_active) || sortedGws[sortedGws.length - 1];
+      const currentSeason = activeGw?.season;
+      setActiveGwNumber(activeGw?.number || null);
+      setPlayers(allPlayers);
+      setStats(currentSeason ? allStats.filter(s => s.season === currentSeason) : allStats);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
   useEffect(() => {
-    (async () => {
-      try {
-        const [allPlayers, gws, allStats] = await Promise.all([
-          fetchAllPlayers(base44.entities),
-          base44.entities.Gameweek.list('number', 50),
-          base44.entities.PlayerStat.list('', 5000),
-        ]);
-        const sortedGws = gws.sort((a, b) => a.number - b.number);
-        const activeGw = sortedGws.find(g => g.is_active) || sortedGws[sortedGws.length - 1];
-        const currentSeason = activeGw?.season;
-        setActiveGwNumber(activeGw?.number || null);
-        setPlayers(allPlayers);
-        setStats(currentSeason ? allStats.filter(s => s.season === currentSeason) : allStats);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    let timer = null;
+    const unsubStats = base44.entities.PlayerStat.subscribe(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => loadData(), 500);
+    });
+    const unsubGws = base44.entities.Gameweek.subscribe(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => loadData(), 500);
+    });
+    return () => {
+      unsubStats();
+      unsubGws();
+      clearTimeout(timer);
+    };
   }, []);
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
