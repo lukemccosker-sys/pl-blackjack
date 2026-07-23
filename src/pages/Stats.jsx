@@ -82,6 +82,8 @@ export default function Stats() {
     if (s.gameweek) aggregated[s.player_id]._gws.add(s.gameweek);
   });
 
+  const maxSyncedGw = stats.length > 0 ? Math.max(...stats.map(s => s.gameweek || 0)) : null;
+
   const getTop5 = (key) =>
     Object.values(aggregated)
       .filter(a => a[key] > 0)
@@ -145,8 +147,8 @@ export default function Stats() {
                         <p className="text-sm font-medium truncate">{player.web_name}</p>
                         <p className="text-xs text-muted-foreground">
                           {player.position} · {player.club_short}
-                          {scope === 'season' && a._gws.size > 0 && (
-                            <span className="text-muted-foreground/60"> · {a._gws.size} GW</span>
+                          {scope === 'season' && maxSyncedGw && (
+                            <span className="text-muted-foreground/60"> · Synced to GW{maxSyncedGw}</span>
                           )}
                         </p>
                       </div>
