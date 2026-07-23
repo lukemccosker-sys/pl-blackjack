@@ -280,7 +280,31 @@ async function syncBootstrap(base44, data) {
   data.teams.forEach(t => { teams[t.id] = t; });
   const positionMap = { 1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
-  const existingPlayers = await fetchAllPlayers(base44.asServiceRole.entities);
+  const existingPlayersRaw = await fetchAllPlayers(base44.asServiceRole.entities);
+
+  // One-time duplicate-player cleanup: an earlier version of the sync could
+  // create duplicate Player rows sharing the same fpl_id (before player
+  // fetching was fixed to avoid truncation). Group by fpl_id, keep the most
+  // recently updated row, and delete the rest — before the upsert logic runs.
+  const dupGroups = {};
+  existingPlayersRaw.forEach(p => {
+    if (!p.fpl_id) return;
+    (dupGroups[p.fpl_id] ||= []).push(p);
+  });
+  const duplicateIdsToDelete = [];
+  Object.values(dupGroups).forEach(group => {
+    if (group.length <= 1) return;
+    group.sort((a, b) => new Date(b.updated_date || 0) - new Date(a.updated_date || 0));
+    group.slice(1).forEach(p => duplicateIdsToDelete.push(p.id));
+  });
+  let duplicatesDeleted = 0;
+  if (duplicateIdsToDelete.length > 0) {
+    await base44.asServiceRole.entities.Player.deleteMany({ id: { $in: duplicateIdsToDelete } });
+    duplicatesDeleted = duplicateIdsToDelete.length;
+  }
+  const deletedIdSet = new Set(duplicateIdsToDelete);
+  const existingPlayers = existingPlayersRaw.filter(p => !deletedIdSet.has(p.id));
+
   const playerMap = {};
   existingPlayers.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
 
@@ -362,7 +386,7 @@ async function syncBootstrap(base44, data) {
     playersDeleted = stalePlayerFplIds.length;
   }
 
-  return { playersCreated, playersUpdated, playersDeleted, gwsCreated, gwsUpdated };
+  return { playersCreated, playersUpdated, playersDeleted, duplicatesDeleted, gwsCreated, gwsUpdated };
 }
 
 async function syncFixtures(base44, bsData) {
