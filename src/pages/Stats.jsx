@@ -152,7 +152,7 @@ export default function Stats() {
                           )}
                         </p>
                       </div>
-                      <span className="text-lg font-bold text-primary">{a[key]}{suffix}</span>
+                      <span className="text-lg font-bold text-white">{a[key]}{suffix}</span>
                     </div>
                   );
                 })}
