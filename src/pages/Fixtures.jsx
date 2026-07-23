@@ -8,6 +8,13 @@ const formatScorers = (list) => (list || []).map(s => {
 }).join(', ');
 const hasMatchStats = (f) => f.home_goalscorers?.length > 0 || f.home_assists?.length > 0 || f.away_goalscorers?.length > 0 || f.away_assists?.length > 0;
 
+const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+const isKickoffConfirmed = (kickoffTime, deadline) => {
+  if (!kickoffTime) return false;
+  if (!deadline) return true;
+  return Math.abs(new Date(kickoffTime) - new Date(deadline)) <= FOURTEEN_DAYS_MS;
+};
+
 export default function Fixtures() {
   const [fixtures, setFixtures] = useState([]);
   const [gameweek, setGameweek] = useState(null);
@@ -65,12 +72,19 @@ export default function Fixtures() {
                     </span>
                   ) : (
                     <>
-                      <span className="text-xs text-muted-foreground text-center">
-                        {f.kickoff_time ? new Date(f.kickoff_time).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'TBD'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {f.kickoff_time ? new Date(f.kickoff_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''}
-                      </span>
+                      {(() => {
+                        const confirmed = isKickoffConfirmed(f.kickoff_time, gameweek?.deadline);
+                        return (
+                          <>
+                            <span className="text-xs text-muted-foreground text-center">
+                              {confirmed ? new Date(f.kickoff_time).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date TBC'}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {confirmed ? new Date(f.kickoff_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
+                          </>
+                        );
+                      })()}
                     </>
                   )}
                 </div>
