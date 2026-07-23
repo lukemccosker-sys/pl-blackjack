@@ -66,7 +66,7 @@ export default function GameweekManager() {
                 <span className="font-medium">Gameweek {gw.number}</span>
               </div>
               {gw.is_finalized ? (
-                <span className="text-xs text-primary flex items-center gap-1"><Check size={12} /> Final</span>
+                <span className="text-xs flex items-center gap-1 bg-primary text-white px-2 py-0.5 rounded-full"><Check size={12} /> Final</span>
               ) : isDeadlinePassed(gw) ? (
                 <span className="text-xs text-muted-foreground flex items-center gap-1"><Lock size={12} /> Locked</span>
               ) : (
