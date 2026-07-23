@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
+import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import ClubBadge from '@/components/ClubBadge';
 import { BarChart3 } from 'lucide-react';
 
@@ -20,17 +20,17 @@ export default function Stats() {
 
   const loadData = async () => {
     try {
-      const [allPlayers, gws, allStats] = await Promise.all([
+      const [allPlayers, gws] = await Promise.all([
         fetchAllPlayers(base44.entities),
         base44.entities.Gameweek.list('number', 50),
-        base44.entities.PlayerStat.list('', 5000),
       ]);
       const sortedGws = gws.sort((a, b) => a.number - b.number);
       const activeGw = sortedGws.find(g => g.is_active) || sortedGws[sortedGws.length - 1];
       const currentSeason = activeGw?.season;
+      const allStats = await fetchAllPlayerStats(base44.entities, currentSeason);
       setActiveGwNumber(activeGw?.number || null);
       setPlayers(allPlayers);
-      setStats(currentSeason ? allStats.filter(s => s.season === currentSeason) : allStats);
+      setStats(allStats);
     } catch (err) {
       console.error(err);
     } finally {

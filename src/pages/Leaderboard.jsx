@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { AlertTriangle } from 'lucide-react';
 import MemberAvatar from '@/components/MemberAvatar';
@@ -40,7 +41,7 @@ export default function Leaderboard() {
         base44.entities.ScoringConfig.filter({ is_active: true }),
         base44.entities.PoolMember.list('', 50),
         base44.entities.Pick.list('', 1000),
-        base44.entities.PlayerStat.list('', 2000),
+        fetchAllPlayerStats(base44.entities),
       ]);
       const sorted = gws.sort((a, b) => a.number - b.number);
       setGameweeks(sorted);
