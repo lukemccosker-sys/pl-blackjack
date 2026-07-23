@@ -1,8 +1,8 @@
 import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, Link } from 'react-router-dom';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import BottomNav from '@/components/BottomNav';
-import AdminUnlock from '@/components/AdminUnlock';
+import MemberAvatar from '@/components/MemberAvatar';
 
 export default function Layout() {
   const { member, loading } = usePoolAuth();
@@ -22,7 +22,9 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-lg mx-auto min-h-screen pb-20 relative">
-        <AdminUnlock />
+        <Link to="/settings" className="absolute top-4 right-4 z-30 rounded-full ring-2 ring-border hover:ring-primary transition-all">
+          <MemberAvatar member={member} size={32} />
+        </Link>
         <Outlet />
       </div>
       <BottomNav />

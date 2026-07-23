@@ -1,25 +1,35 @@
-import React, { useState } from 'react';
-import { usePoolAuth } from '@/lib/PoolAuth';
+import React, { useState, useEffect } from 'react';
+import { usePoolAuth, isAdminName } from '@/lib/PoolAuth';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Spade, Club, Heart, Diamond } from 'lucide-react';
+import { Spade, Club, Heart, Diamond, Shield } from 'lucide-react';
 
 export default function Login() {
-  const { login, register } = usePoolAuth();
+  const { login, register, checkAdminSetup } = usePoolAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState('login');
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [adminSetup, setAdminSetup] = useState(null);
+
+  const adminName = isAdminName(name);
+
+  useEffect(() => {
+    if (!adminName) { setAdminSetup(null); return; }
+    setAdminSetup(null);
+    checkAdminSetup().then(setAdminSetup).catch(() => setAdminSetup(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminName]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      if (mode === 'login') {
+      if (adminName || mode === 'login') {
         await login(name, pin);
       } else {
         await register(name, pin);
@@ -31,6 +41,13 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  const pinLabel = adminName
+    ? (adminSetup === false ? 'Set Admin PIN' : 'Admin PIN')
+    : 'PIN';
+  const buttonText = adminName
+    ? (adminSetup === false ? 'Set Admin PIN' : adminSetup === null ? 'Checking...' : 'Admin Login')
+    : (mode === 'login' ? 'Login' : 'Register');
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
@@ -51,7 +68,10 @@ export default function Login() {
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" disabled={loading} />
         </div>
         <div>
-          <label className="text-sm text-muted-foreground mb-2 block">PIN</label>
+          <label className="text-sm text-muted-foreground mb-2 block flex items-center gap-1">
+            {adminName && <Shield size={14} className="text-primary" />}
+            {pinLabel}
+          </label>
           <Input
             type="password" value={pin}
             onChange={(e) => setPin(e.target.value)}
@@ -60,16 +80,28 @@ export default function Login() {
           />
         </div>
         {error && <p className="text-destructive text-sm">{error}</p>}
-        <Button type="submit" className="w-full" disabled={loading || !name || !pin}>
-          {loading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Register'}
+        <Button type="submit" className="w-full" disabled={loading || !name || !pin || (adminName && adminSetup === null)}>
+          {loading ? 'Please wait...' : buttonText}
         </Button>
-        <button
-          type="button"
-          onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
-          className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {mode === 'login' ? "Don't have an account? Register" : 'Already registered? Login'}
-        </button>
+        {!adminName && (
+          <button
+            type="button"
+            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
+            className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {mode === 'login' ? "Don't have an account? Register" : 'Already registered? Login'}
+          </button>
+        )}
+        {adminName && adminSetup === false && (
+          <p className="text-xs text-muted-foreground text-center">
+            First time setup — choose a 4-digit PIN for admin access.
+          </p>
+        )}
+        {adminName && adminSetup === true && (
+          <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+            <Shield size={12} className="text-primary" /> Admin login
+          </p>
+        )}
       </form>
     </div>
   );

@@ -15,6 +15,7 @@ import Fixtures from '@/pages/Fixtures';
 import Leaderboard from '@/pages/Leaderboard';
 import Admin from '@/pages/Admin';
 import Live from '@/pages/Live';
+import Settings from '@/pages/Settings';
 import Layout from '@/components/Layout';
 import { PoolAuthProvider } from '@/lib/PoolAuth';
 
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
         <Route path="/fixtures" element={<Fixtures />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
