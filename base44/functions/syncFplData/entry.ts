@@ -78,7 +78,11 @@ Deno.serve(async (req) => {
     // within the current season, the lowest-numbered gameweek that does NOT
     // have all its fixtures marked finished.
     const fplActiveGw = gameweeks.find(g => g.is_active);
-    const currentSeason = fplActiveGw?.season || (gameweeks.length > 0 ? gameweeks[gameweeks.length - 1].season : '') || '';
+    // Derive the current season from today's actual date, not from any
+    // Gameweek record's stored season — FPL's is_current flag can be
+    // stale/wrong, which would silently scope the active-GW computation
+    // to the wrong season and find nothing.
+    const currentSeason = deriveSeason(new Date().toISOString());
 
     let computedActiveGw = null;
     const seasonGws = gameweeks
