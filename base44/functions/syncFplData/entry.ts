@@ -239,6 +239,7 @@ Deno.serve(async (req) => {
         active: activeReport,
         activeDiscrepancy,
         seasonBackfill: { gameweeksUpdated: gwSeasonBackfilled, playerStatsUpdated: statSeasonBackfilled },
+        duplicatesDeleted: bootstrapResult.duplicatesDeleted || 0,
         seasonStatus,
         backfill: {
           timeBudgetMs: BACKFILL_TIME_BUDGET_MS,
@@ -298,9 +299,10 @@ async function syncBootstrap(base44, data) {
     group.slice(1).forEach(p => duplicateIdsToDelete.push(p.id));
   });
   let duplicatesDeleted = 0;
-  if (duplicateIdsToDelete.length > 0) {
-    await base44.asServiceRole.entities.Player.deleteMany({ id: { $in: duplicateIdsToDelete } });
-    duplicatesDeleted = duplicateIdsToDelete.length;
+  for (let i = 0; i < duplicateIdsToDelete.length; i += 500) {
+    const batch = duplicateIdsToDelete.slice(i, i + 500);
+    await base44.asServiceRole.entities.Player.deleteMany({ id: { $in: batch } });
+    duplicatesDeleted += batch.length;
   }
   const deletedIdSet = new Set(duplicateIdsToDelete);
   const existingPlayers = existingPlayersRaw.filter(p => !deletedIdSet.has(p.id));
