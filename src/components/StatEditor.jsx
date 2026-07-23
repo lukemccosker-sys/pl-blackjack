@@ -134,7 +134,7 @@ export default function StatEditor() {
                     <p className="font-medium text-sm truncate">{p.web_name}</p>
                     <p className="text-xs text-muted-foreground">{p.position} · {p.club_short}</p>
                   </div>
-                  <span className="text-xl font-bold text-primary w-8 text-right">{stat.points || 0}</span>
+                  <span className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold shrink-0">{stat.points || 0}</span>
                 </div>
                 <div className="grid grid-cols-6 gap-1">
                   {STAT_FIELDS.map(f => (

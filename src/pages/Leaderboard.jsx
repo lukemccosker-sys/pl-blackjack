@@ -180,7 +180,7 @@ export default function Leaderboard() {
                       ) : null}
                     </div>
                     <div className="text-right">
-                      <p className={`text-2xl font-bold font-display ${score.isBust ? 'text-destructive' : 'text-primary'}`}>
+                      <p className={`flex items-center justify-center min-w-[42px] h-10 px-3 rounded-full text-lg font-bold font-display shrink-0 ${score.isBust ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-white'}`}>
                         {score.score}
                       </p>
                       {!score.isBust && score.total > 0 && (
@@ -214,7 +214,7 @@ export default function Leaderboard() {
                   {s.busts > 0 && ` · ${s.busts} bust${s.busts > 1 ? 's' : ''}`}
                 </p>
               </div>
-              <p className="text-2xl font-bold font-display text-primary">{s.totalScore}</p>
+              <p className="flex items-center justify-center min-w-[42px] h-10 px-3 rounded-full bg-primary text-white text-lg font-bold font-display shrink-0">{s.totalScore}</p>
             </div>
           ))}
           {seasonTotals.length === 0 && (

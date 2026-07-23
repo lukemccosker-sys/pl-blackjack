@@ -152,7 +152,7 @@ export default function Stats() {
                           )}
                         </p>
                       </div>
-                      <span className="text-lg font-bold text-white">{a[key]}{suffix}</span>
+                      <span className="flex items-center justify-center min-w-[34px] h-9 px-2 rounded-full bg-primary text-white text-sm font-bold shrink-0">{a[key]}{suffix}</span>
                     </div>
                   );
                 })}
