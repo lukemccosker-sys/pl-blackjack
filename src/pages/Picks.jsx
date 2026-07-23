@@ -94,11 +94,9 @@ export default function Picks() {
   };
 
   const selectedPlayers = selectedIds.map(id => players.find(p => p.id === id)).filter(Boolean);
-  const playerPoints = selectedPlayers.map(p => {
-    const stat = playerStats.find(s => s.player_id === p.id);
-    return calculatePlayerPoints(stat, scoringConfig);
-  });
-  const { total, isBust, tier } = calculatePickTotal(playerPoints, scoringConfig);
+  const pickedStats = selectedPlayers.map(p => playerStats.find(s => s.player_id === p.id));
+  const playerPoints = pickedStats.map(stat => calculatePlayerPoints(stat, scoringConfig));
+  const { total, isBust, tier, isNatural } = calculatePickTotal(playerPoints, scoringConfig, pickedStats);
   const playerData = selectedPlayers.map((p, i) => ({
     player: p,
     stat: playerStats.find(s => s.player_id === p.id),
@@ -131,6 +129,7 @@ export default function Picks() {
               playerData={playerData}
               isBust={isBust}
               isBlackjack={tier === 'blackjack'}
+              isNatural={isNatural}
               threshold={scoringConfig?.bust_threshold || 21}
             />
           ) : (

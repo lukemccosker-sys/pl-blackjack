@@ -60,12 +60,10 @@ export default function Leaderboard() {
   };
 
   const getPickScore = (pick) => {
-    if (!pick) return { score: 0, total: 0, isBust: false };
-    const points = (pick.player_ids || []).map(pid => {
-      const stat = allStats.find(s => s.player_id === pid && s.gameweek === pick.gameweek);
-      return calculatePlayerPoints(stat, scoringConfig);
-    });
-    return calculatePickTotal(points, scoringConfig);
+    if (!pick) return { score: 0, total: 0, isBust: false, isNatural: false };
+    const stats = (pick.player_ids || []).map(pid => allStats.find(s => s.player_id === pid && s.gameweek === pick.gameweek));
+    const points = stats.map(stat => calculatePlayerPoints(stat, scoringConfig));
+    return calculatePickTotal(points, scoringConfig, stats);
   };
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;

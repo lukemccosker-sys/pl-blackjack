@@ -43,6 +43,11 @@
       ],
       "default": "safe",
       "title": "Tier"
+    },
+    "is_natural": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Natural 21"
     }
   },
   "required": [

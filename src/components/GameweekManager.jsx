@@ -31,12 +31,10 @@ export default function GameweekManager() {
       ]);
       const config = configs[0];
       const updates = picks.map(pick => {
-        const points = (pick.player_ids || []).map(pid => {
-          const stat = stats.find(s => s.player_id === pid);
-          return calculatePlayerPoints(stat, config);
-        });
-        const { total, isBust, score, tier } = calculatePickTotal(points, config);
-        return { id: pick.id, total_points: total, is_bust: isBust, score, tier };
+        const pickStats = (pick.player_ids || []).map(pid => stats.find(s => s.player_id === pid));
+        const points = pickStats.map(stat => calculatePlayerPoints(stat, config));
+        const { total, isBust, score, tier, isNatural } = calculatePickTotal(points, config, pickStats);
+        return { id: pick.id, total_points: total, is_bust: isBust, score, tier, is_natural: isNatural };
       });
       if (updates.length > 0) {
         await base44.entities.Pick.bulkUpdate(updates);

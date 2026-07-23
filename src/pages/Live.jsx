@@ -96,7 +96,7 @@ export default function Live() {
       return { player, stat, points: calculatePlayerPoints(stat, scoringConfig) };
     }).filter(d => d.player);
     const playerPoints = playerData.map(d => d.points);
-    const result = calculatePickTotal(playerPoints, scoringConfig);
+    const result = calculatePickTotal(playerPoints, scoringConfig, playerData.map(d => d.stat));
     return { ...pick, playerData, playerPoints, ...result };
   }).sort((a, b) => b.score - a.score);
 
@@ -165,6 +165,7 @@ export default function Live() {
                   playerData={pick.playerData}
                   isBust={pick.isBust}
                   isBlackjack={pick.tier === 'blackjack' && !pick.isBust}
+                  isNatural={pick.isNatural}
                   threshold={threshold}
                 />
 

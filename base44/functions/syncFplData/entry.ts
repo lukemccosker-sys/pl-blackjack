@@ -540,11 +540,10 @@ async function syncStats(base44, gameweek, season) {
 
   const gwPicks = await base44.asServiceRole.entities.Pick.filter({ gameweek });
   const pickUpdates = gwPicks.map(pick => {
-    const playerPoints = (pick.player_ids || []).map(pid => {
-      return calculatePlayerPoints(statMap[pid], config);
-    });
-    const { total, isBust, score, tier } = calculatePickTotal(playerPoints, config);
-    return { id: pick.id, total_points: total, is_bust: isBust, score, tier };
+    const pickStats = (pick.player_ids || []).map(pid => statMap[pid]);
+    const playerPoints = pickStats.map(stat => calculatePlayerPoints(stat, config));
+    const { total, isBust, score, tier, isNatural } = calculatePickTotal(playerPoints, config, pickStats);
+    return { id: pick.id, total_points: total, is_bust: isBust, score, tier, is_natural: isNatural };
   });
 
   if (pickUpdates.length > 0) {

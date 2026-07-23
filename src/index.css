@@ -143,3 +143,22 @@
   filter: drop-shadow(0 0 6px hsl(43 70% 52% / 0.5));
   letter-spacing: 0.1em;
 }
+
+.natural-reveal {
+  text-transform: uppercase;
+  background: linear-gradient(
+    90deg,
+    hsl(273 55% 45%),
+    hsl(155 55% 50%),
+    hsl(273 55% 45%),
+    hsl(155 55% 50%),
+    hsl(273 55% 45%)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s linear infinite, flip-reveal 0.5s ease-out;
+  filter: drop-shadow(0 0 6px hsl(273 55% 45% / 0.5));
+  letter-spacing: 0.1em;
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import PlayerCard from '@/components/PlayerCard';
 
-export default function CardHand({ playerData, isBust, isBlackjack, threshold, showPoints = true }) {
+export default function CardHand({ playerData, isBust, isBlackjack, isNatural, threshold, showPoints = true }) {
   return (
     <div className="relative py-6">
       <div className="flex justify-center items-center" style={{ perspective: '800px' }}>
@@ -28,8 +28,8 @@ export default function CardHand({ playerData, isBust, isBlackjack, threshold, s
 
       {isBlackjack && !isBust && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="blackjack-reveal font-display font-black text-2xl">
-            BLACKJACK
+          <span className={`font-display font-black text-2xl ${isNatural ? 'natural-reveal' : 'blackjack-reveal'}`}>
+            {isNatural ? 'NATURAL 21' : 'BLACKJACK'}
           </span>
         </div>
       )}

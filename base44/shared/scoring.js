@@ -26,11 +26,24 @@ export function calculatePlayerPoints(stats, config) {
   );
 }
 
-export function calculatePickTotal(playerPoints, config) {
+export function calculatePickTotal(playerPoints, config, playerStats) {
   const total = (playerPoints || []).reduce((sum, p) => sum + (p || 0), 0);
   const threshold = config?.bust_threshold || 21;
   const bonus = config?.blackjack_bonus || 10;
+
+  // Natural 21: if any picked goalkeeper scores a genuine goal, override
+  // the entire result — score becomes bust_threshold + blackjack_bonus,
+  // treated as a blackjack for standings but flagged for display.
+  const isNatural = (playerStats || []).some(
+    s => s && s.position === 'GK' && (s.goals || 0) > 0
+  );
+
   let tier, score;
+  if (isNatural) {
+    tier = 'blackjack';
+    score = threshold + bonus;
+    return { total: score, isBust: false, score, tier, isNatural: true };
+  }
   if (total > threshold) {
     tier = 'bust';
     score = 0;
@@ -41,5 +54,5 @@ export function calculatePickTotal(playerPoints, config) {
     tier = 'safe';
     score = total;
   }
-  return { total, isBust: tier === 'bust', score, tier };
+  return { total, isBust: tier === 'bust', score, tier, isNatural: false };
 }

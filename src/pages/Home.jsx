@@ -92,14 +92,12 @@ export default function Home() {
     const stat = playerStats.find(s => s.player_id === id);
     return { player, stat, points: calculatePlayerPoints(stat, scoringConfig) };
   }).filter(Boolean);
-  const myResult = calculatePickTotal(myPlayerData.map(d => d.points), scoringConfig);
+  const myResult = calculatePickTotal(myPlayerData.map(d => d.points), scoringConfig, myPlayerData.map(d => d.stat));
 
   const leaderboard = allPicks.map(pick => {
-    const pts = (pick.player_ids || []).map(pid => {
-      const stat = playerStats.find(s => s.player_id === pid);
-      return calculatePlayerPoints(stat, scoringConfig);
-    });
-    return { pick, ...calculatePickTotal(pts, scoringConfig) };
+    const pickedStats = (pick.player_ids || []).map(pid => playerStats.find(s => s.player_id === pid));
+    const pts = pickedStats.map(stat => calculatePlayerPoints(stat, scoringConfig));
+    return { pick, ...calculatePickTotal(pts, scoringConfig, pickedStats) };
   }).sort((a, b) => b.score - a.score).slice(0, 5);
 
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
@@ -135,6 +133,7 @@ export default function Home() {
               playerData={myPlayerData}
               isBust={myResult.isBust}
               isBlackjack={myResult.tier === 'blackjack'}
+              isNatural={myResult.isNatural}
               threshold={threshold}
               showPoints={locked}
             />
