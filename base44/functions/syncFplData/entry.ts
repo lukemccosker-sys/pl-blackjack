@@ -7,6 +7,7 @@ const FPL_BASE = 'https://fantasy.premierleague.com/api';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const syncStartTime = Date.now();
     const body = await req.json();
     const { member_id } = body;
 
@@ -92,18 +93,24 @@ Deno.serve(async (req) => {
           });
           succeeded.push({ gameweek: activeGw.number, ...statResult });
         }
-        activeReport = { gameweek: activeGw.number, synced: true, finalized: allFinished };
+        activeReport = {
+          gameweek: activeGw.number, synced: true, finalized: allFinished,
+          hasMatchData: statResult.hasMatchData,
+        };
       } catch (err) {
         activeReport = { gameweek: activeGw.number, synced: false, error: err.message };
       }
+    } else {
+      activeReport = { noActiveGw: true };
     }
 
     // 2. Backfill stats for every OTHER finished gameweek in the current
     //    season that hasn't been marked stats_synced yet. Each gameweek is
     //    wrapped in its own try/catch so one failure doesn't block the rest.
-    //    Cap at 3 gameweeks per sync run to avoid timeouts — press Sync
-    //    again to continue from the next unsynced gameweek.
-    const MAX_BACKFILL_PER_RUN = 3;
+    //    Uses a time budget (20s) instead of a flat cap — processes as many
+    //    gameweeks as fit within the budget, then stops. Press Sync again
+    //    to continue from the next unsynced gameweek.
+    const BACKFILL_TIME_BUDGET_MS = 20000;
     let backfillProcessed = 0;
     const remainingUnsynced = [];
     for (const gw of gameweeks) {
@@ -114,7 +121,7 @@ Deno.serve(async (req) => {
       if (gwFixtures.length === 0) continue;
       if (!gwFixtures.every(f => f.finished)) continue;
 
-      if (backfillProcessed >= MAX_BACKFILL_PER_RUN) {
+      if (Date.now() - syncStartTime > BACKFILL_TIME_BUDGET_MS) {
         remainingUnsynced.push(gw.number);
         continue;
       }
@@ -176,7 +183,8 @@ Deno.serve(async (req) => {
         seasonBackfill: { gameweeksUpdated: gwSeasonBackfilled, playerStatsUpdated: statSeasonBackfilled },
         seasonStatus,
         backfill: {
-          maxPerRun: MAX_BACKFILL_PER_RUN,
+          timeBudgetMs: BACKFILL_TIME_BUDGET_MS,
+          elapsedMs: Date.now() - syncStartTime,
           processedThisRun: backfillProcessed,
           stillRemaining,
           remainingGameweeks: remainingUnsynced,
@@ -485,5 +493,6 @@ async function syncStats(base44, gameweek, season) {
     await base44.asServiceRole.entities.Pick.bulkUpdate(pickUpdates);
   }
 
-  return { created, updated, picksUpdated: pickUpdates.length };
+  const totalMinutes = data.elements.reduce((sum, el) => sum + ((el.stats && el.stats.minutes) || 0), 0);
+  return { created, updated, picksUpdated: pickUpdates.length, hasMatchData: totalMinutes > 0 };
 }

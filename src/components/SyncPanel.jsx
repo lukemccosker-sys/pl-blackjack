@@ -103,10 +103,14 @@ export default function SyncPanel({ member }) {
                   <p className="text-xs text-muted-foreground">
                     Attempted: GW {result.report.attempted.join(', ')}
                   </p>
-                  {result.report.active && (
+                  {result.report.active?.noActiveGw ? (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <AlertCircle size={12} /> No gameweek is currently active per FPL — nothing to sync live yet
+                    </p>
+                  ) : result.report.active && (
                     <p className={`text-xs flex items-center gap-1 ${result.report.active.synced ? 'text-primary' : 'text-destructive'}`}>
                       {result.report.active.synced
-                        ? <><Check size={12} /> Active GW {result.report.active.gameweek}: live stats synced{result.report.active.finalized ? ' (finalized)' : ''}</>
+                        ? <><Check size={12} /> Active GW {result.report.active.gameweek}: live stats synced{result.report.active.finalized ? ' (finalized)' : ''}{result.report.active.hasMatchData === false ? ' — matches likely haven\'t kicked off yet (all players at 0 minutes)' : ''}</>
                         : <><AlertCircle size={12} /> Active GW {result.report.active.gameweek}: {result.report.active.error}</>}
                     </p>
                   )}
