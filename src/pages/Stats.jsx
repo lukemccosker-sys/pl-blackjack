@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
 import ClubBadge from '@/components/ClubBadge';
 import { BarChart3 } from 'lucide-react';
 
@@ -21,7 +22,7 @@ export default function Stats() {
     (async () => {
       try {
         const [allPlayers, gws, allStats] = await Promise.all([
-          base44.entities.Player.list('', 600),
+          fetchAllPlayers(base44.entities),
           base44.entities.Gameweek.list('number', 50),
           base44.entities.PlayerStat.list('', 5000),
         ]);

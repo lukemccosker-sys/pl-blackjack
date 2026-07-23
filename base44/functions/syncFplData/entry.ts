@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 import { calculatePlayerPoints, calculatePickTotal } from '../../shared/scoring.js';
+import { fetchAllPlayers } from '../../shared/playerQueries.js';
 
 const FPL_BASE = 'https://fantasy.premierleague.com/api';
 
@@ -195,11 +196,7 @@ async function fplFetch(path) {
   return resp.json();
 }
 
-// Fetch all players without truncation. FPL seasons typically have ~600-700
-// players; use a high limit with margin for growth (new signings, loans).
-async function fetchAllPlayers(base44) {
-  return await base44.asServiceRole.entities.Player.list('', 2000);
-}
+// fetchAllPlayers is imported from ../../shared/playerQueries.js
 
 function deriveSeason(deadlineStr) {
   if (!deadlineStr) return '';
@@ -217,7 +214,7 @@ async function syncBootstrap(base44, data) {
   data.teams.forEach(t => { teams[t.id] = t; });
   const positionMap = { 1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
-  const existingPlayers = await fetchAllPlayers(base44);
+  const existingPlayers = await fetchAllPlayers(base44.asServiceRole.entities);
   const playerMap = {};
   existingPlayers.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
 
@@ -298,7 +295,7 @@ async function syncFixtures(base44, bsData) {
   const teams = {};
   bsData.teams.forEach(t => { teams[t.id] = t; });
 
-  const players = await fetchAllPlayers(base44);
+  const players = await fetchAllPlayers(base44.asServiceRole.entities);
   const playerMap = {};
   players.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
 
@@ -412,7 +409,7 @@ async function syncStats(base44, gameweek, season) {
     points_per_defensive_contribution: 2, bust_threshold: 21,
   };
 
-  const players = await fetchAllPlayers(base44);
+  const players = await fetchAllPlayers(base44.asServiceRole.entities);
   const playerMap = {};
   players.forEach(p => { if (p.fpl_id) playerMap[p.fpl_id] = p; });
 

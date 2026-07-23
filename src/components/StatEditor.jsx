@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
 import { calculatePlayerPoints } from '@/lib/scoring';
 import ClubBadge from '@/components/ClubBadge';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ export default function StatEditor() {
         const [gws, configs, players] = await Promise.all([
           base44.entities.Gameweek.list('number', 50),
           base44.entities.ScoringConfig.filter({ is_active: true }),
-          base44.entities.Player.list('', 600),
+          fetchAllPlayers(base44.entities),
         ]);
         const sorted = gws.sort((a, b) => b.number - a.number);
         setGameweeks(sorted);

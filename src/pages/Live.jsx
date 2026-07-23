@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import ClubBadge from '@/components/ClubBadge';
@@ -22,7 +23,7 @@ export default function Live() {
       const [gws, configs, allPlayers, allMembers] = await Promise.all([
         base44.entities.Gameweek.list('number', 50),
         base44.entities.ScoringConfig.filter({ is_active: true }),
-        base44.entities.Player.list('', 600),
+        fetchAllPlayers(base44.entities),
         base44.entities.PoolMember.list('', 50),
       ]);
       const sorted = gws.sort((a, b) => a.number - b.number);
