@@ -50,7 +50,7 @@ export default function PickSummary({
         <div className="flex gap-1.5 mb-3 min-h-[36px] flex-wrap">
           {selectedPlayers.length === 0 && (
             <p className="text-sm text-muted-foreground self-center">
-              {isLocked ? 'No picks saved' : 'Pick 5 players'}
+              {isLocked ? 'No picks saved' : 'Pick 2–7 players'}
             </p>
           )}
           {selectedPlayers.map((p, i) => (
@@ -68,9 +68,12 @@ export default function PickSummary({
               )}
             </div>
           ))}
-          {!isLocked && Array.from({ length: Math.max(0, 5 - selectedPlayers.length) }).map((_, i) => (
+          {!isLocked && selectedPlayers.length < 2 && Array.from({ length: 2 - selectedPlayers.length }).map((_, i) => (
             <div key={`empty-${i}`} className="w-10 h-7 border border-dashed border-border rounded-lg" />
           ))}
+          {!isLocked && selectedPlayers.length >= 2 && (
+            <span className="text-xs text-muted-foreground/60 self-center ml-1">up to 7</span>
+          )}
         </div>
 
         {!isLocked && (

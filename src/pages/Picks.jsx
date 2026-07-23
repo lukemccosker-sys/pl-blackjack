@@ -66,7 +66,7 @@ export default function Picks() {
     if (locked) return;
     setSelectedIds(prev => {
       if (prev.includes(player.id)) return prev.filter(id => id !== player.id);
-      if (prev.length >= 5) return prev;
+      if (prev.length >= 7) return prev;
       return [...prev, player.id];
     });
     setSaved(false);
@@ -150,7 +150,7 @@ export default function Picks() {
         saving={saving}
         saved={saved}
         isLocked={locked}
-        hasFive={selectedIds.length === 5}
+        hasFive={selectedIds.length >= 2}
         tier={tier}
         isFinalized={gwFinished}
       />
