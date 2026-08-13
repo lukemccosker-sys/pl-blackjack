@@ -56,7 +56,7 @@ export default function PlayerSearch({ players, selectedIds, onToggle, pointsByP
           className="pl-9"
         />
       </div>
-      <div className="flex gap-2 mb-3">
+      <div className="flex gap-2 mb-3 flex-wrap">
         <Button size="sm" variant={groupBy === 'club' ? 'default' : 'outline'} onClick={() => setGroupBy('club')}>
           By Club
         </Button>
