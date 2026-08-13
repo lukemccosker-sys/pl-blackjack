@@ -67,11 +67,16 @@ export default function Leaderboard() {
     return calculatePickTotal(points, scoringConfig, stats);
   };
 
+  // A pick "matches" a gameweek's season if it has been season-backfilled
+  // and agrees, or if it hasn't been backfilled yet (treated as current,
+  // best-effort, so nothing silently disappears before a sync runs).
+  const matchesSeason = (pick, season) => !season || !pick.season || pick.season === season;
+
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
 
-  const gwPicks = allPicks.filter(p => p.gameweek === selectedGw);
-  const gwSorted = [...gwPicks].sort((a, b) => getPickScore(b).score - getPickScore(a).score);
   const selectedGwObj = gameweeks.find(g => g.number === selectedGw);
+  const gwPicks = allPicks.filter(p => p.gameweek === selectedGw && matchesSeason(p, selectedGwObj?.season));
+  const gwSorted = [...gwPicks].sort((a, b) => getPickScore(b).score - getPickScore(a).score);
 
   const currentSeasonGw = gameweeks.find(g => g.is_active) || gameweeks[gameweeks.length - 1];
   const currentSeason = currentSeasonGw?.season;
@@ -82,7 +87,7 @@ export default function Leaderboard() {
     let blackjacks = 0;
     let played = 0;
     finalizedGws.forEach(gw => {
-      const pick = allPicks.find(p => p.member_id === m.id && p.gameweek === gw.number);
+      const pick = allPicks.find(p => p.member_id === m.id && p.gameweek === gw.number && matchesSeason(p, gw.season));
       if (pick) {
         const s = getPickScore(pick);
         totalScore += s.score;
