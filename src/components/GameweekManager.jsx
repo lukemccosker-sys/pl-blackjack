@@ -26,7 +26,7 @@ export default function GameweekManager() {
     try {
       const [picks, stats, configs] = await Promise.all([
         base44.entities.Pick.filter({ gameweek: gw.number }),
-        base44.entities.PlayerStat.filter({ gameweek: gw.number }),
+        base44.entities.PlayerStat.filter(gw.season ? { gameweek: gw.number, season: gw.season } : { gameweek: gw.number }),
         base44.entities.ScoringConfig.filter({ is_active: true }),
       ]);
       const config = configs[0];
