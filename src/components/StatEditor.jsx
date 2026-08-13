@@ -39,16 +39,16 @@ export default function StatEditor() {
         setAllPlayers(players);
         if (sorted[0]) {
           setSelectedGw(sorted[0].number);
-          await loadGwData(sorted[0].number);
+          await loadGwData(sorted[0].number, sorted[0].season);
         }
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     })();
   }, []);
 
-  const loadGwData = async (gw) => {
+  const loadGwData = async (gw, season) => {
     const [gwStats, gwPicks] = await Promise.all([
-      base44.entities.PlayerStat.filter({ gameweek: gw }),
+      base44.entities.PlayerStat.filter(season ? { gameweek: gw, season } : { gameweek: gw }),
       base44.entities.Pick.filter({ gameweek: gw }),
     ]);
     setStats(gwStats);
@@ -57,7 +57,8 @@ export default function StatEditor() {
 
   const handleGwChange = async (gw) => {
     setSelectedGw(gw);
-    await loadGwData(gw);
+    const gwObj = gameweeks.find(g => g.number === gw);
+    await loadGwData(gw, gwObj?.season);
   };
 
   const pickedPlayerIds = new Set(picks.flatMap(p => p.player_ids || []));
