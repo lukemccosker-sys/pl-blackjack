@@ -103,6 +103,12 @@ export default function Picks() {
     points: playerPoints[i],
   }));
 
+  const pointsByPlayerId = {};
+  players.forEach(p => {
+    const stat = playerStats.find(s => s.player_id === p.id);
+    pointsByPlayerId[p.id] = calculatePlayerPoints(stat, scoringConfig);
+  });
+
   return (
     <div className="p-4 pb-48">
       <div className="mb-4">
@@ -119,7 +125,7 @@ export default function Picks() {
       </div>
 
       {!locked && (
-        <PlayerSearch players={players} selectedIds={selectedIds} onToggle={handleToggle} />
+        <PlayerSearch players={players} selectedIds={selectedIds} onToggle={handleToggle} pointsByPlayerId={pointsByPlayerId} gameweekNumber={gameweek.number} />
       )}
 
       {locked && (
