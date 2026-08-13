@@ -49,7 +49,7 @@ export default function StatEditor() {
   const loadGwData = async (gw, season) => {
     const [gwStats, gwPicks] = await Promise.all([
       base44.entities.PlayerStat.filter(season ? { gameweek: gw, season } : { gameweek: gw }),
-      base44.entities.Pick.filter({ gameweek: gw }),
+      base44.entities.Pick.filter(season ? { gameweek: gw, season } : { gameweek: gw }),
     ]);
     setStats(gwStats);
     setPicks(gwPicks);
