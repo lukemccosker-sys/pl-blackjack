@@ -5,7 +5,6 @@ import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed, isGameweekFinished } from '@/lib/scoring';
 import PlayerSearch from '@/components/PlayerSearch';
 import PickSummary from '@/components/PickSummary';
-import ClubBadge from '@/components/ClubBadge';
 import CardHand from '@/components/CardHand';
 import { Lock, Clock } from 'lucide-react';
 

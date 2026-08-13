@@ -4,7 +4,6 @@ import { base44 } from '@/api/base44Client';
 import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
-import ClubBadge from '@/components/ClubBadge';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import { Lock } from 'lucide-react';
