@@ -66,7 +66,7 @@ export default function Picks() {
     if (locked) return;
     setSelectedIds(prev => {
       if (prev.includes(player.id)) return prev.filter(id => id !== player.id);
-      if (prev.length >= 7) return prev;
+      if (prev.length >= 5) return prev;
       return [...prev, player.id];
     });
     setSaved(false);
