@@ -136,6 +136,7 @@ export default function Home() {
               isNatural={myResult.isNatural}
               threshold={threshold}
               showPoints={locked}
+              spread
             />
           </>
         ) : (
