@@ -5,22 +5,23 @@ const SUITS = { GK: '♠', DEF: '♦', MID: '♣', FWD: '♥' };
 const INK = 'hsl(280 15% 12%)';
 const INK_LIGHT = 'hsl(280 10% 38%)';
 
-export default function PlayerCard({ player, stat, points, index, total, showPoints = true }) {
+export default function PlayerCard({ player, stat, points, index, total, showPoints = true, spread = false }) {
   const suit = SUITS[player.position] || '♣';
   const center = (total - 1) / 2;
-  const rotation = (index - center) * 5;
-  const yOffset = Math.abs(index - center) * 4;
+  const rotation = spread ? 0 : (index - center) * 5;
+  const yOffset = spread ? 0 : Math.abs(index - center) * 4;
+  const pointsColor = points > 0 ? 'hsl(155 55% 20%)' : points < 0 ? 'hsl(355 65% 45%)' : INK_LIGHT;
 
   return (
     <div
       className="relative rounded-xl shadow-md flex flex-col overflow-hidden"
       style={{
         width: '88px',
-        height: '124px',
+        height: spread ? '134px' : '124px',
         backgroundColor: 'hsl(43 35% 95%)',
         color: INK,
         transform: `rotate(${rotation}deg) translateY(${yOffset}px)`,
-        marginLeft: index === 0 ? 0 : '-52px',
+        marginLeft: spread ? 0 : (index === 0 ? 0 : '-52px'),
         zIndex: index,
       }}
     >
@@ -39,18 +40,25 @@ export default function PlayerCard({ player, stat, points, index, total, showPoi
         <p className="text-[8px] text-center" style={{ color: INK_LIGHT }}>
           {player.position} · {player.club_short}
         </p>
+
+        {showPoints && spread && (
+          <p className="text-[12px] font-extrabold mt-1 leading-none" style={{ color: pointsColor }}>
+            {points > 0 ? '+' : ''}{points} pts
+          </p>
+        )}
+
         {stat && (
-          <p className="text-[7px] text-center mt-0.5" style={{ color: INK_LIGHT }}>
+          <p className="text-[7px] text-center mt-1" style={{ color: INK_LIGHT }}>
             {stat.goals}G · {stat.assists}A · {stat.clean_sheets}CS
           </p>
         )}
       </div>
 
-      {showPoints && (
+      {showPoints && !spread && (
         <div
           className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
           style={{
-            color: points > 0 ? 'hsl(155 55% 20%)' : points < 0 ? 'hsl(355 65% 45%)' : INK_LIGHT,
+            color: pointsColor,
             backgroundColor: 'hsl(43 35% 88%)',
           }}
         >
