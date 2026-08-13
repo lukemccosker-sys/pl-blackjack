@@ -1,10 +1,13 @@
 import React from 'react';
 import PlayerCard from '@/components/PlayerCard';
 
-export default function CardHand({ playerData, isBust, isBlackjack, isNatural, threshold, showPoints = true }) {
+export default function CardHand({ playerData, isBust, isBlackjack, isNatural, threshold, showPoints = true, spread = false }) {
   return (
     <div className="relative py-6">
-      <div className="flex justify-center items-center" style={{ perspective: '800px' }}>
+      <div
+        className={spread ? 'flex flex-wrap justify-center items-start gap-3' : 'flex justify-center items-center'}
+        style={spread ? undefined : { perspective: '800px' }}
+      >
         {playerData.map((data, i) => (
           <PlayerCard
             key={data.player.id}
@@ -14,6 +17,7 @@ export default function CardHand({ playerData, isBust, isBlackjack, isNatural, t
             index={i}
             total={playerData.length}
             showPoints={showPoints}
+            spread={spread}
           />
         ))}
       </div>
