@@ -5,6 +5,7 @@ import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed, isGameweekFinished } from '@/lib/scoring';
 import PlayerSearch from '@/components/PlayerSearch';
 import PickSummary from '@/components/PickSummary';
+import PickRail from '@/components/PickRail';
 import CardHand from '@/components/CardHand';
 import { Lock, Clock } from 'lucide-react';
 
@@ -109,7 +110,7 @@ export default function Picks() {
   });
 
   return (
-    <div className="p-4 pb-48">
+    <div className={`p-4 ${locked ? 'pb-48' : 'pb-6'}`}>
       <div className="mb-4">
         <h1 className="text-2xl font-bold font-heading">Gameweek {gameweek.number}</h1>
         {locked ? (
@@ -124,7 +125,19 @@ export default function Picks() {
       </div>
 
       {!locked && (
-        <PlayerSearch players={players} selectedIds={selectedIds} onToggle={handleToggle} pointsByPlayerId={pointsByPlayerId} gameweekNumber={gameweek.number} />
+        <div className="flex gap-3 items-start">
+          <div className="flex-1 min-w-0">
+            <PlayerSearch players={players} selectedIds={selectedIds} onToggle={handleToggle} pointsByPlayerId={pointsByPlayerId} gameweekNumber={gameweek.number} />
+          </div>
+          <PickRail
+            selectedPlayers={selectedPlayers}
+            onRemove={handleToggle}
+            onSave={handleSave}
+            saving={saving}
+            saved={saved}
+            hasFive={selectedIds.length >= 2}
+          />
+        </div>
       )}
 
       {locked && (
@@ -143,21 +156,21 @@ export default function Picks() {
         </div>
       )}
 
-      <PickSummary
-        selectedPlayers={selectedPlayers}
-        playerPoints={playerPoints}
-        total={total}
-        isBust={isBust}
-        threshold={scoringConfig?.bust_threshold || 21}
-        onSave={handleSave}
-        onRemove={handleToggle}
-        saving={saving}
-        saved={saved}
-        isLocked={locked}
-        hasFive={selectedIds.length >= 2}
-        tier={tier}
-        isFinalized={gwFinished}
-      />
+      {locked && (
+        <PickSummary
+          selectedPlayers={selectedPlayers}
+          playerPoints={playerPoints}
+          isBust={isBust}
+          onSave={handleSave}
+          onRemove={handleToggle}
+          saving={saving}
+          saved={saved}
+          isLocked={locked}
+          hasFive={selectedIds.length >= 2}
+          tier={tier}
+          isFinalized={gwFinished}
+        />
+      )}
     </div>
   );
 }
