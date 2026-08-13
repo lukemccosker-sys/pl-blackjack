@@ -36,20 +36,21 @@ export default function Leaderboard() {
 
   const loadInitial = async () => {
     try {
-      const [gws, configs, members, picks, stats] = await Promise.all([
+      const [gws, configs, members, picks] = await Promise.all([
         base44.entities.Gameweek.list('number', 50),
         base44.entities.ScoringConfig.filter({ is_active: true }),
         base44.entities.PoolMember.list('', 50),
         base44.entities.Pick.list('', 1000),
-        fetchAllPlayerStats(base44.entities),
       ]);
       const sorted = gws.sort((a, b) => a.number - b.number);
+      const active = sorted.find(g => g.is_active);
+      const currentSeason = active?.season || sorted[sorted.length - 1]?.season;
+      const stats = await fetchAllPlayerStats(base44.entities, currentSeason);
       setGameweeks(sorted);
       setScoringConfig(configs[0]);
       setAllMembers(members);
       setAllPicks(picks);
       setAllStats(stats);
-      const active = sorted.find(g => g.is_active);
       const latestFinalized = sorted.filter(g => g.is_finalized).pop();
       setSelectedGw(prev => prev ?? (active || latestFinalized || sorted[sorted.length - 1])?.number);
     } catch (err) {
