@@ -14,6 +14,10 @@
       "type": "number",
       "title": "Gameweek"
     },
+    "season": {
+      "type": "string",
+      "title": "Season"
+    },
     "player_ids": {
       "type": "array",
       "items": {
