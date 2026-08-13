@@ -39,7 +39,7 @@ export default function Picks() {
       if (active && member) {
         const [picks, stats, gwFixtures] = await Promise.all([
           base44.entities.Pick.filter({ member_id: member.id, gameweek: active.number }),
-          base44.entities.PlayerStat.filter({ gameweek: active.number }),
+          base44.entities.PlayerStat.filter(active.season ? { gameweek: active.number, season: active.season } : { gameweek: active.number }),
           base44.entities.Fixture.filter({ gameweek: active.number }),
         ]);
         if (picks.length > 0) {
