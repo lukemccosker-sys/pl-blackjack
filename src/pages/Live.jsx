@@ -44,7 +44,7 @@ export default function Live() {
 
   const reloadGwData = async (gwNumber, season) => {
     const [gwPicks, gwStats] = await Promise.all([
-      base44.entities.Pick.filter({ gameweek: gwNumber }),
+      base44.entities.Pick.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
       base44.entities.PlayerStat.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
     ]);
     setPicks(gwPicks);
