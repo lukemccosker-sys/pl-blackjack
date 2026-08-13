@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Check } from 'lucide-react';
 import { POSITIONS, POSITION_LABELS } from '@/lib/plData';
 
-export default function PlayerSearch({ players, selectedIds, onToggle }) {
+export default function PlayerSearch({ players, selectedIds, onToggle, pointsByPlayerId = {}, gameweekNumber }) {
   const [query, setQuery] = useState('');
   const [groupBy, setGroupBy] = useState('position');
 
@@ -20,6 +20,10 @@ export default function PlayerSearch({ players, selectedIds, onToggle }) {
   }, [players, query]);
 
   const groups = useMemo(() => {
+    if (groupBy === 'points') {
+      const sorted = [...filtered].sort((a, b) => (pointsByPlayerId[b.id] || 0) - (pointsByPlayerId[a.id] || 0));
+      return { 'All Players': sorted };
+    }
     const g = {};
     filtered.forEach(p => {
       const key = groupBy === 'club' ? (p.club || 'Unknown') : (p.position || 'Unknown');
@@ -33,10 +37,12 @@ export default function PlayerSearch({ players, selectedIds, onToggle }) {
     };
     Object.values(g).forEach(arr => arr.sort(posOrder));
     return g;
-  }, [filtered, groupBy]);
+  }, [filtered, groupBy, pointsByPlayerId]);
 
   const groupKeys = groupBy === 'club'
     ? Object.keys(groups).sort()
+    : groupBy === 'points'
+    ? Object.keys(groups)
     : POSITIONS.filter(p => groups[p]).concat(Object.keys(groups).filter(k => !POSITIONS.includes(k)));
 
   return (
@@ -57,7 +63,13 @@ export default function PlayerSearch({ players, selectedIds, onToggle }) {
         <Button size="sm" variant={groupBy === 'position' ? 'default' : 'outline'} onClick={() => setGroupBy('position')}>
           By Position
         </Button>
+        <Button size="sm" variant={groupBy === 'points' ? 'default' : 'outline'} onClick={() => setGroupBy('points')}>
+          By Points
+        </Button>
       </div>
+      {gameweekNumber && (
+        <p className="text-xs text-muted-foreground mb-2 px-1">Points shown are live for Gameweek {gameweekNumber}</p>
+      )}
       <div className="space-y-3">
         {groupKeys.map(key => (
           <div key={key}>
@@ -68,6 +80,7 @@ export default function PlayerSearch({ players, selectedIds, onToggle }) {
               {groups[key].map(p => {
                 const isSelected = selectedIds.includes(p.id);
                 const isDisabled = !isSelected && selectedIds.length >= 5;
+                const pts = pointsByPlayerId[p.id] || 0;
                 return (
                   <button
                     key={p.id}
@@ -82,6 +95,9 @@ export default function PlayerSearch({ players, selectedIds, onToggle }) {
                       <p className="font-medium text-sm truncate">{p.web_name}</p>
                       <p className="text-xs text-muted-foreground">{p.position} · {p.club_short}</p>
                     </div>
+                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${pts > 0 ? 'bg-primary/15 text-primary' : 'text-muted-foreground/70'}`}>
+                      {pts} pt{pts === 1 ? '' : 's'}
+                    </span>
                     {isSelected && <Check className="text-primary" size={18} />}
                   </button>
                 );
