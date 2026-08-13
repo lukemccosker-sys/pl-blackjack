@@ -33,7 +33,7 @@ export default function Live() {
       setPlayers(allPlayers);
       setMembers(allMembers);
       if (active) {
-        await reloadGwData(active.number);
+        await reloadGwData(active.number, active.season);
       }
     } catch (err) {
       console.error(err);
@@ -42,10 +42,10 @@ export default function Live() {
     }
   };
 
-  const reloadGwData = async (gwNumber) => {
+  const reloadGwData = async (gwNumber, season) => {
     const [gwPicks, gwStats] = await Promise.all([
       base44.entities.Pick.filter({ gameweek: gwNumber }),
-      base44.entities.PlayerStat.filter({ gameweek: gwNumber }),
+      base44.entities.PlayerStat.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
     ]);
     setPicks(gwPicks);
     setPlayerStats(gwStats);
@@ -62,16 +62,16 @@ export default function Live() {
 
     const unsubPicks = base44.entities.Pick.subscribe(() => {
       clearTimeout(picksTimer);
-      picksTimer = setTimeout(() => reloadGwData(gwNumber), 500);
+      picksTimer = setTimeout(() => reloadGwData(gwNumber, gameweek.season), 500);
     });
 
     const unsubStats = base44.entities.PlayerStat.subscribe(() => {
       clearTimeout(statsTimer);
-      statsTimer = setTimeout(() => reloadGwData(gwNumber), 500);
+      statsTimer = setTimeout(() => reloadGwData(gwNumber, gameweek.season), 500);
     });
 
     const pollInterval = setInterval(() => {
-      reloadGwData(gwNumber);
+      reloadGwData(gwNumber, gameweek.season);
     }, 5 * 60 * 1000);
 
     return () => {
