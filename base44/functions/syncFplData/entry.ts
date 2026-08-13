@@ -72,6 +72,25 @@ Deno.serve(async (req) => {
       }
     }
 
+    // --- Season backfill: Picks missing a season field ---
+    // Derives each pick's season from its gameweek number via seasonByGw.
+    // Safe because, at the time this runs, every gameweek number maps to
+    // exactly one season's worth of Gameweek rows in the data seen so far.
+    let pickSeasonBackfilled = 0;
+    try {
+      const allPicksForBackfill = await base44.asServiceRole.entities.Pick.list('', 5000);
+      const picksNeedingSeason = allPicksForBackfill.filter(p => !p.season && seasonByGw[p.gameweek]);
+      if (picksNeedingSeason.length > 0) {
+        const pickUpdates = picksNeedingSeason.map(p => ({ id: p.id, season: seasonByGw[p.gameweek] }));
+        for (let i = 0; i < pickUpdates.length; i += 500) {
+          await base44.asServiceRole.entities.Pick.bulkUpdate(pickUpdates.slice(i, i + 500));
+        }
+        pickSeasonBackfilled = pickUpdates.length;
+      }
+    } catch (e) {
+      // season backfill is best-effort; don't block sync
+    }
+
     // --- Compute the REAL active gameweek from fixture data ---
     // FPL's is_current flag can be wrong or lagging, especially around
     // season boundaries. Instead of trusting it, compute the active GW as:
@@ -238,7 +257,7 @@ Deno.serve(async (req) => {
         failed,
         active: activeReport,
         activeDiscrepancy,
-        seasonBackfill: { gameweeksUpdated: gwSeasonBackfilled, playerStatsUpdated: statSeasonBackfilled },
+        seasonBackfill: { gameweeksUpdated: gwSeasonBackfilled, playerStatsUpdated: statSeasonBackfilled, picksUpdated: pickSeasonBackfilled },
         duplicatesDeleted: bootstrapResult.duplicatesDeleted || 0,
         seasonStatus,
         backfill: {
