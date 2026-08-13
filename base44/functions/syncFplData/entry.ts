@@ -592,7 +592,7 @@ async function syncStats(base44, gameweek, season) {
   const statMap = {};
   updatedStats.forEach(s => { statMap[s.player_id] = s; });
 
-  const gwPicks = await base44.asServiceRole.entities.Pick.filter({ gameweek });
+  const gwPicks = await base44.asServiceRole.entities.Pick.filter(season ? { gameweek, season } : { gameweek });
   const pickUpdates = gwPicks.map(pick => {
     const pickStats = (pick.player_ids || []).map(pid => statMap[pid]);
     const playerPoints = pickStats.map(stat => calculatePlayerPoints(stat, config));
