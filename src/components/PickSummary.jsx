@@ -5,9 +5,7 @@ import { Lock, Save, Check, AlertTriangle, X } from 'lucide-react';
 export default function PickSummary({
   selectedPlayers,
   playerPoints,
-  total,
   isBust,
-  threshold,
   onSave,
   onRemove,
   saving,
@@ -17,35 +15,32 @@ export default function PickSummary({
   isFinalized,
   tier,
 }) {
+  const showBadge = isBust || tier === 'blackjack' || isFinalized || isLocked;
+
   return (
     <div className="fixed bottom-16 left-0 right-0 z-40">
       <div className="max-w-lg mx-auto bg-card border-t border-border rounded-t-2xl shadow-lg p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm text-muted-foreground">Total</span>
-            <span className={`text-3xl font-bold ${isBust ? 'text-destructive' : 'text-primary'}`}>
-              {total}
-            </span>
-            <span className="text-sm text-muted-foreground">/ {threshold}</span>
+        {showBadge && (
+          <div className="flex items-center justify-end mb-3">
+            {isBust ? (
+              <span className="flex items-center gap-1 text-destructive text-sm font-semibold">
+                <AlertTriangle size={16} /> BUST
+              </span>
+            ) : tier === 'blackjack' ? (
+              <span className="text-primary text-sm font-bold tracking-wide">
+                BLACKJACK!
+              </span>
+            ) : isFinalized ? (
+              <span className="flex items-center gap-1 text-primary text-sm font-medium">
+                <Check size={16} /> Final
+              </span>
+            ) : isLocked ? (
+              <span className="flex items-center gap-1 text-muted-foreground text-sm">
+                <Lock size={14} /> Locked
+              </span>
+            ) : null}
           </div>
-          {isBust ? (
-            <span className="flex items-center gap-1 text-destructive text-sm font-semibold">
-              <AlertTriangle size={16} /> BUST
-            </span>
-          ) : tier === 'blackjack' ? (
-            <span className="text-primary text-sm font-bold tracking-wide">
-              BLACKJACK!
-            </span>
-          ) : isFinalized ? (
-            <span className="flex items-center gap-1 text-primary text-sm font-medium">
-              <Check size={16} /> Final
-            </span>
-          ) : isLocked ? (
-            <span className="flex items-center gap-1 text-muted-foreground text-sm">
-              <Lock size={14} /> Locked
-            </span>
-          ) : null}
-        </div>
+        )}
 
         <div className="flex gap-1.5 mb-3 min-h-[36px] flex-wrap">
           {selectedPlayers.length === 0 && (
