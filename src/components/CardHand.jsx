@@ -5,8 +5,8 @@ export default function CardHand({ playerData, isBust, isBlackjack, isNatural, t
   return (
     <div className="relative py-6">
       <div
-        className={`${spread ? 'flex flex-wrap justify-center items-start gap-3' : 'flex justify-center items-center'} transition-[gap] duration-300 ease-out`}
-        style={spread ? undefined : { perspective: '800px' }}
+        className="flex flex-nowrap justify-center items-center transition-[gap] duration-300 ease-out"
+        style={{ gap: spread ? '6px' : '0px', perspective: spread ? undefined : '800px' }}
       >
         {playerData.map((data, i) => (
           <PlayerCard
