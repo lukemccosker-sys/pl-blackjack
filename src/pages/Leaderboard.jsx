@@ -173,8 +173,8 @@ export default function Leaderboard() {
                       {i + 1}
                     </span>
                     <MemberAvatar member={allMembers.find(m => m.id === pick.member_id)} size={32} />
-                    <div className="flex-1">
-                      <p className="font-medium">{pick.member_name}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{pick.member_name}</p>
                       {score.isBust ? (
                         <p className="text-xs text-destructive flex items-center gap-1">
                           <AlertTriangle size={10} /> BUST · {score.total - (scoringConfig?.bust_threshold || 21)} pts over
@@ -210,9 +210,9 @@ export default function Leaderboard() {
                 {i + 1}
               </span>
               <MemberAvatar member={s.member} size={32} />
-              <div className="flex-1">
-                <p className="font-medium">{s.member.name}</p>
-                <p className="text-xs text-muted-foreground">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate">{s.member.name}</p>
+                <p className="text-xs text-muted-foreground truncate">
                   {s.played} played
                   {s.blackjacks > 0 && ` · ${s.blackjacks} blackjack${s.blackjacks > 1 ? 's' : ''}`}
                   {s.busts > 0 && ` · ${s.busts} bust${s.busts > 1 ? 's' : ''}`}
