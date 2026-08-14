@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home as HomeIcon, Hand, Calendar, Trophy, Settings, BarChart3, Coins } from 'lucide-react';
+import { Home as HomeIcon, Hand, Calendar, Trophy, Settings, BarChart3 } from 'lucide-react';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { base44 } from '@/api/base44Client';
 import { isDeadlinePassed } from '@/lib/scoring';
@@ -42,7 +42,6 @@ export default function BottomNav() {
     { to: '/picks', label: 'Picks', icon: Hand },
     { to: '/fixtures', label: 'Fixtures', icon: Calendar },
     { to: '/leaderboard', label: 'Standings', icon: Trophy },
-    { to: '/pot', label: 'Pot', icon: Coins },
   ];
 
   if (member?.is_admin) {
