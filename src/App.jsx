@@ -14,7 +14,6 @@ import Picks from '@/pages/Picks';
 import Fixtures from '@/pages/Fixtures';
 import Leaderboard from '@/pages/Leaderboard';
 import Admin from '@/pages/Admin';
-import Pot from '@/pages/Pot';
 import Settings from '@/pages/Settings';
 import Layout from '@/components/Layout';
 import { PoolAuthProvider } from '@/lib/PoolAuth';
@@ -53,7 +52,6 @@ const AuthenticatedApp = () => {
         <Route path="/picks" element={<Picks />} />
         <Route path="/fixtures" element={<Fixtures />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/pot" element={<Pot />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
