@@ -211,6 +211,34 @@ export default function PotPanel() {
     }
   };
 
+  // Admin correction: pull a bettor back out of an unresolved week and refund their stake.
+  // If they were the only bettor, the week resets to unset so the stake can be renegotiated.
+  const handleRemoveBettor = async (week, bettorMemberId) => {
+    setBusy(true);
+    try {
+      const bettorEntry = entries.find(e => e.member_id === bettorMemberId);
+      const remainingBettors = (week.bettor_ids || []).filter(id => id !== bettorMemberId);
+      const wasLastBettor = remainingBettors.length === 0;
+
+      const weekUpdate = wasLastBettor
+        ? { bettor_ids: [], stake_amount: 0, set_by_member_id: null, set_by_member_name: null }
+        : { bettor_ids: remainingBettors };
+      const updatedWeek = await base44.entities.PotWeek.update(week.id, weekUpdate);
+      setPotWeeks(prev => prev.map(w => (w.id === updatedWeek.id ? updatedWeek : w)));
+
+      if (bettorEntry) {
+        const updatedEntry = await base44.entities.PotEntry.update(bettorEntry.id, {
+          balance: bettorEntry.balance + week.stake_amount,
+        });
+        setEntries(prev => prev.map(e => (e.id === updatedEntry.id ? updatedEntry : e)));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleResolveWeek = async (week) => {
     setBusy(true);
     try {
@@ -451,6 +479,26 @@ export default function PotPanel() {
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Lock size={14} /> Locked · ${thisWeekBet.stake_amount * thisWeekBet.bettor_ids.length} pot · {thisWeekBet.bettor_ids.length} betting · resolves once the gameweek's finalized
                     </p>
+                  )}
+
+                  {/* Admin: pull someone out of this week's bet and refund them */}
+                  {member?.is_admin && thisWeekBet?.bettor_ids?.length > 0 && !thisWeekBet.is_resolved && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-[11px] text-muted-foreground mb-2">Admin: remove a bettor and refund their ${thisWeekBet.stake_amount} stake</p>
+                      <div className="space-y-1.5">
+                        {thisWeekBet.bettor_ids.map(bid => {
+                          const bettorEntry = entries.find(e => e.member_id === bid);
+                          return (
+                            <div key={bid} className="flex items-center justify-between">
+                              <span className="text-sm">{bettorEntry?.member_name || 'Unknown'}</span>
+                              <Button onClick={() => handleRemoveBettor(thisWeekBet, bid)} disabled={busy} size="sm" variant="outline">
+                                Remove & refund
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
