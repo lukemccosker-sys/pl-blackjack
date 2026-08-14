@@ -66,10 +66,17 @@ export default function Fixtures() {
                   <ClubBadge code={f.home_team_code} name={f.home_team} size={32} />
                 </div>
                 <div className="flex flex-col items-center min-w-[60px] shrink-0">
-                  {f.finished ? (
-                    <span className="text-lg font-bold">
-                      {f.home_score} - {f.away_score}
-                    </span>
+                  {f.home_score != null && f.away_score != null ? (
+                    <>
+                      <span className="text-lg font-bold">
+                        {f.home_score} - {f.away_score}
+                      </span>
+                      {!f.finished && (
+                        <span className="text-[9px] text-destructive font-semibold flex items-center gap-1 mt-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" /> LIVE
+                        </span>
+                      )}
+                    </>
                   ) : (
                     <>
                       {(() => {
