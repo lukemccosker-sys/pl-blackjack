@@ -234,7 +234,7 @@ export default function Home() {
               return (
                 <button
                   onClick={() => toggleExpanded('dealer')}
-                  className="w-full text-left rounded-xl bg-card ring-1 ring-primary/30 p-4"
+                  className="w-full text-left rounded-xl bg-card ring-1 ring-primary/30 p-3"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export default function Home() {
                 <button
                   key={pick.id}
                   onClick={() => toggleExpanded(pick.id)}
-                  className={`w-full text-left rounded-xl p-4 ${
+                  className={`w-full text-left rounded-xl p-3 ${
                     pick.isBust ? 'bg-destructive/10 ring-2 ring-destructive' :
                     i === 0 ? 'bg-card ring-1 ring-primary/40' :
                     pick.member_id === member?.id ? 'bg-card ring-1 ring-primary/20' : 'bg-card'
