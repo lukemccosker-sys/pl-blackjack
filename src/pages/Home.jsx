@@ -8,7 +8,7 @@ import { ensureDealerWeek } from '@/lib/dealer';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
-import { Lock, Spade } from 'lucide-react';
+import { Lock, Spade, ChevronDown } from 'lucide-react';
 
 export default function Home() {
   const { member } = usePoolAuth();
@@ -21,6 +21,16 @@ export default function Home() {
   const [potWeek, setPotWeek] = useState(null);
   const [scoringConfig, setScoringConfig] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expandedIds, setExpandedIds] = useState(() => new Set());
+
+  const toggleExpanded = (id) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const loadData = async () => {
     try {
@@ -215,58 +225,82 @@ export default function Home() {
             </span>
           </div>
           <div className="space-y-3">
-            {dealerPlayerData.length > 0 && (
-              <div className="rounded-xl bg-card ring-1 ring-primary/30 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Spade size={18} className="text-primary" />
-                    <span className="font-medium text-sm">The Dealer</span>
+            {dealerPlayerData.length > 0 && (() => {
+              const dealerExpanded = expandedIds.has('dealer');
+              return (
+                <button
+                  onClick={() => toggleExpanded('dealer')}
+                  className="w-full text-left rounded-xl bg-card ring-1 ring-primary/30 p-4"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Spade size={18} className="text-primary" />
+                      <span className="font-medium text-sm">The Dealer</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-lg font-bold ${dealerResult.isBust ? 'text-destructive' : 'text-primary'}`}>
+                        {dealerResult.score}
+                      </span>
+                      <ChevronDown size={16} className={`text-muted-foreground transition-transform ${dealerExpanded ? 'rotate-180' : ''}`} />
+                    </div>
                   </div>
-                  <span className={`text-lg font-bold ${dealerResult.isBust ? 'text-destructive' : 'text-primary'}`}>
-                    {dealerResult.score}
-                  </span>
-                </div>
-                <CardHand
-                  playerData={dealerPlayerData}
-                  isBust={dealerResult.isBust}
-                  isBlackjack={dealerResult.tier === 'blackjack' && !dealerResult.isBust}
-                  isNatural={dealerResult.isNatural}
-                  threshold={threshold}
-                  showPoints
-                />
-              </div>
-            )}
+                  <CardHand
+                    playerData={dealerPlayerData}
+                    isBust={dealerExpanded && dealerResult.isBust}
+                    isBlackjack={dealerExpanded && dealerResult.tier === 'blackjack' && !dealerResult.isBust}
+                    isNatural={dealerExpanded && dealerResult.isNatural}
+                    threshold={threshold}
+                    showPoints={dealerExpanded}
+                    spread={dealerExpanded}
+                  />
+                  {!dealerExpanded && (
+                    <p className="text-center text-[10px] text-muted-foreground mt-2">Tap for the breakdown</p>
+                  )}
+                </button>
+              );
+            })()}
 
-            {picksWithScores.map((pick, i) => (
-              <div
-                key={pick.id}
-                className={`rounded-xl p-4 ${
-                  pick.isBust ? 'bg-destructive/10 ring-2 ring-destructive' :
-                  i === 0 ? 'bg-card ring-1 ring-primary/40' :
-                  pick.member_id === member?.id ? 'bg-card ring-1 ring-primary/20' : 'bg-card'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-5 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>{i + 1}</span>
-                    <MemberAvatar member={members.find(m => m.id === pick.member_id)} size={26} />
-                    <span className="font-medium text-sm">
-                      {pick.member_name}
-                      {pick.member_id === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
-                    </span>
+            {picksWithScores.map((pick, i) => {
+              const isExpanded = expandedIds.has(pick.id);
+              return (
+                <button
+                  key={pick.id}
+                  onClick={() => toggleExpanded(pick.id)}
+                  className={`w-full text-left rounded-xl p-4 ${
+                    pick.isBust ? 'bg-destructive/10 ring-2 ring-destructive' :
+                    i === 0 ? 'bg-card ring-1 ring-primary/40' :
+                    pick.member_id === member?.id ? 'bg-card ring-1 ring-primary/20' : 'bg-card'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-5 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>{i + 1}</span>
+                      <MemberAvatar member={members.find(m => m.id === pick.member_id)} size={26} />
+                      <span className="font-medium text-sm">
+                        {pick.member_name}
+                        {pick.member_id === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-lg font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>{pick.score}</span>
+                      <ChevronDown size={16} className={`text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </div>
                   </div>
-                  <span className={`text-lg font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>{pick.score}</span>
-                </div>
-                <CardHand
-                  playerData={pick.playerData}
-                  isBust={pick.isBust}
-                  isBlackjack={pick.tier === 'blackjack' && !pick.isBust}
-                  isNatural={pick.isNatural}
-                  threshold={threshold}
-                  showPoints
-                />
-              </div>
-            ))}
+                  <CardHand
+                    playerData={pick.playerData}
+                    isBust={isExpanded && pick.isBust}
+                    isBlackjack={isExpanded && pick.tier === 'blackjack' && !pick.isBust}
+                    isNatural={isExpanded && pick.isNatural}
+                    threshold={threshold}
+                    showPoints={isExpanded}
+                    spread={isExpanded}
+                  />
+                  {!isExpanded && (
+                    <p className="text-center text-[10px] text-muted-foreground mt-2">Tap for the breakdown</p>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
