@@ -460,7 +460,7 @@ export default function PotPanel() {
                         <div key={row.memberId} className="flex items-center gap-3 bg-background/50 rounded-lg p-2.5 border border-border">
                           <span className={`w-4 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>{i + 1}</span>
                           <MemberAvatar member={allMembers.find(m => m.id === row.memberId)} size={26} />
-                          <span className="flex-1 text-sm font-medium truncate">
+                          <span className="flex-1 min-w-0 text-sm font-medium truncate">
                             {row.name}
                             {row.memberId === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
                           </span>
@@ -604,7 +604,7 @@ export default function PotPanel() {
                         <div key={e.id} className={`flex items-center gap-3 rounded-lg p-2.5 border ${isMe ? 'bg-primary/10 border-primary/30' : 'bg-background/50 border-border'}`}>
                           <span className="text-sm text-muted-foreground w-4">{i + 1}</span>
                           <MemberAvatar member={allMembers.find(m => m.id === e.member_id)} size={28} />
-                          <span className="flex-1 text-sm font-medium truncate">
+                          <span className="flex-1 min-w-0 text-sm font-medium truncate">
                             {e.member_name}
                             {isMe && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
                           </span>
