@@ -1,0 +1,32 @@
+{
+  "name": "PotEntry",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "title": "Member ID"
+    },
+    "member_name": {
+      "type": "string",
+      "title": "Member Name"
+    },
+    "season": {
+      "type": "string",
+      "title": "Season"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount"
+    },
+    "paid_in": {
+      "type": "boolean",
+      "default": false,
+      "title": "Paid In"
+    },
+    "joined_at": {
+      "type": "string",
+      "title": "Joined At"
+    }
+  },
+  "required": []
+}
