@@ -1,9 +1,11 @@
-export const DEALER_HAND_SIZE = 5;
+export const DEALER_HAND_MIN = 2;
+export const DEALER_HAND_MAX = 5;
 
 export function pickDealerHand(players) {
+  const handSize = DEALER_HAND_MIN + Math.floor(Math.random() * (DEALER_HAND_MAX - DEALER_HAND_MIN + 1));
   const pool = [...players];
   const hand = [];
-  for (let i = 0; i < DEALER_HAND_SIZE && pool.length > 0; i++) {
+  for (let i = 0; i < handSize && pool.length > 0; i++) {
     const idx = Math.floor(Math.random() * pool.length);
     hand.push(pool[idx].id);
     pool.splice(idx, 1);
