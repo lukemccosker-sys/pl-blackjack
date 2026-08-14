@@ -3,9 +3,9 @@ import PlayerCard from '@/components/PlayerCard';
 
 export default function CardHand({ playerData, isBust, isBlackjack, isNatural, threshold, showPoints = true, spread = false }) {
   return (
-    <div className="relative py-6">
+    <div className="relative py-6 overflow-hidden">
       <div
-        className="flex flex-nowrap justify-center items-center px-4 transition-[gap] duration-300 ease-out"
+        className="flex flex-nowrap justify-center items-center px-2 transition-[gap] duration-300 ease-out"
         style={{ gap: spread ? '6px' : '0px', perspective: spread ? undefined : '800px' }}
       >
         {playerData.map((data, i) => (
