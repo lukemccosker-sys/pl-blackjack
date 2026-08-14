@@ -6,7 +6,6 @@ import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { ensureDealerWeek } from '@/lib/dealer';
 import MemberAvatar from '@/components/MemberAvatar';
-import ClubBadge from '@/components/ClubBadge';
 import CardHand from '@/components/CardHand';
 import { Lock, Spade } from 'lucide-react';
 
@@ -18,7 +17,7 @@ export default function Home() {
   const [playerStats, setPlayerStats] = useState([]);
   const [players, setPlayers] = useState([]);
   const [members, setMembers] = useState([]);
-  const [potWeeks, setPotWeeks] = useState([]);
+  const [potWeek, setPotWeek] = useState(null);
   const [scoringConfig, setScoringConfig] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +36,7 @@ export default function Home() {
       setPlayers(allPlayers);
       setMembers(allMembers);
       if (active) {
-        await reloadGwData(active.number, active.season);
+        await reloadGwData(active, allPlayers);
       }
     } catch (err) {
       console.error(err);
@@ -46,7 +45,9 @@ export default function Home() {
     }
   };
 
-  const reloadGwData = async (gwNumber, season) => {
+  const reloadGwData = async (gw, playerList) => {
+    const gwNumber = gw.number;
+    const season = gw.season;
     const [gwPicks, gwStats, weeks] = await Promise.all([
       base44.entities.Pick.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
       base44.entities.PlayerStat.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
@@ -57,17 +58,15 @@ export default function Home() {
     setMyPick(gwPicks.find(p => p.member_id === member?.id) || null);
 
     if (season) {
-      const weekLocked = isDeadlinePassed({ deadline: undefined, number: gwNumber, ...{ deadline: null } });
-      // recompute lock using the real gameweek object, set below via closure-safe fetch
       const updatedWeeks = await ensureDealerWeek({
         base44, season, gameweekNumber: gwNumber,
-        weekLocked: gwDeadlinePassedRef.current,
-        players: playersRef.current,
+        weekLocked: isDeadlinePassed(gw),
+        players: playerList,
         existingWeeks: weeks,
       });
-      setPotWeeks(updatedWeeks);
+      setPotWeek(updatedWeeks.find(w => w.gameweek === gwNumber) || null);
     } else {
-      setPotWeeks([]);
+      setPotWeek(null);
     }
   };
 
@@ -75,18 +74,17 @@ export default function Home() {
 
   useEffect(() => {
     if (!gameweek) return;
-    const gwNumber = gameweek.number;
     let timer = null;
 
     const unsubPicks = base44.entities.Pick.subscribe(() => {
       clearTimeout(timer);
-      timer = setTimeout(() => reloadGwData(gwNumber, gameweek.season), 500);
+      timer = setTimeout(() => reloadGwData(gameweek, players), 500);
     });
     const unsubStats = base44.entities.PlayerStat.subscribe(() => {
       clearTimeout(timer);
-      timer = setTimeout(() => reloadGwData(gwNumber, gameweek.season), 500);
+      timer = setTimeout(() => reloadGwData(gameweek, players), 500);
     });
-    const pollInterval = setInterval(() => reloadGwData(gwNumber, gameweek.season), 5 * 60 * 1000);
+    const pollInterval = setInterval(() => reloadGwData(gameweek, players), 5 * 60 * 1000);
 
     return () => {
       unsubPicks();
@@ -94,6 +92,7 @@ export default function Home() {
       clearInterval(pollInterval);
       clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameweek]);
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
@@ -111,11 +110,27 @@ export default function Home() {
   }).filter(Boolean);
   const myResult = calculatePickTotal(myPlayerData.map(d => d.points), scoringConfig, myPlayerData.map(d => d.stat));
 
-  const leaderboard = allPicks.map(pick => {
-    const pickedStats = (pick.player_ids || []).map(pid => playerStats.find(s => s.player_id === pid));
-    const pts = pickedStats.map(stat => calculatePlayerPoints(stat, scoringConfig));
-    return { pick, ...calculatePickTotal(pts, scoringConfig, pickedStats) };
-  }).sort((a, b) => b.score - a.score).slice(0, 5);
+  const picksWithScores = allPicks.map(pick => {
+    const playerData = (pick.player_ids || []).map(pid => {
+      const player = players.find(p => p.id === pid);
+      const stat = playerStats.find(s => s.player_id === pid);
+      return { player, stat, points: calculatePlayerPoints(stat, scoringConfig) };
+    }).filter(d => d.player);
+    const playerPoints = playerData.map(d => d.points);
+    const result = calculatePickTotal(playerPoints, scoringConfig, playerData.map(d => d.stat));
+    return { ...pick, playerData, ...result };
+  }).sort((a, b) => b.score - a.score);
+
+  const leaderboard = picksWithScores.slice(0, 5);
+
+  const dealerPlayerIds = potWeek?.dealer_player_ids || [];
+  const dealerPlayerData = dealerPlayerIds.map(id => {
+    const player = players.find(p => p.id === id);
+    if (!player) return null;
+    const stat = playerStats.find(s => s.player_id === id);
+    return { player, stat, points: calculatePlayerPoints(stat, scoringConfig) };
+  }).filter(Boolean);
+  const dealerResult = calculatePickTotal(dealerPlayerData.map(d => d.points), scoringConfig, dealerPlayerData.map(d => d.stat));
 
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
 
@@ -162,7 +177,7 @@ export default function Home() {
       </div>
 
       {/* Compact Leaderboard */}
-      <div>
+      <div className="mb-6">
         <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Leaderboard</h2>
 
         {!locked ? (
@@ -175,10 +190,10 @@ export default function Home() {
         ) : (
           <div className="space-y-1.5">
             {leaderboard.map((entry, i) => (
-              <div key={entry.pick.id} className={`flex items-center gap-3 p-2.5 rounded-xl ${i === 0 ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-card'}`}>
+              <div key={entry.id} className={`flex items-center gap-3 p-2.5 rounded-xl ${i === 0 ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-card'}`}>
                 <span className={`w-5 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>{i + 1}</span>
-                <MemberAvatar member={members.find(m => m.id === entry.pick.member_id)} size={28} />
-                <p className="flex-1 text-sm font-medium truncate">{entry.pick.member_name}</p>
+                <MemberAvatar member={members.find(m => m.id === entry.member_id)} size={28} />
+                <p className="flex-1 text-sm font-medium truncate">{entry.member_name}</p>
                 <span className={`text-lg font-bold ${entry.isBust ? 'text-destructive' : 'text-primary'}`}>{entry.score}</span>
               </div>
             ))}
@@ -186,6 +201,59 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Everyone's Picks + The Dealer, once locked */}
+      {locked && (picksWithScores.length > 0 || dealerPlayerData.length > 0) && (
+        <div>
+          <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Everyone's Picks</h2>
+          <div className="space-y-3">
+            {dealerPlayerData.length > 0 && (
+              <div className="rounded-xl bg-card ring-1 ring-primary/30 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Spade size={18} className="text-primary" />
+                    <span className="font-medium text-sm">The Dealer</span>
+                  </div>
+                  <span className={`text-lg font-bold ${dealerResult.isBust ? 'text-destructive' : 'text-primary'}`}>
+                    {dealerResult.score}
+                  </span>
+                </div>
+                <CardHand
+                  playerData={dealerPlayerData}
+                  isBust={dealerResult.isBust}
+                  isBlackjack={dealerResult.tier === 'blackjack' && !dealerResult.isBust}
+                  isNatural={dealerResult.isNatural}
+                  threshold={threshold}
+                  showPoints
+                />
+              </div>
+            )}
+
+            {picksWithScores.map(pick => (
+              <div key={pick.id} className="rounded-xl bg-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <MemberAvatar member={members.find(m => m.id === pick.member_id)} size={26} />
+                    <span className="font-medium text-sm">
+                      {pick.member_name}
+                      {pick.member_id === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
+                    </span>
+                  </div>
+                  <span className={`text-lg font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>{pick.score}</span>
+                </div>
+                <CardHand
+                  playerData={pick.playerData}
+                  isBust={pick.isBust}
+                  isBlackjack={pick.tier === 'blackjack' && !pick.isBust}
+                  isNatural={pick.isNatural}
+                  threshold={threshold}
+                  showPoints
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
