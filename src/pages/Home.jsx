@@ -4,9 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
+import { ensureDealerWeek } from '@/lib/dealer';
 import MemberAvatar from '@/components/MemberAvatar';
+import ClubBadge from '@/components/ClubBadge';
 import CardHand from '@/components/CardHand';
-import { Lock } from 'lucide-react';
+import { Lock, Spade } from 'lucide-react';
 
 export default function Home() {
   const { member } = usePoolAuth();
@@ -16,6 +18,7 @@ export default function Home() {
   const [playerStats, setPlayerStats] = useState([]);
   const [players, setPlayers] = useState([]);
   const [members, setMembers] = useState([]);
+  const [potWeeks, setPotWeeks] = useState([]);
   const [scoringConfig, setScoringConfig] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,13 +47,28 @@ export default function Home() {
   };
 
   const reloadGwData = async (gwNumber, season) => {
-    const [gwPicks, gwStats] = await Promise.all([
+    const [gwPicks, gwStats, weeks] = await Promise.all([
       base44.entities.Pick.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
       base44.entities.PlayerStat.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
+      season ? base44.entities.PotWeek.filter({ season }) : Promise.resolve([]),
     ]);
     setAllPicks(gwPicks);
     setPlayerStats(gwStats);
     setMyPick(gwPicks.find(p => p.member_id === member?.id) || null);
+
+    if (season) {
+      const weekLocked = isDeadlinePassed({ deadline: undefined, number: gwNumber, ...{ deadline: null } });
+      // recompute lock using the real gameweek object, set below via closure-safe fetch
+      const updatedWeeks = await ensureDealerWeek({
+        base44, season, gameweekNumber: gwNumber,
+        weekLocked: gwDeadlinePassedRef.current,
+        players: playersRef.current,
+        existingWeeks: weeks,
+      });
+      setPotWeeks(updatedWeeks);
+    } else {
+      setPotWeeks([]);
+    }
   };
 
   useEffect(() => { loadData(); }, []);
