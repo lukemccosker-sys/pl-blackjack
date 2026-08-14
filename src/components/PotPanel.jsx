@@ -716,12 +716,12 @@ export default function PotPanel() {
                         Only for the very end of the season — stops betting for everyone and moves straight to final settlement. Can't be undone.
                       </p>
                       {confirmingCloseSeason ? (
-                        <div className="flex gap-2">
-                          <Button onClick={() => setConfirmingCloseSeason(false)} variant="outline" className="flex-1" disabled={busy}>
-                            Cancel
-                          </Button>
-                          <Button onClick={handleCloseSeason} variant="destructive" className="flex-1" disabled={busy}>
+                        <div className="flex flex-col gap-2">
+                          <Button onClick={handleCloseSeason} variant="destructive" className="w-full" disabled={busy}>
                             {busy ? 'Ending...' : 'Confirm: end the season'}
+                          </Button>
+                          <Button onClick={() => setConfirmingCloseSeason(false)} variant="outline" className="w-full" disabled={busy}>
+                            Cancel
                           </Button>
                         </div>
                       ) : (
