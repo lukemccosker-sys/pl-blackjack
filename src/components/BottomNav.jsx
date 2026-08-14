@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home as HomeIcon, Hand, Calendar, Trophy, Settings, Radio, BarChart3 } from 'lucide-react';
+import { Home as HomeIcon, Hand, Calendar, Trophy, Settings, Radio, BarChart3, Coins } from 'lucide-react';
 import { usePoolAuth } from '@/lib/PoolAuth';
 
 export default function BottomNav() {
@@ -13,6 +13,7 @@ export default function BottomNav() {
     { to: '/live', label: 'Live', icon: Radio },
     { to: '/fixtures', label: 'Fixtures', icon: Calendar },
     { to: '/leaderboard', label: 'Standings', icon: Trophy },
+    { to: '/pot', label: 'Pot', icon: Coins },
   ];
 
   if (member?.is_admin) {
@@ -28,7 +29,7 @@ export default function BottomNav() {
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 px-4 py-2 transition-colors ${
+              `flex flex-col items-center gap-1 px-2 py-2 transition-colors ${
                 isActive ? 'text-primary' : 'text-muted-foreground'
               }`
             }
