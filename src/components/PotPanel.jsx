@@ -5,10 +5,10 @@ import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/player
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { ensureDealerWeek } from '@/lib/dealer';
 import MemberAvatar from '@/components/MemberAvatar';
-import ClubBadge from '@/components/ClubBadge';
+import CardHand from '@/components/CardHand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Coins, Check, Crown, Lock, Plus, TrendingUp, TrendingDown, Spade, ChevronDown, ChevronUp } from 'lucide-react';
+import { Coins, Check, Crown, Lock, Plus, TrendingUp, TrendingDown, Spade, ChevronDown, ChevronUp, ShieldAlert } from 'lucide-react';
 
 const REINVEST_AMOUNT = 20;
 const MIN_BUYIN = 20;
@@ -16,6 +16,7 @@ const MIN_BUYIN = 20;
 export default function PotPanel() {
   const { member } = usePoolAuth();
   const [expanded, setExpanded] = useState(false);
+  const [dealerExpanded, setDealerExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [gameweeks, setGameweeks] = useState([]);
   const [scoringConfig, setScoringConfig] = useState(null);
@@ -92,7 +93,6 @@ export default function PotPanel() {
   const thisWeekBet = currentSeason ? potWeeks.find(w => w.gameweek === active.number) : null;
   const weekLocked = active ? isDeadlinePassed(active) : false;
   const iBetThisWeek = thisWeekBet?.bettor_ids?.includes(member?.id);
-  const dealerHandPlayers = (thisWeekBet?.dealer_player_ids || []).map(id => players.find(p => p.id === id)).filter(Boolean);
   const rolloverPool = potSeason?.rollover_pool || 0;
 
   const myContributions = contributions
@@ -100,6 +100,14 @@ export default function PotPanel() {
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   const myFirstContribution = myContributions[0];
   const buyInConfirmed = myFirstContribution?.paid_in === true;
+
+  const dealerPlayerData = (thisWeekBet?.dealer_player_ids || []).map(id => {
+    const player = players.find(p => p.id === id);
+    if (!player) return null;
+    const stat = allStats.find(s => s.player_id === id && s.gameweek === thisWeekBet.gameweek);
+    return { player, stat, points: calculatePlayerPoints(stat, scoringConfig) };
+  }).filter(Boolean);
+  const dealerResult = calculatePickTotal(dealerPlayerData.map(d => d.points), scoringConfig, dealerPlayerData.map(d => d.stat));
 
   const getPickScore = (memberId, gwNumber) => {
     const pick = allPicks.find(p => p.member_id === memberId && p.gameweek === gwNumber);
@@ -316,6 +324,14 @@ export default function PotPanel() {
     setPotSeason(updated);
   };
 
+  const isAdmin = !!member?.is_admin;
+  const hasAdminWork = isAdmin && (
+    pendingContributions.length > 0 ||
+    unresolvedFinalized.length > 0 ||
+    (thisWeekBet?.bettor_ids?.length > 0 && !thisWeekBet.is_resolved) ||
+    (potSeason && !potSeason.is_closed)
+  );
+
   // --- Collapsed summary line ---
   let summaryLine = 'Loading...';
   if (!loading) {
@@ -357,40 +373,58 @@ export default function PotPanel() {
             <p className="text-center text-muted-foreground text-sm py-4">Loading...</p>
           ) : !currentSeason ? (
             <p className="text-center text-muted-foreground text-sm py-4">
-              No season data yet — sync gameweeks first (Admin → Sync).
+              Nothing to show yet — check back once the season's underway.
             </p>
           ) : (
             <>
               <p className="text-muted-foreground text-xs mb-3">
-                Optional. Buy in for at least ${MIN_BUYIN}, bet whatever you like each week, top up ${REINVEST_AMOUNT} whenever you run dry — and watch out for the dealer.
+                Totally optional. Buy in for at least ${MIN_BUYIN}, bet whatever you like each week, and top up ${REINVEST_AMOUNT} anytime you run dry — just watch out for the dealer.
               </p>
 
               {/* The dealer's hand for this week */}
-              {thisWeekBet && dealerHandPlayers.length > 0 && (
-                <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1">
-                    <Spade size={12} /> The Dealer — Gameweek {active.number}
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    {dealerHandPlayers.map(p => (
-                      <div key={p.id} className="flex flex-col items-center w-14">
-                        <ClubBadge code={p.club_code} name={p.club} size={26} />
-                        <p className="text-[9px] font-medium text-center mt-1 truncate w-full">{p.web_name}</p>
-                      </div>
-                    ))}
+              {thisWeekBet && dealerPlayerData.length > 0 && (
+                <button
+                  onClick={() => setDealerExpanded(prev => !prev)}
+                  className="w-full text-left rounded-xl bg-background/50 border border-border mb-3 p-3"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <Spade size={14} className="text-primary" />
+                      <span className="text-sm font-medium">The Dealer</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {thisWeekBet.is_resolved && (
+                        <span className={`text-sm font-bold ${thisWeekBet.house_won ? 'text-destructive' : 'text-primary'}`}>
+                          {thisWeekBet.dealer_score}
+                        </span>
+                      )}
+                      <ChevronDown size={14} className={`text-muted-foreground transition-transform ${dealerExpanded ? 'rotate-180' : ''}`} />
+                    </div>
                   </div>
-                  {thisWeekBet.is_resolved && (
-                    <p className={`text-sm font-semibold mt-3 ${thisWeekBet.house_won ? 'text-destructive' : 'text-primary'}`}>
-                      Dealer scored {thisWeekBet.dealer_score} · {thisWeekBet.house_won ? 'House wins this week' : 'Beaten by ' + thisWeekBet.winner_member_name}
+                  <CardHand
+                    playerData={dealerPlayerData}
+                    isBust={dealerExpanded && dealerResult.isBust}
+                    isBlackjack={dealerExpanded && dealerResult.tier === 'blackjack' && !dealerResult.isBust}
+                    isNatural={dealerExpanded && dealerResult.isNatural}
+                    threshold={scoringConfig?.bust_threshold || 21}
+                    showPoints={dealerExpanded}
+                    spread={dealerExpanded}
+                  />
+                  {!dealerExpanded ? (
+                    <p className="text-center text-[10px] text-muted-foreground -mt-2">Tap to see their hand</p>
+                  ) : thisWeekBet.is_resolved ? (
+                    <p className={`text-center text-xs font-medium -mt-1 ${thisWeekBet.house_won ? 'text-destructive' : 'text-primary'}`}>
+                      {thisWeekBet.house_won ? 'The house won this week' : `Beaten by ${thisWeekBet.winner_member_name}`}
                     </p>
-                  )}
-                </div>
+                  ) : null}
+                </button>
               )}
 
               {/* My bankroll */}
               {!myEntry ? (
                 <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
-                  <p className="text-sm mb-3">Buy in to get started (minimum ${MIN_BUYIN}).</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Your Bankroll</p>
+                  <p className="text-sm mb-3">Buy in to get started — minimum ${MIN_BUYIN}.</p>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-muted-foreground">$</span>
                     <Input type="number" min={MIN_BUYIN} value={buyInInput} onChange={(e) => setBuyInInput(e.target.value)} className="w-24" />
@@ -401,14 +435,15 @@ export default function PotPanel() {
                 </div>
               ) : (
                 <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Your Bankroll</p>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground">Your bankroll</p>
                       <p className="text-2xl font-bold font-display text-primary">${myEntry.balance}</p>
+                      <p className="text-xs text-muted-foreground">available to bet</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Put in total</p>
                       <p className="text-lg font-semibold">${myEntry.total_contributed}</p>
+                      <p className="text-xs text-muted-foreground">put in total</p>
                     </div>
                   </div>
                   <Button onClick={handleReinvest} disabled={busy || myEntry.balance > 0} variant="outline" size="sm" className="w-full mt-3">
@@ -417,7 +452,7 @@ export default function PotPanel() {
                   {myEntry.balance > 0 ? (
                     <p className="text-[11px] text-muted-foreground text-center mt-1.5">Reinvest unlocks once your bankroll hits $0</p>
                   ) : !buyInConfirmed ? (
-                    <p className="text-[11px] text-muted-foreground text-center mt-1.5">Waiting on admin to confirm your last buy-in before you can spend it</p>
+                    <p className="text-[11px] text-muted-foreground text-center mt-1.5">Waiting on admin to confirm your last top-up before you can spend it</p>
                   ) : null}
                 </div>
               )}
@@ -425,7 +460,7 @@ export default function PotPanel() {
               {/* This week's bet */}
               {myEntry && !potSeason?.is_closed && (
                 <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
-                  <p className="text-xs text-muted-foreground mb-2">Gameweek {active.number}</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Gameweek {active.number}</p>
 
                   {!buyInConfirmed && (
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -435,7 +470,7 @@ export default function PotPanel() {
 
                   {buyInConfirmed && thisWeekBet?.stake_amount === 0 && !weekLocked && (
                     <>
-                      <p className="text-sm mb-3">No stake set for this week yet — name one and you're the first in.</p>
+                      <p className="text-sm mb-3">Nobody's set this week's stake yet — name an amount and you'll be first in.</p>
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-muted-foreground">$</span>
                         <Input type="number" min="1" value={weekStakeInput} onChange={(e) => setWeekStakeInput(e.target.value)} className="w-24" />
@@ -452,7 +487,7 @@ export default function PotPanel() {
                   {buyInConfirmed && thisWeekBet?.stake_amount > 0 && !weekLocked && !iBetThisWeek && (
                     <>
                       <p className="text-sm mb-3">
-                        This week's stake is <span className="font-semibold text-foreground">${thisWeekBet.stake_amount}</span>, set by {thisWeekBet.set_by_member_name}. You in?
+                        This week's stake is <span className="font-semibold text-foreground">${thisWeekBet.stake_amount}</span>, set by {thisWeekBet.set_by_member_name}. Want in?
                       </p>
                       <Button onClick={handleJoinWeek} disabled={busy || myEntry.balance < thisWeekBet.stake_amount} className="w-full">
                         {busy ? 'Joining...' : `I'm in for $${thisWeekBet.stake_amount}`}
@@ -465,63 +500,28 @@ export default function PotPanel() {
 
                   {buyInConfirmed && thisWeekBet?.stake_amount > 0 && iBetThisWeek && (
                     <div className="flex items-center gap-2 text-sm text-primary">
-                      <Check size={16} /> You're in this week for ${thisWeekBet.stake_amount} · {thisWeekBet.bettor_ids.length} betting · ${thisWeekBet.stake_amount * thisWeekBet.bettor_ids.length} pot
+                      <Check size={16} /> You're in for ${thisWeekBet.stake_amount} · {thisWeekBet.bettor_ids.length} betting · ${thisWeekBet.stake_amount * thisWeekBet.bettor_ids.length} pot
                     </div>
                   )}
 
                   {buyInConfirmed && thisWeekBet?.stake_amount === 0 && weekLocked && (
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Lock size={14} /> No bets placed this week
+                      <Lock size={14} /> Nobody bet this week
                     </p>
                   )}
 
                   {buyInConfirmed && thisWeekBet?.stake_amount > 0 && weekLocked && !thisWeekBet.is_resolved && (
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Lock size={14} /> Locked · ${thisWeekBet.stake_amount * thisWeekBet.bettor_ids.length} pot · {thisWeekBet.bettor_ids.length} betting · resolves once the gameweek's finalized
+                      <Lock size={14} /> Locked · ${thisWeekBet.stake_amount * thisWeekBet.bettor_ids.length} pot · {thisWeekBet.bettor_ids.length} betting · winner shown once the gameweek's final
                     </p>
                   )}
-
-                  {/* Admin: pull someone out of this week's bet and refund them */}
-                  {member?.is_admin && thisWeekBet?.bettor_ids?.length > 0 && !thisWeekBet.is_resolved && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-[11px] text-muted-foreground mb-2">Admin: remove a bettor and refund their ${thisWeekBet.stake_amount} stake</p>
-                      <div className="space-y-1.5">
-                        {thisWeekBet.bettor_ids.map(bid => {
-                          const bettorEntry = entries.find(e => e.member_id === bid);
-                          return (
-                            <div key={bid} className="flex items-center justify-between">
-                              <span className="text-sm">{bettorEntry?.member_name || 'Unknown'}</span>
-                              <Button onClick={() => handleRemoveBettor(thisWeekBet, bid)} disabled={busy} size="sm" variant="outline">
-                                Remove & refund
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Admin: resolve finalized weeks */}
-              {member?.is_admin && unresolvedFinalized.length > 0 && !potSeason?.is_closed && (
-                <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Ready to resolve</p>
-                  <div className="space-y-2">
-                    {unresolvedFinalized.map(w => (
-                      <div key={w.id} className="flex items-center justify-between">
-                        <span className="text-sm">GW{w.gameweek} · ${w.stake_amount * (w.bettor_ids || []).length} pot · {(w.bettor_ids || []).length} betting</span>
-                        <Button onClick={() => handleResolveWeek(w)} disabled={busy} size="sm">Resolve</Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Weekly history */}
+              {/* Recent results */}
               {resolvedWeeks.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-1">Weekly results</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-1">Recent Results</p>
                   <div className="space-y-1.5">
                     {resolvedWeeks.map(w => (
                       <div key={w.id} className="flex items-center justify-between bg-background/50 rounded-lg p-2.5 border border-border text-sm">
@@ -543,7 +543,7 @@ export default function PotPanel() {
               {/* Bankroll standings */}
               {entries.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-1">Bankrolls</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-1">Everyone's Bankroll</p>
                   <div className="space-y-2">
                     {standings.map((e, i) => {
                       const net = e.balance - e.total_contributed;
@@ -564,47 +564,9 @@ export default function PotPanel() {
                 </div>
               )}
 
-              {/* Admin: pending contributions */}
-              {member?.is_admin && pendingContributions.length > 0 && (
-                <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Awaiting cash — {pendingContributions.length}</p>
-                  <div className="space-y-2">
-                    {pendingContributions.map(c => (
-                      <div key={c.id} className="flex items-center justify-between">
-                        <span className="text-sm">{c.member_name} · ${c.amount}</span>
-                        <Button onClick={() => markContributionPaid(c)} size="sm" variant="outline">Mark paid</Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Admin: end the pot for the whole season */}
-              {member?.is_admin && potSeason && !potSeason.is_closed && (
-                <div className="border-t border-border pt-3 mt-3">
-                  <p className="text-[11px] text-muted-foreground mb-2">
-                    Only for the very end of the season — this stops betting for everyone and moves straight to final settlement. Weekly results resolve automatically above; this is separate and can't be undone.
-                  </p>
-                  {confirmingCloseSeason ? (
-                    <div className="flex gap-2">
-                      <Button onClick={() => setConfirmingCloseSeason(false)} variant="outline" className="flex-1" disabled={busy}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleCloseSeason} variant="destructive" className="flex-1" disabled={busy}>
-                        {busy ? 'Ending...' : 'Confirm: end the season'}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button onClick={handleCloseSeason} variant="outline" className="w-full" disabled={entries.length === 0}>
-                      End the pot for the season
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {/* Season closed / settlement */}
+              {/* Season closed / settlement — visible to everyone, only the action button is admin-only */}
               {potSeason?.is_closed && (
-                <div className="bg-background/50 rounded-xl p-4 border border-border text-center">
+                <div className="bg-background/50 rounded-xl p-4 border border-border text-center mb-3">
                   <Crown size={28} className="text-primary mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground mb-3">Season pot closed — settle up based on each person's net below.</p>
                   {rolloverPool > 0 && (
@@ -625,10 +587,93 @@ export default function PotPanel() {
                       );
                     })}
                   </div>
-                  {member?.is_admin && (
+                  {isAdmin && (
                     <Button onClick={toggleSettled} variant={potSeason.settled ? 'outline' : 'default'} className="w-full">
                       {potSeason.settled ? 'Settled up ✓' : 'Mark settled'}
                     </Button>
+                  )}
+                </div>
+              )}
+
+              {/* ============================================================ */}
+              {/* Everything below this line is admin-only and never rendered  */}
+              {/* for regular players.                                         */}
+              {/* ============================================================ */}
+              {isAdmin && hasAdminWork && (
+                <div className="mt-4 pt-4 border-t-2 border-dashed border-border">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-3 flex items-center gap-1.5">
+                    <ShieldAlert size={13} /> Admin only — not visible to other players
+                  </p>
+
+                  {pendingContributions.length > 0 && (
+                    <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Awaiting cash — {pendingContributions.length}</p>
+                      <div className="space-y-2">
+                        {pendingContributions.map(c => (
+                          <div key={c.id} className="flex items-center justify-between">
+                            <span className="text-sm">{c.member_name} · ${c.amount}</span>
+                            <Button onClick={() => markContributionPaid(c)} size="sm" variant="outline">Mark paid</Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {unresolvedFinalized.length > 0 && (
+                    <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Ready to resolve</p>
+                      <div className="space-y-2">
+                        {unresolvedFinalized.map(w => (
+                          <div key={w.id} className="flex items-center justify-between">
+                            <span className="text-sm">GW{w.gameweek} · ${w.stake_amount * (w.bettor_ids || []).length} pot · {(w.bettor_ids || []).length} betting</span>
+                            <Button onClick={() => handleResolveWeek(w)} disabled={busy} size="sm">Resolve</Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {thisWeekBet?.bettor_ids?.length > 0 && !thisWeekBet.is_resolved && (
+                    <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                        Remove a bettor from GW{thisWeekBet.gameweek} — refunds their ${thisWeekBet.stake_amount} stake
+                      </p>
+                      <div className="space-y-1.5">
+                        {thisWeekBet.bettor_ids.map(bid => {
+                          const bettorEntry = entries.find(e => e.member_id === bid);
+                          return (
+                            <div key={bid} className="flex items-center justify-between">
+                              <span className="text-sm">{bettorEntry?.member_name || 'Unknown'}</span>
+                              <Button onClick={() => handleRemoveBettor(thisWeekBet, bid)} disabled={busy} size="sm" variant="outline">
+                                Remove & refund
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {potSeason && !potSeason.is_closed && (
+                    <div className="bg-background/50 rounded-xl p-3 border border-border">
+                      <p className="text-[11px] text-muted-foreground mb-2">
+                        Only for the very end of the season — stops betting for everyone and moves straight to final settlement. Can't be undone.
+                      </p>
+                      {confirmingCloseSeason ? (
+                        <div className="flex gap-2">
+                          <Button onClick={() => setConfirmingCloseSeason(false)} variant="outline" className="flex-1" disabled={busy}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleCloseSeason} variant="destructive" className="flex-1" disabled={busy}>
+                            {busy ? 'Ending...' : 'Confirm: end the season'}
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button onClick={handleCloseSeason} variant="outline" className="w-full" disabled={entries.length === 0}>
+                          End the pot for the season
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
