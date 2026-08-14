@@ -13,12 +13,14 @@ export default function PlayerCard({ player, stat, points, index, total, showPoi
   const yOffset = spread ? 0 : Math.abs(index - center) * 4;
   const pointsColor = points > 0 ? 'hsl(155 55% 20%)' : points < 0 ? 'hsl(355 65% 45%)' : INK_LIGHT;
   const pointsVisible = showPoints && spread;
+  const width = spread ? 60 : 88;
+  const badgeSize = spread ? 22 : 26;
 
   return (
     <div
-      className="relative rounded-xl shadow-md flex flex-col overflow-hidden"
+      className="relative rounded-xl shadow-md flex flex-col overflow-hidden shrink-0"
       style={{
-        width: '88px',
+        width: `${width}px`,
         height: spread ? '134px' : '124px',
         backgroundColor: 'hsl(43 35% 95%)',
         color: INK,
@@ -35,17 +37,17 @@ export default function PlayerCard({ player, stat, points, index, total, showPoi
         <span className="text-sm">{suit}</span>
       </div>
 
-      <div className="flex flex-col items-center justify-center flex-1 px-1.5 pt-5 pb-5">
-        <ClubBadge code={player.club_code} name={player.club} size={26} />
+      <div className="flex flex-col items-center justify-center flex-1 px-1 pt-5 pb-5">
+        <ClubBadge code={player.club_code} name={player.club} size={badgeSize} />
         <p className="text-[10px] font-bold text-center mt-1 truncate w-full" style={{ color: INK }}>
           {player.web_name}
         </p>
-        <p className="text-[8px] text-center" style={{ color: INK_LIGHT }}>
+        <p className="text-[8px] text-center truncate w-full" style={{ color: INK_LIGHT }}>
           {player.position} · {player.club_short}
         </p>
 
         <p
-          className="text-[12px] font-extrabold leading-none overflow-hidden"
+          className="text-[11px] font-extrabold leading-none overflow-hidden"
           style={{
             color: pointsColor,
             opacity: pointsVisible ? 1 : 0,
