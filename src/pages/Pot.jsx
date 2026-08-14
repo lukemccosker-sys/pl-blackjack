@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
+import { ensureDealerWeek } from '@/lib/dealer';
 import MemberAvatar from '@/components/MemberAvatar';
 import ClubBadge from '@/components/ClubBadge';
 import { Button } from '@/components/ui/button';
@@ -11,18 +12,6 @@ import { Coins, Check, Crown, Lock, Plus, TrendingUp, TrendingDown, Spade } from
 
 const REINVEST_AMOUNT = 20;
 const MIN_BUYIN = 20;
-const DEALER_HAND_SIZE = 5;
-
-function pickDealerHand(players) {
-  const pool = [...players];
-  const hand = [];
-  for (let i = 0; i < DEALER_HAND_SIZE && pool.length > 0; i++) {
-    const idx = Math.floor(Math.random() * pool.length);
-    hand.push(pool[idx].id);
-    pool.splice(idx, 1);
-  }
-  return hand;
-}
 
 export default function Pot() {
   const { member } = usePoolAuth();
@@ -77,20 +66,14 @@ export default function Pot() {
         setContributions(contribs);
         setEntries(potEntries);
 
-        // Deal the dealer's hand for the active gameweek if nobody has yet,
-        // as long as the pot exists and betting hasn't locked.
+        // Deal the dealer's hand for the active gameweek if nobody has yet.
+        // This no longer requires anyone to have joined the money pot.
         const weekLocked = isDeadlinePassed(active);
-        const existingWeek = weeks.find(w => w.gameweek === active.number);
-        if (season && !existingWeek && !weekLocked && allPlayers.length > 0) {
-          const dealerHand = pickDealerHand(allPlayers);
-          const created = await base44.entities.PotWeek.create({
-            season: currentSeason, gameweek: active.number, stake_amount: 0,
-            bettor_ids: [], dealer_player_ids: dealerHand, is_resolved: false,
-          });
-          setPotWeeks([...weeks, created]);
-        } else {
-          setPotWeeks(weeks);
-        }
+        const updatedWeeks = await ensureDealerWeek({
+          base44, season: currentSeason, gameweekNumber: active.number,
+          weekLocked, players: allPlayers, existingWeeks: weeks,
+        });
+        setPotWeeks(updatedWeeks);
       } else {
         setEntries([]);
         setPotWeeks([]);
@@ -249,7 +232,7 @@ export default function Pot() {
           pot_amount: weekPot, resolved_at: new Date().toISOString(),
         });
         setPotWeeks(prev => prev.map(w => (w.id === updatedWeek.id ? updatedWeek : w)));
-        if (weekPot > 0) {
+        if (weekPot > 0 && potSeason) {
           const updatedSeason = await base44.entities.PotSeason.update(potSeason.id, {
             rollover_pool: (potSeason.rollover_pool || 0) + weekPot,
           });
@@ -257,7 +240,7 @@ export default function Pot() {
         }
       } else {
         const winnerEntry = entries.find(e => e.member_id === topHuman.id);
-        const claimedRollover = potSeason.rollover_pool || 0;
+        const claimedRollover = potSeason?.rollover_pool || 0;
         const totalWin = weekPot + claimedRollover;
         const updatedWeek = await base44.entities.PotWeek.update(week.id, {
           is_resolved: true, dealer_score: dealerScore, house_won: false,
@@ -271,7 +254,7 @@ export default function Pot() {
           });
           setEntries(prev => prev.map(e => (e.id === updatedEntry.id ? updatedEntry : e)));
         }
-        if (claimedRollover > 0) {
+        if (claimedRollover > 0 && potSeason) {
           const updatedSeason = await base44.entities.PotSeason.update(potSeason.id, { rollover_pool: 0 });
           setPotSeason(updatedSeason);
         }
