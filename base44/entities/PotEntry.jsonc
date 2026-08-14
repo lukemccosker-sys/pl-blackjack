@@ -14,14 +14,15 @@
       "type": "string",
       "title": "Season"
     },
-    "amount": {
+    "balance": {
       "type": "number",
-      "title": "Amount"
+      "default": 0,
+      "title": "Balance"
     },
-    "paid_in": {
-      "type": "boolean",
-      "default": false,
-      "title": "Paid In"
+    "total_contributed": {
+      "type": "number",
+      "default": 0,
+      "title": "Total Contributed"
     },
     "joined_at": {
       "type": "string",
