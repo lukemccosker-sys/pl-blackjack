@@ -133,7 +133,7 @@ export default function PotPanel() {
   const standings = [...entries].sort((a, b) => b.balance - a.balance);
   const pendingContributions = contributions.filter(c => !c.paid_in);
 
-  const totalPotAmount = entries.reduce((sum, e) => sum + (e.total_contributed || 0), 0);
+  const totalPotAmount = (thisWeekBet?.stake_amount || 0) * (thisWeekBet?.bettor_ids?.length || 0) + rolloverPool;
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
   const thisWeekLeaderboard = weekLocked && thisWeekBet?.bettor_ids?.length > 0
     ? thisWeekBet.bettor_ids
@@ -432,13 +432,15 @@ export default function PotPanel() {
                 </button>
               )}
 
-              {/* Total pot — the headline number */}
+              {/* This week's pot — the headline number */}
               <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3 text-center">
-                <p className="text-xs uppercase tracking-wide text-primary/80 font-semibold">Total Pot</p>
+                <p className="text-xs uppercase tracking-wide text-primary/80 font-semibold">This Week's Pot</p>
                 <p className="text-4xl font-bold font-display text-primary mt-1">${totalPotAmount}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {entries.length} player{entries.length === 1 ? '' : 's'} in
-                  {rolloverPool > 0 && ` · $${rolloverPool} jackpot rolling`}
+                  {thisWeekBet?.bettor_ids?.length > 0
+                    ? `${thisWeekBet.bettor_ids.length} betting at $${thisWeekBet.stake_amount} each`
+                    : 'Nobody has bet yet this week'}
+                  {rolloverPool > 0 && ` · includes $${rolloverPool} jackpot`}
                 </p>
               </div>
 
