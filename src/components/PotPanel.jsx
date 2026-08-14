@@ -472,10 +472,10 @@ export default function PotPanel() {
                 </div>
               )}
 
-              {/* My bankroll */}
+              {/* My bankroll — the biggest, most prominent number in the panel */}
               {!myEntry ? (
-                <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Your Bankroll</p>
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3">
+                  <p className="text-xs uppercase tracking-wide text-primary/80 font-semibold mb-2">Your Bankroll</p>
                   <p className="text-sm mb-3">Buy in to get started — minimum ${MIN_BUYIN}.</p>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-muted-foreground">$</span>
@@ -486,12 +486,12 @@ export default function PotPanel() {
                   </Button>
                 </div>
               ) : (
-                <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Your Bankroll</p>
-                  <div className="flex items-center justify-between">
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3">
+                  <p className="text-xs uppercase tracking-wide text-primary/80 font-semibold mb-1">Your Bankroll</p>
+                  <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-2xl font-bold font-display text-primary">${myEntry.balance}</p>
-                      <p className="text-xs text-muted-foreground">available to bet</p>
+                      <p className="text-5xl font-bold font-display text-primary leading-none">${myEntry.balance}</p>
+                      <p className="text-xs text-muted-foreground mt-1.5">available to bet</p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-semibold">${myEntry.total_contributed}</p>
@@ -599,11 +599,15 @@ export default function PotPanel() {
                   <div className="space-y-2">
                     {standings.map((e, i) => {
                       const net = e.balance - e.total_contributed;
+                      const isMe = e.member_id === member?.id;
                       return (
-                        <div key={e.id} className="flex items-center gap-3 bg-background/50 rounded-lg p-2.5 border border-border">
+                        <div key={e.id} className={`flex items-center gap-3 rounded-lg p-2.5 border ${isMe ? 'bg-primary/10 border-primary/30' : 'bg-background/50 border-border'}`}>
                           <span className="text-sm text-muted-foreground w-4">{i + 1}</span>
                           <MemberAvatar member={allMembers.find(m => m.id === e.member_id)} size={28} />
-                          <span className="flex-1 text-sm font-medium truncate">{e.member_name}</span>
+                          <span className="flex-1 text-sm font-medium truncate">
+                            {e.member_name}
+                            {isMe && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
+                          </span>
                           <span className="text-sm font-bold">${e.balance}</span>
                           <span className={`text-xs flex items-center gap-0.5 w-16 justify-end ${net >= 0 ? 'text-primary' : 'text-destructive'}`}>
                             {net >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
