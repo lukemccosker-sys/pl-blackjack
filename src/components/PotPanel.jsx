@@ -667,7 +667,7 @@ export default function PotPanel() {
                       <div className="space-y-2">
                         {pendingContributions.map(c => (
                           <div key={c.id} className="flex items-center gap-2 justify-between">
-                            <span className="text-sm truncate">{c.member_name} · ${c.amount}</span>
+                            <span className="text-sm truncate flex-1 min-w-0">{c.member_name} · ${c.amount}</span>
                             <Button onClick={() => markContributionPaid(c)} size="sm" variant="outline" className="shrink-0">Mark paid</Button>
                           </div>
                         ))}
@@ -699,7 +699,7 @@ export default function PotPanel() {
                           const bettorEntry = entries.find(e => e.member_id === bid);
                           return (
                             <div key={bid} className="flex items-center gap-2 justify-between">
-                              <span className="text-sm truncate">{bettorEntry?.member_name || 'Unknown'}</span>
+                              <span className="text-sm truncate flex-1 min-w-0">{bettorEntry?.member_name || 'Unknown'}</span>
                               <Button onClick={() => handleRemoveBettor(thisWeekBet, bid)} disabled={busy} size="sm" variant="outline" className="shrink-0">
                                 Remove & refund
                               </Button>
