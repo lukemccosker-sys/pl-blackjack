@@ -380,7 +380,7 @@ export default function PotPanel() {
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4">
+        <div className="px-3 pb-4">
           {loading ? (
             <p className="text-center text-muted-foreground text-sm py-4">Loading...</p>
           ) : !currentSeason ? (
@@ -397,7 +397,7 @@ export default function PotPanel() {
               {thisWeekBet && dealerPlayerData.length > 0 && (
                 <button
                   onClick={() => setDealerExpanded(prev => !prev)}
-                  className="w-full text-left rounded-xl bg-background/50 border border-border mb-3 p-3"
+                  className="w-full text-left rounded-xl bg-background/50 border border-border mb-3 p-2"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
