@@ -1,0 +1,55 @@
+{
+  "name": "PotSeason",
+  "type": "object",
+  "properties": {
+    "season": {
+      "type": "string",
+      "title": "Season"
+    },
+    "stake_amount": {
+      "type": "number",
+      "default": 0,
+      "title": "Stake Amount"
+    },
+    "set_by_member_id": {
+      "type": "string",
+      "title": "Set By Member ID"
+    },
+    "set_by_member_name": {
+      "type": "string",
+      "title": "Set By Member Name"
+    },
+    "is_locked": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Locked"
+    },
+    "is_closed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Closed"
+    },
+    "winner_member_id": {
+      "type": "string",
+      "title": "Winner Member ID"
+    },
+    "winner_member_name": {
+      "type": "string",
+      "title": "Winner Member Name"
+    },
+    "winner_amount": {
+      "type": "number",
+      "title": "Winner Amount"
+    },
+    "payout_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Payout Confirmed"
+    },
+    "closed_at": {
+      "type": "string",
+      "title": "Closed At"
+    }
+  },
+  "required": []
+}
