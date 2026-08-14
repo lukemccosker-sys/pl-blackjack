@@ -94,6 +94,12 @@ export default function PotPanel() {
   const dealerHandPlayers = (thisWeekBet?.dealer_player_ids || []).map(id => players.find(p => p.id === id)).filter(Boolean);
   const rolloverPool = potSeason?.rollover_pool || 0;
 
+  const myContributions = contributions
+    .filter(c => c.member_id === member?.id)
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const myFirstContribution = myContributions[0];
+  const buyInConfirmed = myFirstContribution?.paid_in === true;
+
   const getPickScore = (memberId, gwNumber) => {
     const pick = allPicks.find(p => p.member_id === memberId && p.gameweek === gwNumber);
     if (!pick) return 0;
@@ -147,7 +153,7 @@ export default function PotPanel() {
   };
 
   const handleReinvest = async () => {
-    if (!myEntry) return;
+    if (!myEntry || myEntry.balance > 0) return;
     setBusy(true);
     try {
       const updated = await base44.entities.PotEntry.update(myEntry.id, {
@@ -168,7 +174,7 @@ export default function PotPanel() {
 
   const handlePlaceFirstBet = async () => {
     const amount = Number(weekStakeInput);
-    if (!amount || amount <= 0 || !myEntry || myEntry.balance < amount || !thisWeekBet) return;
+    if (!amount || amount <= 0 || !myEntry || !buyInConfirmed || myEntry.balance < amount || !thisWeekBet) return;
     setBusy(true);
     try {
       const updatedWeek = await base44.entities.PotWeek.update(thisWeekBet.id, {
@@ -186,7 +192,7 @@ export default function PotPanel() {
   };
 
   const handleJoinWeek = async () => {
-    if (!myEntry || !thisWeekBet || myEntry.balance < thisWeekBet.stake_amount) return;
+    if (!myEntry || !buyInConfirmed || !thisWeekBet || myEntry.balance < thisWeekBet.stake_amount) return;
     setBusy(true);
     try {
       const updatedWeek = await base44.entities.PotWeek.update(thisWeekBet.id, {
