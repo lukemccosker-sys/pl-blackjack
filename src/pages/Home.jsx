@@ -208,7 +208,7 @@ export default function Home() {
               <div key={entry.id} className={`flex items-center gap-3 p-2.5 rounded-xl ${i === 0 ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-card'}`}>
                 <span className={`w-5 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>{i + 1}</span>
                 <MemberAvatar member={members.find(m => m.id === entry.member_id)} size={28} />
-                <p className="flex-1 text-sm font-medium truncate">{entry.member_name}</p>
+                <p className="flex-1 min-w-0 text-sm font-medium truncate">{entry.member_name}</p>
                 <span className={`text-lg font-bold ${entry.isBust ? 'text-destructive' : 'text-primary'}`}>{entry.score}</span>
               </div>
             ))}
