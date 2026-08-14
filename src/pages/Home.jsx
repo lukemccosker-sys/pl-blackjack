@@ -161,27 +161,31 @@ export default function Home() {
             Make your picks
           </Link>
         ) : myPlayerData.length > 0 ? (
-          <>
+          <button onClick={() => toggleExpanded('mine')} className="w-full text-left">
             {/* Score header */}
             <div className="flex items-center justify-between bg-card rounded-xl p-3 mb-2">
               <p className="text-xs text-muted-foreground">Your total</p>
-              <div className="text-right">
+              <div className="flex items-center gap-1.5">
                 <span className={`text-2xl font-bold font-display ${myResult.isBust ? 'text-destructive' : 'text-primary'}`}>{myResult.score}</span>
-                <span className="text-xs text-muted-foreground ml-1">/ {threshold}</span>
+                <span className="text-xs text-muted-foreground">/ {threshold}</span>
+                <ChevronDown size={16} className={`text-muted-foreground transition-transform ${expandedIds.has('mine') ? 'rotate-180' : ''}`} />
               </div>
             </div>
 
             {/* Card hand */}
             <CardHand
               playerData={myPlayerData}
-              isBust={myResult.isBust}
-              isBlackjack={myResult.tier === 'blackjack'}
-              isNatural={myResult.isNatural}
+              isBust={expandedIds.has('mine') && myResult.isBust}
+              isBlackjack={expandedIds.has('mine') && myResult.tier === 'blackjack'}
+              isNatural={expandedIds.has('mine') && myResult.isNatural}
               threshold={threshold}
-              showPoints={locked}
-              spread
+              showPoints={expandedIds.has('mine') && locked}
+              spread={expandedIds.has('mine')}
             />
-          </>
+            {!expandedIds.has('mine') && (
+              <p className="text-center text-[10px] text-muted-foreground -mt-2">Tap for the breakdown</p>
+            )}
+          </button>
         ) : (
           <p className="text-center text-muted-foreground py-4 bg-card rounded-xl text-sm">No picks for this gameweek</p>
         )}
