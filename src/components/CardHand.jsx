@@ -5,8 +5,13 @@ export default function CardHand({ playerData, isBust, isBlackjack, isNatural, t
   return (
     <div className="relative py-6 overflow-hidden">
       <div
-        className="flex flex-nowrap justify-center items-center px-2 transition-[gap] duration-300 ease-out"
-        style={{ gap: spread ? '6px' : '0px', perspective: spread ? undefined : '800px' }}
+        className="flex flex-nowrap justify-center items-center transition-[gap,padding] duration-300 ease-out"
+        style={{
+          gap: spread ? '4px' : '0px',
+          paddingLeft: spread ? '4px' : '12px',
+          paddingRight: spread ? '4px' : '12px',
+          perspective: spread ? undefined : '800px',
+        }}
       >
         {playerData.map((data, i) => (
           <PlayerCard
