@@ -13,8 +13,8 @@ export default function PlayerCard({ player, stat, points, index, total, showPoi
   const yOffset = spread ? 0 : Math.abs(index - center) * 4;
   const pointsColor = points > 0 ? 'hsl(155 55% 20%)' : points < 0 ? 'hsl(355 65% 45%)' : INK_LIGHT;
   const pointsVisible = showPoints && spread;
-  const width = spread ? 60 : 68;
-  const badgeSize = spread ? 22 : 22;
+  const width = spread ? 50 : 68;
+  const badgeSize = spread ? 18 : 22;
   const overlap = spread ? 0 : (index === 0 ? 0 : '-40px');
 
   return (
