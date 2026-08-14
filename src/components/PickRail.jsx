@@ -23,10 +23,10 @@ export default function PickRail({ selectedPlayers, onRemove, onSave, saving, sa
             <>
               <button
                 onClick={() => onRemove(player)}
-                className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full w-4 h-4 flex items-center justify-center"
+                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center"
                 aria-label={`Remove ${player.web_name}`}
               >
-                <X size={10} />
+                <X size={12} />
               </button>
               <ClubBadge code={player.club_code} name={player.club} size={24} />
               <p className="text-[9px] font-medium text-center mt-1 leading-tight truncate w-full">
