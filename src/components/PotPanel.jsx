@@ -666,9 +666,9 @@ export default function PotPanel() {
                       <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Awaiting cash — {pendingContributions.length}</p>
                       <div className="space-y-2">
                         {pendingContributions.map(c => (
-                          <div key={c.id} className="flex items-center justify-between">
-                            <span className="text-sm">{c.member_name} · ${c.amount}</span>
-                            <Button onClick={() => markContributionPaid(c)} size="sm" variant="outline">Mark paid</Button>
+                          <div key={c.id} className="flex items-center gap-2 justify-between">
+                            <span className="text-sm truncate">{c.member_name} · ${c.amount}</span>
+                            <Button onClick={() => markContributionPaid(c)} size="sm" variant="outline" className="shrink-0">Mark paid</Button>
                           </div>
                         ))}
                       </div>
@@ -698,9 +698,9 @@ export default function PotPanel() {
                         {thisWeekBet.bettor_ids.map(bid => {
                           const bettorEntry = entries.find(e => e.member_id === bid);
                           return (
-                            <div key={bid} className="flex items-center justify-between">
-                              <span className="text-sm">{bettorEntry?.member_name || 'Unknown'}</span>
-                              <Button onClick={() => handleRemoveBettor(thisWeekBet, bid)} disabled={busy} size="sm" variant="outline">
+                            <div key={bid} className="flex items-center gap-2 justify-between">
+                              <span className="text-sm truncate">{bettorEntry?.member_name || 'Unknown'}</span>
+                              <Button onClick={() => handleRemoveBettor(thisWeekBet, bid)} disabled={busy} size="sm" variant="outline" className="shrink-0">
                                 Remove & refund
                               </Button>
                             </div>
