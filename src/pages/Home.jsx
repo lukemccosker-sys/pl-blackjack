@@ -7,6 +7,7 @@ import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/l
 import { ensureDealerWeek } from '@/lib/dealer';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
+import PotPanel from '@/components/PotPanel';
 import { Lock, Spade } from 'lucide-react';
 
 export default function Home() {
@@ -269,6 +270,11 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* The Pot */}
+      <div className="mb-6">
+        <PotPanel />
+      </div>
     </div>
   );
 }
