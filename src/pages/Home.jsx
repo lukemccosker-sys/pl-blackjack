@@ -205,7 +205,14 @@ export default function Home() {
       {/* Everyone's Picks + The Dealer, once locked */}
       {locked && (picksWithScores.length > 0 || dealerPlayerData.length > 0) && (
         <div>
-          <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Everyone's Picks</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Everyone's Picks</h2>
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+              gameweek.is_finalized ? 'bg-primary/20 text-primary' : 'bg-accent text-muted-foreground'
+            }`}>
+              {gameweek.is_finalized ? 'Final' : 'Live'}
+            </span>
+          </div>
           <div className="space-y-3">
             {dealerPlayerData.length > 0 && (
               <div className="rounded-xl bg-card ring-1 ring-primary/30 p-4">
@@ -229,10 +236,18 @@ export default function Home() {
               </div>
             )}
 
-            {picksWithScores.map(pick => (
-              <div key={pick.id} className="rounded-xl bg-card p-4">
+            {picksWithScores.map((pick, i) => (
+              <div
+                key={pick.id}
+                className={`rounded-xl p-4 ${
+                  pick.isBust ? 'bg-destructive/10 ring-2 ring-destructive' :
+                  i === 0 ? 'bg-card ring-1 ring-primary/40' :
+                  pick.member_id === member?.id ? 'bg-card ring-1 ring-primary/20' : 'bg-card'
+                }`}
+              >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
+                    <span className={`w-5 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>{i + 1}</span>
                     <MemberAvatar member={members.find(m => m.id === pick.member_id)} size={26} />
                     <span className="font-medium text-sm">
                       {pick.member_name}
