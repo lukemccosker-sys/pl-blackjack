@@ -8,7 +8,7 @@ import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Coins, Check, Crown, Lock, Plus, TrendingUp, TrendingDown, Spade, ChevronDown, ChevronUp, ShieldAlert } from 'lucide-react';
+import { Coins, Check, Crown, Lock, Plus, TrendingUp, TrendingDown, Spade, ChevronDown, ChevronUp, ShieldAlert, Trophy } from 'lucide-react';
 
 const REINVEST_AMOUNT = 20;
 const MIN_BUYIN = 20;
@@ -132,6 +132,18 @@ export default function PotPanel() {
   const resolvedWeeks = [...potWeeks].filter(w => w.is_resolved).sort((a, b) => b.gameweek - a.gameweek);
   const standings = [...entries].sort((a, b) => b.balance - a.balance);
   const pendingContributions = contributions.filter(c => !c.paid_in);
+
+  const totalPotAmount = entries.reduce((sum, e) => sum + (e.total_contributed || 0), 0);
+  const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
+  const thisWeekLeaderboard = weekLocked && thisWeekBet?.bettor_ids?.length > 0
+    ? thisWeekBet.bettor_ids
+        .map(id => ({
+          memberId: id,
+          name: entries.find(e => e.member_id === id)?.member_name || allMembers.find(m => m.id === id)?.name || 'Unknown',
+          score: getPickScore(id, active.number),
+        }))
+        .sort((a, b) => b.score - a.score)
+    : [];
 
   // --- Actions ---
 
@@ -418,6 +430,44 @@ export default function PotPanel() {
                     </p>
                   ) : null}
                 </button>
+              )}
+
+              {/* Total pot — the headline number */}
+              <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3 text-center">
+                <p className="text-xs uppercase tracking-wide text-primary/80 font-semibold">Total Pot</p>
+                <p className="text-4xl font-bold font-display text-primary mt-1">${totalPotAmount}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {entries.length} player{entries.length === 1 ? '' : 's'} in
+                  {rolloverPool > 0 && ` · $${rolloverPool} jackpot rolling`}
+                </p>
+              </div>
+
+              {/* This week's leaderboard — who's currently winning the bet */}
+              {thisWeekBet?.bettor_ids?.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2 px-1 flex items-center gap-1">
+                    <Trophy size={12} /> This Week's Leaderboard
+                  </p>
+                  {!weekLocked ? (
+                    <div className="bg-background/50 rounded-xl p-4 border border-border text-center">
+                      <p className="text-sm text-muted-foreground">Scores visible once picks lock</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {thisWeekLeaderboard.map((row, i) => (
+                        <div key={row.memberId} className="flex items-center gap-3 bg-background/50 rounded-lg p-2.5 border border-border">
+                          <span className={`w-4 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>{i + 1}</span>
+                          <MemberAvatar member={allMembers.find(m => m.id === row.memberId)} size={26} />
+                          <span className="flex-1 text-sm font-medium truncate">
+                            {row.name}
+                            {row.memberId === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
+                          </span>
+                          <span className="text-sm font-bold text-primary">{row.score}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* My bankroll */}
