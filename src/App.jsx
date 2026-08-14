@@ -14,7 +14,6 @@ import Picks from '@/pages/Picks';
 import Fixtures from '@/pages/Fixtures';
 import Leaderboard from '@/pages/Leaderboard';
 import Admin from '@/pages/Admin';
-import Live from '@/pages/Live';
 import Pot from '@/pages/Pot';
 import Settings from '@/pages/Settings';
 import Layout from '@/components/Layout';
@@ -52,7 +51,6 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Home />} />
         <Route path="/stats" element={<Stats />} />
         <Route path="/picks" element={<Picks />} />
-        <Route path="/live" element={<Live />} />
         <Route path="/fixtures" element={<Fixtures />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/pot" element={<Pot />} />
