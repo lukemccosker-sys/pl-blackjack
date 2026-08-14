@@ -179,7 +179,7 @@ export default function Home() {
               isBlackjack={expandedIds.has('mine') && myResult.tier === 'blackjack'}
               isNatural={expandedIds.has('mine') && myResult.isNatural}
               threshold={threshold}
-              showPoints={expandedIds.has('mine') && locked}
+              showPoints={expandedIds.has('mine')}
               spread={expandedIds.has('mine')}
             />
             {!expandedIds.has('mine') && (
