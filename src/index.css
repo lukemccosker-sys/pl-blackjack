@@ -144,6 +144,31 @@
   letter-spacing: 0.1em;
 }
 
+@keyframes nav-live-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px hsl(355 65% 45% / 0.65)); }
+  50% { filter: drop-shadow(0 0 7px hsl(355 65% 45% / 0.95)); }
+}
+
+@keyframes nav-live-dot {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(355 65% 45% / 0.7); opacity: 1; }
+  70% { box-shadow: 0 0 0 5px hsl(355 65% 45% / 0); opacity: 0.75; }
+}
+
+.nav-live-icon {
+  animation: nav-live-glow 1.6s ease-in-out infinite;
+}
+
+.nav-live-dot {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: hsl(355 65% 45%);
+  animation: nav-live-dot 1.6s ease-in-out infinite;
+}
+
 .natural-reveal {
   text-transform: uppercase;
   background: linear-gradient(
