@@ -1,0 +1,55 @@
+{
+  "name": "PotWeek",
+  "type": "object",
+  "properties": {
+    "season": {
+      "type": "string",
+      "title": "Season"
+    },
+    "gameweek": {
+      "type": "number",
+      "title": "Gameweek"
+    },
+    "stake_amount": {
+      "type": "number",
+      "title": "Stake Amount"
+    },
+    "set_by_member_id": {
+      "type": "string",
+      "title": "Set By Member ID"
+    },
+    "set_by_member_name": {
+      "type": "string",
+      "title": "Set By Member Name"
+    },
+    "bettor_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Bettor IDs"
+    },
+    "is_resolved": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Resolved"
+    },
+    "winner_member_id": {
+      "type": "string",
+      "title": "Winner Member ID"
+    },
+    "winner_member_name": {
+      "type": "string",
+      "title": "Winner Member Name"
+    },
+    "pot_amount": {
+      "type": "number",
+      "title": "Pot Amount"
+    },
+    "resolved_at": {
+      "type": "string",
+      "title": "Resolved At"
+    }
+  },
+  "required": []
+}
