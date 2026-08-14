@@ -29,6 +29,21 @@
       },
       "title": "Bettor IDs"
     },
+    "dealer_player_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Dealer's random 5 players"
+    },
+    "dealer_score": {
+      "type": "number",
+      "title": "Dealer Score"
+    },
+    "house_won": {
+      "type": "boolean",
+      "title": "House Won"
+    },
     "is_resolved": {
       "type": "boolean",
       "default": false,
