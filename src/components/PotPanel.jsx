@@ -30,6 +30,7 @@ export default function PotPanel() {
   const [buyInInput, setBuyInInput] = useState(String(MIN_BUYIN));
   const [weekStakeInput, setWeekStakeInput] = useState('10');
   const [busy, setBusy] = useState(false);
+  const [confirmingCloseSeason, setConfirmingCloseSeason] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -266,10 +267,20 @@ export default function PotPanel() {
   };
 
   const handleCloseSeason = async () => {
-    const updated = await base44.entities.PotSeason.update(potSeason.id, {
-      is_closed: true, closed_at: new Date().toISOString(),
-    });
-    setPotSeason(updated);
+    if (!confirmingCloseSeason) {
+      setConfirmingCloseSeason(true);
+      return;
+    }
+    setBusy(true);
+    try {
+      const updated = await base44.entities.PotSeason.update(potSeason.id, {
+        is_closed: true, closed_at: new Date().toISOString(),
+      });
+      setPotSeason(updated);
+    } finally {
+      setBusy(false);
+      setConfirmingCloseSeason(false);
+    }
   };
 
   const toggleSettled = async () => {
@@ -520,11 +531,27 @@ export default function PotPanel() {
                 </div>
               )}
 
-              {/* Admin: close season */}
+              {/* Admin: end the pot for the whole season */}
               {member?.is_admin && potSeason && !potSeason.is_closed && (
-                <Button onClick={handleCloseSeason} variant="outline" className="w-full" disabled={entries.length === 0}>
-                  Close season pot
-                </Button>
+                <div className="border-t border-border pt-3 mt-3">
+                  <p className="text-[11px] text-muted-foreground mb-2">
+                    Only for the very end of the season — this stops betting for everyone and moves straight to final settlement. Weekly results resolve automatically above; this is separate and can't be undone.
+                  </p>
+                  {confirmingCloseSeason ? (
+                    <div className="flex gap-2">
+                      <Button onClick={() => setConfirmingCloseSeason(false)} variant="outline" className="flex-1" disabled={busy}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCloseSeason} variant="destructive" className="flex-1" disabled={busy}>
+                        {busy ? 'Ending...' : 'Confirm: end the season'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button onClick={handleCloseSeason} variant="outline" className="w-full" disabled={entries.length === 0}>
+                      End the pot for the season
+                    </Button>
+                  )}
+                </div>
               )}
 
               {/* Season closed / settlement */}
