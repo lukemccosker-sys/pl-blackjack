@@ -13,8 +13,9 @@ export default function PlayerCard({ player, stat, points, index, total, showPoi
   const yOffset = spread ? 0 : Math.abs(index - center) * 4;
   const pointsColor = points > 0 ? 'hsl(155 55% 20%)' : points < 0 ? 'hsl(355 65% 45%)' : INK_LIGHT;
   const pointsVisible = showPoints && spread;
-  const width = spread ? 60 : 88;
-  const badgeSize = spread ? 22 : 26;
+  const width = spread ? 60 : 68;
+  const badgeSize = spread ? 22 : 22;
+  const overlap = spread ? 0 : (index === 0 ? 0 : '-40px');
 
   return (
     <div
@@ -25,7 +26,7 @@ export default function PlayerCard({ player, stat, points, index, total, showPoi
         backgroundColor: 'hsl(43 35% 95%)',
         color: INK,
         transform: `rotate(${rotation}deg) translateY(${yOffset}px)`,
-        marginLeft: spread ? 0 : (index === 0 ? 0 : '-52px'),
+        marginLeft: overlap,
         zIndex: index,
         transition: TRANSITION,
       }}
