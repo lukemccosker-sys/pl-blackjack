@@ -372,9 +372,14 @@ export default function PotPanel() {
                       <p className="text-lg font-semibold">${myEntry.total_contributed}</p>
                     </div>
                   </div>
-                  <Button onClick={handleReinvest} disabled={busy} variant="outline" size="sm" className="w-full mt-3">
+                  <Button onClick={handleReinvest} disabled={busy || myEntry.balance > 0} variant="outline" size="sm" className="w-full mt-3">
                     <Plus size={14} className="mr-1" /> Reinvest ${REINVEST_AMOUNT}
                   </Button>
+                  {myEntry.balance > 0 ? (
+                    <p className="text-[11px] text-muted-foreground text-center mt-1.5">Reinvest unlocks once your bankroll hits $0</p>
+                  ) : !buyInConfirmed ? (
+                    <p className="text-[11px] text-muted-foreground text-center mt-1.5">Waiting on admin to confirm your last buy-in before you can spend it</p>
+                  ) : null}
                 </div>
               )}
 
@@ -383,7 +388,13 @@ export default function PotPanel() {
                 <div className="bg-background/50 rounded-xl p-3 border border-border mb-3">
                   <p className="text-xs text-muted-foreground mb-2">Gameweek {active.number}</p>
 
-                  {thisWeekBet?.stake_amount === 0 && !weekLocked && (
+                  {!buyInConfirmed && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Lock size={14} /> Waiting on admin to confirm your ${myFirstContribution?.amount || MIN_BUYIN} buy-in before you can bet
+                    </p>
+                  )}
+
+                  {buyInConfirmed && thisWeekBet?.stake_amount === 0 && !weekLocked && (
                     <>
                       <p className="text-sm mb-3">No stake set for this week yet — name one and you're the first in.</p>
                       <div className="flex items-center gap-2 mb-3">
@@ -399,7 +410,7 @@ export default function PotPanel() {
                     </>
                   )}
 
-                  {thisWeekBet?.stake_amount > 0 && !weekLocked && !iBetThisWeek && (
+                  {buyInConfirmed && thisWeekBet?.stake_amount > 0 && !weekLocked && !iBetThisWeek && (
                     <>
                       <p className="text-sm mb-3">
                         This week's stake is <span className="font-semibold text-foreground">${thisWeekBet.stake_amount}</span>, set by {thisWeekBet.set_by_member_name}. You in?
@@ -413,19 +424,19 @@ export default function PotPanel() {
                     </>
                   )}
 
-                  {thisWeekBet?.stake_amount > 0 && iBetThisWeek && (
+                  {buyInConfirmed && thisWeekBet?.stake_amount > 0 && iBetThisWeek && (
                     <div className="flex items-center gap-2 text-sm text-primary">
                       <Check size={16} /> You're in this week for ${thisWeekBet.stake_amount} · {thisWeekBet.bettor_ids.length} betting · ${thisWeekBet.stake_amount * thisWeekBet.bettor_ids.length} pot
                     </div>
                   )}
 
-                  {thisWeekBet?.stake_amount === 0 && weekLocked && (
+                  {buyInConfirmed && thisWeekBet?.stake_amount === 0 && weekLocked && (
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Lock size={14} /> No bets placed this week
                     </p>
                   )}
 
-                  {thisWeekBet?.stake_amount > 0 && weekLocked && !thisWeekBet.is_resolved && (
+                  {buyInConfirmed && thisWeekBet?.stake_amount > 0 && weekLocked && !thisWeekBet.is_resolved && (
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Lock size={14} /> Locked · ${thisWeekBet.stake_amount * thisWeekBet.bettor_ids.length} pot · {thisWeekBet.bettor_ids.length} betting · resolves once the gameweek's finalized
                     </p>
