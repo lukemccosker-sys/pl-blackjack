@@ -61,11 +61,11 @@ export default function Fixtures() {
           {fixtures.map(f => (
             <div key={f.id} className="bg-card rounded-xl p-4">
               <div className="flex items-center gap-3">
-                <div className="flex-1 flex items-center justify-end gap-2">
-                  <span className="text-sm font-medium text-right">{f.home_team}</span>
+                <div className="flex-1 min-w-0 flex items-center justify-end gap-2">
+                  <span className="text-sm font-medium text-right truncate">{f.home_team}</span>
                   <ClubBadge code={f.home_team_code} name={f.home_team} size={32} />
                 </div>
-                <div className="flex flex-col items-center min-w-[60px]">
+                <div className="flex flex-col items-center min-w-[60px] shrink-0">
                   {f.finished ? (
                     <span className="text-lg font-bold">
                       {f.home_score} - {f.away_score}
@@ -88,9 +88,9 @@ export default function Fixtures() {
                     </>
                   )}
                 </div>
-                <div className="flex-1 flex items-center gap-2">
+                <div className="flex-1 min-w-0 flex items-center gap-2">
                   <ClubBadge code={f.away_team_code} name={f.away_team} size={32} />
-                  <span className="text-sm font-medium">{f.away_team}</span>
+                  <span className="text-sm font-medium truncate">{f.away_team}</span>
                 </div>
               </div>
               {hasMatchStats(f) && (
