@@ -24,6 +24,11 @@
       "type": "boolean",
       "default": false,
       "title": "Settled"
+    },
+    "rollover_pool": {
+      "type": "number",
+      "default": 0,
+      "title": "Rollover Pool (house winnings held for next human winner)"
     }
   },
   "required": []
