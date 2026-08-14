@@ -1,4 +1,4 @@
-export const DEALER_HAND_MIN = 2;
+export const DEALER_HAND_MIN = 3;
 export const DEALER_HAND_MAX = 5;
 
 export function pickDealerHand(players) {
