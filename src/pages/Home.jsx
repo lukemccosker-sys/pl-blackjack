@@ -363,6 +363,8 @@ export default function Home() {
                   { icon: '✨', title: 'Natural 21', text: `If a GK you picked scores a goal, it's a "Natural 21" — automatic blackjack.` },
                   { icon: '🤝', title: 'The Dealer', text: 'Each week the Dealer draws 5 random players. Beat the Dealer AND your mates to win the pot — ties go to the house.' },
                   { icon: '💰', title: 'Pot Rollover', text: 'If the Dealer beats everyone, the pot rolls over and stacks onto next week\'s pot. It keeps growing until someone takes it down.' },
+                  { icon: '💵', title: 'The Pot (Side Game)', text: 'The money pot is an optional side game — buy in, bet each week, and try to beat the Dealer and your mates to win the cash. Totally separate from the main competition.' },
+                  { icon: '🏆', title: 'Overall Leaderboard', text: 'Separate from the pot, there\'s a season-long leaderboard tracking everyone\'s gameweek scores. Hit the Leaderboard tab to see where you stack across the whole season.' },
                 ].map((r, i) => (
                   <div key={i} className="flex gap-3 bg-accent/40 rounded-lg p-3">
                     <span className="text-xl shrink-0">{r.icon}</span>
