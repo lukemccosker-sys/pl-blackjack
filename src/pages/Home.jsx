@@ -390,18 +390,18 @@ export default function Home() {
                   ].map((row, i) => (
                     <div key={i} className={`flex items-center justify-between px-3 py-2 text-sm ${i % 2 === 0 ? 'bg-card' : 'bg-accent/30'}`}>
                       <span className="text-muted-foreground">{row.label}</span>
-                      <span className={`font-bold font-display ${row.val < 0 ? 'text-destructive' : 'text-primary'}`}>{row.val > 0 ? '+' : ''}{row.val}</span>
+                      <span className={`font-bold font-display ${row.val < 0 ? 'text-yellow-400' : 'text-white'}`}>{row.val > 0 ? '+' : ''}{row.val}</span>
                     </div>
                   ))}
                 </div>
                 <div className="bg-primary/10 rounded-lg p-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Bust threshold</span>
-                    <span className="font-bold font-display text-primary">{threshold}</span>
+                    <span className="font-bold font-display text-white">{threshold}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Blackjack score</span>
-                    <span className="font-bold font-display text-primary">{threshold + (scoringConfig?.blackjack_bonus || 10)}</span>
+                    <span className="text-muted-foreground">Blackjack bonus</span>
+                    <span className="font-bold font-display text-white">+{scoringConfig?.blackjack_bonus || 10} pts</span>
                   </div>
                 </div>
               </div>
