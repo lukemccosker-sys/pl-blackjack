@@ -156,10 +156,10 @@ export default function Home() {
         </div>
         <button
           onClick={() => setInfoOpen(true)}
-          className="p-2.5 rounded-full bg-card ring-1 ring-border text-foreground hover:bg-accent transition-colors shrink-0"
-          aria-label="Rules and scoring info"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity shrink-0"
         >
-          <Info size={22} />
+          <Info size={18} />
+          Rules
         </button>
       </div>
 
