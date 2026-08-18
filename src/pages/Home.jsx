@@ -9,6 +9,7 @@ import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
 import { Lock, Spade, ChevronDown } from 'lucide-react';
+import InfoButton from '@/components/InfoButton';
 
 export default function Home() {
   const { member } = usePoolAuth();
@@ -147,9 +148,12 @@ export default function Home() {
 
   return (
     <div className="p-4 pb-20">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold font-heading">Home</h1>
-        <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
+      <div className="mb-4 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold font-heading">Home</h1>
+          <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
+        </div>
+        <InfoButton scoringConfig={scoringConfig} />
       </div>
 
       {/* My Picks */}
