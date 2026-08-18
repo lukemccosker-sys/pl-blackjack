@@ -8,7 +8,7 @@ import { ensureDealerWeek } from '@/lib/dealer';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
-import { Lock, Spade, ChevronDown } from 'lucide-react';
+import { Lock, Spade, ChevronDown, Info, X } from 'lucide-react';
 import InfoButton from '@/components/InfoButton';
 
 export default function Home() {
@@ -150,7 +150,7 @@ export default function Home() {
     <div className="p-4 pb-20">
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-heading">Home</h1>
+          <h1 className="text-2xl font-bold font-heading">Home ⓘ</h1>
           <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
         </div>
         <InfoButton scoringConfig={scoringConfig} />
