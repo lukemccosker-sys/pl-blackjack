@@ -9,7 +9,6 @@ import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
 import { Lock, Spade, ChevronDown, Info, X } from 'lucide-react';
-import InfoButton from '@/components/InfoButton';
 
 export default function Home() {
   const { member } = usePoolAuth();
@@ -23,6 +22,8 @@ export default function Home() {
   const [scoringConfig, setScoringConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedIds, setExpandedIds] = useState(() => new Set());
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoTab, setInfoTab] = useState('rules');
 
   const toggleExpanded = (id) => {
     setExpandedIds(prev => {
@@ -150,10 +151,16 @@ export default function Home() {
     <div className="p-4 pb-20">
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-heading">Home ⓘ</h1>
+          <h1 className="text-2xl font-bold font-heading">Home</h1>
           <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
         </div>
-        <InfoButton scoringConfig={scoringConfig} />
+        <button
+          onClick={() => setInfoOpen(true)}
+          className="p-2.5 rounded-full bg-card ring-1 ring-border text-foreground hover:bg-accent transition-colors shrink-0"
+          aria-label="Rules and scoring info"
+        >
+          <Info size={22} />
+        </button>
       </div>
 
       {/* My Picks */}
@@ -317,6 +324,91 @@ export default function Home() {
       <div className="mb-6">
         <PotPanel />
       </div>
+
+      {infoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setInfoOpen(false)}>
+          <div className="absolute inset-0 bg-black/80" />
+          <div
+            className="relative bg-background border border-border rounded-xl w-full max-w-md max-h-[85vh] overflow-y-auto p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-lg font-bold text-center flex-1">How PL Blackjack Works</h2>
+              <button onClick={() => setInfoOpen(false)} className="text-muted-foreground hover:text-foreground p-1">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setInfoTab('rules')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${infoTab === 'rules' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'}`}
+              >
+                Rules
+              </button>
+              <button
+                onClick={() => setInfoTab('scoring')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${infoTab === 'scoring' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'}`}
+              >
+                Scoring
+              </button>
+            </div>
+            {infoTab === 'rules' ? (
+              <div className="space-y-3">
+                {[
+                  { icon: '🎯', title: 'The Goal', text: `Pick 2–7 PL players each gameweek. Their combined stats aim to hit ${threshold} exactly — blackjack!` },
+                  { icon: '♠️', title: 'Card Positions', text: 'GK ♠, DEF ♦, MID ♣, FWD ♥.' },
+                  { icon: '🔒', title: 'Locking In', text: 'Picks lock at the gameweek deadline. After that, picks are revealed and scores update live.' },
+                  { icon: '💥', title: 'Bust', text: `Go over ${threshold} and you bust — your gameweek score is 0.` },
+                  { icon: '🃏', title: 'Blackjack', text: `Hit ${threshold} exactly and you score ${threshold + (scoringConfig?.blackjack_bonus || 10)}.` },
+                  { icon: '✨', title: 'Natural 21', text: `If a GK you picked scores a goal, it's a "Natural 21" — automatic blackjack.` },
+                  { icon: '🤝', title: 'The Dealer', text: 'Each week the Dealer draws 5 random players. Beat the Dealer to win the pot.' },
+                ].map((r, i) => (
+                  <div key={i} className="flex gap-3 bg-accent/40 rounded-lg p-3">
+                    <span className="text-xl shrink-0">{r.icon}</span>
+                    <div>
+                      <p className="font-medium text-sm">{r.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{r.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-lg overflow-hidden border border-border">
+                  {[
+                    { label: 'Goals (GK)', val: scoringConfig?.points_per_goal_gk ?? 10 },
+                    { label: 'Goals (DEF)', val: scoringConfig?.points_per_goal_def ?? 6 },
+                    { label: 'Goals (MID)', val: scoringConfig?.points_per_goal_mid ?? 5 },
+                    { label: 'Goals (FWD)', val: scoringConfig?.points_per_goal_fwd ?? 4 },
+                    { label: 'Assists', val: scoringConfig?.points_per_assist ?? 2 },
+                    { label: 'Clean Sheet (GK)', val: scoringConfig?.points_per_cleansheet_gk ?? 4 },
+                    { label: 'Clean Sheet (DEF)', val: scoringConfig?.points_per_cleansheet_def ?? 4 },
+                    { label: 'Clean Sheet (MID)', val: scoringConfig?.points_per_cleansheet_mid ?? 1 },
+                    { label: 'Appearance', val: scoringConfig?.points_per_appearance ?? 1 },
+                    { label: 'Yellow Card', val: scoringConfig?.points_per_yellow_card ?? 2 },
+                    { label: 'Red Card', val: scoringConfig?.points_per_red_card ?? 5 },
+                  ].map((row, i) => (
+                    <div key={i} className={`flex items-center justify-between px-3 py-2 text-sm ${i % 2 === 0 ? 'bg-card' : 'bg-accent/30'}`}>
+                      <span className="text-muted-foreground">{row.label}</span>
+                      <span className={`font-bold font-display ${row.val < 0 ? 'text-destructive' : 'text-primary'}`}>{row.val > 0 ? '+' : ''}{row.val}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-primary/10 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Bust threshold</span>
+                    <span className="font-bold font-display text-primary">{threshold}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Blackjack score</span>
+                    <span className="font-bold font-display text-primary">{threshold + (scoringConfig?.blackjack_bonus || 10)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
