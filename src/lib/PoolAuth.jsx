@@ -18,7 +18,15 @@ export function PoolAuthProvider({ children }) {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        setMember(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setMember(parsed);
+        // Re-fetch from DB to sync latest fields (especially profile_photo)
+        if (parsed.id) {
+          base44.entities.PoolMember.get(parsed.id).then(updated => {
+            setMember(updated);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          }).catch(() => {});
+        }
       } catch (e) {
         localStorage.removeItem(STORAGE_KEY);
       }
@@ -75,6 +83,7 @@ export function PoolAuthProvider({ children }) {
     } else {
       m = await base44.entities.PoolMember.create({
         name,
+        full_name: name,
         pin,
         is_admin: true,
       });
@@ -84,17 +93,18 @@ export function PoolAuthProvider({ children }) {
     return m;
   };
 
-  const register = async (name, pin) => {
+  const register = async (name, pin, fullName) => {
     const trimmed = name.trim();
     if (isAdminName(trimmed)) {
       throw new Error('This name is reserved. Use login instead.');
     }
     const existing = await base44.entities.PoolMember.filter({ name: trimmed });
     if (existing.length > 0) {
-      throw new Error('That name is already taken');
+      throw new Error('That username is already taken');
     }
     const m = await base44.entities.PoolMember.create({
       name: trimmed,
+      full_name: (fullName || '').trim(),
       pin: pin.trim(),
       is_admin: false,
     });

@@ -136,7 +136,7 @@ export default function Settings() {
       </section>
 
       <section className="bg-card rounded-xl p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Display Name</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Username</h2>
         <Input
           value={newName}
           onChange={(e) => { setNewName(e.target.value); setNameError(''); setNameSuccess(false); }}

@@ -10,6 +10,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [mode, setMode] = useState('login');
   const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,7 @@ export default function Login() {
       if (adminName || mode === 'login') {
         await login(name, pin);
       } else {
-        await register(name, pin);
+        await register(name, pin, fullName);
       }
       navigate('/');
     } catch (err) {
@@ -48,6 +49,7 @@ export default function Login() {
   const buttonText = adminName
     ? (adminSetup === false ? 'Set Admin PIN' : adminSetup === null ? 'Checking...' : 'Admin Login')
     : (mode === 'login' ? 'Login' : 'Register');
+  const isRegisterMode = !adminName && mode === 'register';
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
@@ -63,9 +65,15 @@ export default function Login() {
       </div>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+        {isRegisterMode && (
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">Full Name</label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Smith" disabled={loading} />
+          </div>
+        )}
         <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Name</label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" disabled={loading} />
+          <label className="text-sm text-muted-foreground mb-2 block">Username{isRegisterMode && ' (shows on leaderboard)'}</label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={isRegisterMode ? "Pick a username" : "Your username"} disabled={loading} />
         </div>
         <div>
           <label className="text-sm text-muted-foreground mb-2 block flex items-center gap-1">
@@ -80,7 +88,7 @@ export default function Login() {
           />
         </div>
         {error && <p className="text-destructive text-sm">{error}</p>}
-        <Button type="submit" className="w-full" disabled={loading || !name || !pin || (adminName && adminSetup === null)}>
+        <Button type="submit" className="w-full" disabled={loading || !name || !pin || (isRegisterMode && !fullName) || (adminName && adminSetup === null)}>
           {loading ? 'Please wait...' : buttonText}
         </Button>
         {!adminName && (

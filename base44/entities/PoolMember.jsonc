@@ -4,7 +4,11 @@
   "properties": {
     "name": {
       "type": "string",
-      "title": "Name"
+      "title": "Username"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
     },
     "pin": {
       "type": "string",
