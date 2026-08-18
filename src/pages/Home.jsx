@@ -359,7 +359,7 @@ export default function Home() {
                   { icon: '♠️', title: 'Card Positions', text: 'GK ♠, DEF ♦, MID ♣, FWD ♥.' },
                   { icon: '🔒', title: 'Locking In', text: 'Picks lock at the gameweek deadline. After that, picks are revealed and scores update live.' },
                   { icon: '💥', title: 'Bust', text: `Go over ${threshold} and you bust — your gameweek score is 0.` },
-                  { icon: '🃏', title: 'Blackjack', text: `Hit ${threshold} exactly and you score ${threshold + (scoringConfig?.blackjack_bonus || 10)}.` },
+                  { icon: '🃏', title: 'Blackjack', text: `Hit ${threshold} exactly for a Blackjack — that's +${scoringConfig?.blackjack_bonus || 10} bonus points on top of your score.` },
                   { icon: '✨', title: 'Natural 21', text: `If a GK you picked scores a goal, it's a "Natural 21" — automatic blackjack.` },
                   { icon: '🤝', title: 'The Dealer', text: 'Each week the Dealer draws 5 random players. Beat the Dealer AND your mates to win the pot — ties go to the house.' },
                   { icon: '💰', title: 'Pot Rollover', text: 'If the Dealer beats everyone, the pot rolls over and stacks onto next week\'s pot. It keeps growing until someone takes it down.' },
