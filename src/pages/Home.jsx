@@ -156,10 +156,10 @@ export default function Home() {
         </div>
         <button
           onClick={() => setInfoOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity shrink-0"
+          className="p-2 rounded-full bg-card ring-1 ring-border text-foreground hover:bg-accent transition-colors shrink-0 mr-10"
+          aria-label="Rules and scoring info"
         >
-          <Info size={18} />
-          Rules
+          <Info size={20} />
         </button>
       </div>
 
@@ -355,7 +355,7 @@ export default function Home() {
             {infoTab === 'rules' ? (
               <div className="space-y-3">
                 {[
-                  { icon: '🎯', title: 'The Goal', text: `Pick 2–7 PL players each gameweek. Their combined stats aim to hit ${threshold} exactly — blackjack!` },
+                  { icon: '🎯', title: 'The Goal', text: `Pick 2–5 PL players each gameweek. Their combined stats aim to hit ${threshold} exactly — blackjack!` },
                   { icon: '♠️', title: 'Card Positions', text: 'GK ♠, DEF ♦, MID ♣, FWD ♥.' },
                   { icon: '🔒', title: 'Locking In', text: 'Picks lock at the gameweek deadline. After that, picks are revealed and scores update live.' },
                   { icon: '💥', title: 'Bust', text: `Go over ${threshold} and you bust — your gameweek score is 0.` },
