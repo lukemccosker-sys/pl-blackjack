@@ -39,7 +39,7 @@ export default function InfoButton({ scoringConfig }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="p-1.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+        className="p-2 rounded-full bg-primary/20 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
         aria-label="Rules and scoring info"
       >
         <Info size={20} />
