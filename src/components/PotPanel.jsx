@@ -267,7 +267,7 @@ export default function PotPanel() {
       humanScores.sort((a, b) => b.score - a.score);
       const topHuman = humanScores[0];
       const weekPot = week.stake_amount * (week.bettor_ids || []).length;
-      const houseWon = !topHuman || dealerScore > topHuman.score;
+      const houseWon = !topHuman || dealerScore >= topHuman.score;
 
       if (houseWon) {
         const updatedWeek = await base44.entities.PotWeek.update(week.id, {

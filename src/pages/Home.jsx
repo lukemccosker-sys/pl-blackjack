@@ -361,7 +361,8 @@ export default function Home() {
                   { icon: '💥', title: 'Bust', text: `Go over ${threshold} and you bust — your gameweek score is 0.` },
                   { icon: '🃏', title: 'Blackjack', text: `Hit ${threshold} exactly and you score ${threshold + (scoringConfig?.blackjack_bonus || 10)}.` },
                   { icon: '✨', title: 'Natural 21', text: `If a GK you picked scores a goal, it's a "Natural 21" — automatic blackjack.` },
-                  { icon: '🤝', title: 'The Dealer', text: 'Each week the Dealer draws 5 random players. Beat the Dealer to win the pot.' },
+                  { icon: '🤝', title: 'The Dealer', text: 'Each week the Dealer draws 5 random players. Beat the Dealer AND your mates to win the pot — ties go to the house.' },
+                  { icon: '💰', title: 'Pot Rollover', text: 'If the Dealer beats everyone, the pot rolls over and stacks onto next week\'s pot. It keeps growing until someone takes it down.' },
                 ].map((r, i) => (
                   <div key={i} className="flex gap-3 bg-accent/40 rounded-lg p-3">
                     <span className="text-xl shrink-0">{r.icon}</span>
