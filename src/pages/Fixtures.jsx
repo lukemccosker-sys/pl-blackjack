@@ -98,7 +98,7 @@ export default function Fixtures() {
                     {gwStatus(gw)}
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-muted-foreground truncate">
+                    <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
                       {gw.deadline ? new Date(gw.deadline).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Deadline TBC'}
                     </span>
                     {gwFixtures.length > 0 && (
