@@ -68,7 +68,15 @@ export default function Fixtures() {
     return (
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-1">All Gameweeks</h1>
-        <p className="text-sm text-muted-foreground mb-4">{gameweeks.length} gameweeks synced</p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm text-muted-foreground">{gameweeks.length} gameweeks synced</p>
+          <button
+            onClick={() => setView('fixtures')}
+            className="flex items-center gap-1 text-xs text-primary font-medium bg-primary/10 px-2.5 py-1.5 rounded-full"
+          >
+            <ChevronLeft size={14} /> Back
+          </button>
+        </div>
 
         {gameweeks.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
