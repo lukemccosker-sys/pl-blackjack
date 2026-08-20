@@ -87,7 +87,6 @@ export default function Fixtures() {
             {gameweeks.map(gw => {
               const gwFixtures = allFixtures.filter(f => f.gameweek === gw.number);
               const finishedCount = gwFixtures.filter(f => f.finished).length;
-              const confirmed = isKickoffConfirmed(gw.deadline, gw.deadline);
               return (
                 <button
                   key={gw.id}
@@ -100,7 +99,7 @@ export default function Fixtures() {
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs text-muted-foreground truncate">
-                      {gw.deadline && confirmed ? new Date(gw.deadline).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Deadline TBC'}
+                      {gw.deadline ? new Date(gw.deadline).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Deadline TBC'}
                     </span>
                     {gwFixtures.length > 0 && (
                       <span className="text-xs text-muted-foreground shrink-0">{finishedCount}/{gwFixtures.length} played</span>
