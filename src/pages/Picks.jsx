@@ -97,7 +97,7 @@ export default function Picks() {
   const selectedPlayers = selectedIds.map(id => players.find(p => p.id === id)).filter(Boolean);
   const pickedStats = selectedPlayers.map(p => playerStats.find(s => s.player_id === p.id));
   const playerPoints = pickedStats.map(stat => calculatePlayerPoints(stat, scoringConfig));
-  const { isBust, tier, isNatural } = calculatePickTotal(playerPoints, scoringConfig, pickedStats);
+  const { isBust, tier, isNatural, score } = calculatePickTotal(playerPoints, scoringConfig, pickedStats);
   const playerData = selectedPlayers.map((p, i) => ({
     player: p,
     stat: playerStats.find(s => s.player_id === p.id),
@@ -145,8 +145,13 @@ export default function Picks() {
         <div className="mb-4">
           {playerData.length > 0 ? (
             <button onClick={() => setExpanded(prev => !prev)} className="w-full text-left">
-              <div className="flex items-center justify-end mb-2">
-                <ChevronDown size={16} className={`text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              <div className="flex items-center justify-between bg-card rounded-xl p-3 mb-2">
+                <p className="text-xs text-muted-foreground">Your total</p>
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-2xl font-bold font-display ${isBust ? 'text-destructive' : 'text-white'}`}>{score}</span>
+                  <span className="text-xs text-muted-foreground">/ {scoringConfig?.bust_threshold || 21}</span>
+                  <ChevronDown size={16} className={`text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                </div>
               </div>
               <CardHand
                 playerData={playerData}
