@@ -161,6 +161,7 @@ export default function Picks() {
                 threshold={scoringConfig?.bust_threshold || 21}
                 showPoints={true}
                 spread={expanded}
+                large={true}
               />
               {!expanded && (
                 <p className="text-center text-[10px] text-muted-foreground -mt-2">Tap to expand your picks</p>

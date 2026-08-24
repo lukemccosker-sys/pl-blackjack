@@ -1,7 +1,7 @@
 import React from 'react';
 import PlayerCard from '@/components/PlayerCard';
 
-export default function CardHand({ playerData, isBust, isBlackjack, isNatural, threshold, showPoints = true, spread = false }) {
+export default function CardHand({ playerData, isBust, isBlackjack, isNatural, threshold, showPoints = true, spread = false, large = false }) {
   return (
     <div className="relative py-6 overflow-hidden">
       <div
@@ -23,6 +23,7 @@ export default function CardHand({ playerData, isBust, isBlackjack, isNatural, t
             total={playerData.length}
             showPoints={showPoints}
             spread={spread}
+            large={large}
           />
         ))}
       </div>
