@@ -3,10 +3,9 @@ import { calculatePlayerPoints } from '@/lib/scoring';
 /**
  * Finds blackjack combinations of 3-5 players whose combined gameweek
  * points equal exactly the threshold. When no exact match exists for a
- * given size, falls back to the closest combination without busting so
- * the shuffle always has varying hand sizes.
+ * given size, falls back to the closest combination without busting.
  *
- * Pass `skip` to cycle through found combinations (for refresh).
+ * `skip` cycles strictly through sizes: 3 → 4 → 5 → 3 → 4 → 5 …
  */
 export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21, skip = 0) {
   const candidates = players
@@ -34,11 +33,12 @@ export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21,
     }
   }
 
-  const all = interleave(bySize);
-  if (all.length === 0) return null;
+  if (bySize.length === 0) return null;
 
-  const idx = skip % all.length;
-  return all[idx];
+  const sizeIndex = skip % bySize.length;
+  const combos = bySize[sizeIndex];
+  const comboIndex = Math.floor(skip / bySize.length) % combos.length;
+  return combos[comboIndex];
 }
 
 function findAllCombinations(pool, size, target) {
@@ -93,15 +93,4 @@ function findClosestUnder(pool, size, target) {
   }
 
   return best;
-}
-
-function interleave(arrays) {
-  const result = [];
-  const maxLen = Math.max(...arrays.map(a => a.length));
-  for (let i = 0; i < maxLen; i++) {
-    for (const arr of arrays) {
-      if (i < arr.length) result.push(arr[i]);
-    }
-  }
-  return result;
 }

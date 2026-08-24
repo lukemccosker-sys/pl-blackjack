@@ -299,8 +299,6 @@ export default function Home() {
                   </p>
                   <CardHand
                     playerData={teamOfTheWeek}
-                    isBlackjack={isExact}
-                    isNatural={false}
                     threshold={threshold}
                     showPoints={true}
                     spread={true}
