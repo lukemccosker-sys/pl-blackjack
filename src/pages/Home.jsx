@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { ensureDealerWeek } from '@/lib/dealer';
+import { findBlackjackTeam } from '@/lib/teamOfTheWeek';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
-import { Lock, Spade, ChevronDown, Info, X } from 'lucide-react';
+import { Lock, Spade, ChevronDown, Info, X, Sparkles } from 'lucide-react';
 
 export default function Home() {
   const { member } = usePoolAuth();
@@ -108,11 +109,16 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameweek]);
 
+  const locked = gameweek ? isDeadlinePassed(gameweek) : false;
+  const threshold = scoringConfig?.bust_threshold || 21;
+
+  const teamOfTheWeek = useMemo(() => {
+    if (!locked || !scoringConfig || players.length === 0 || playerStats.length === 0) return null;
+    return findBlackjackTeam(players, playerStats, scoringConfig, threshold);
+  }, [locked, scoringConfig, players, playerStats, threshold]);
+
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
   if (!gameweek) return <div className="p-6 text-center text-muted-foreground">No active gameweek yet.</div>;
-
-  const locked = isDeadlinePassed(gameweek);
-  const threshold = scoringConfig?.bust_threshold || 21;
 
   const myPlayerIds = myPick?.player_ids || [];
   const myPlayerData = myPlayerIds.map(id => {
@@ -316,6 +322,31 @@ export default function Home() {
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Team of the Week — a blackjack example */}
+      {locked && teamOfTheWeek && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <Sparkles size={12} /> Team of the Week
+            </h2>
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary/20 text-white">Blackjack</span>
+          </div>
+          <div className="rounded-xl bg-card ring-1 ring-primary/30 p-3">
+            <p className="text-xs text-muted-foreground text-center mb-1">
+              These {teamOfTheWeek.length} players would've hit {threshold} exactly
+            </p>
+            <CardHand
+              playerData={teamOfTheWeek}
+              isBlackjack={true}
+              isNatural={false}
+              threshold={threshold}
+              showPoints={true}
+              spread={true}
+            />
           </div>
         </div>
       )}
