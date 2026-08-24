@@ -1,11 +1,11 @@
 import { calculatePlayerPoints } from '@/lib/scoring';
 
 /**
- * Finds blackjack combinations of 3-5 players whose combined gameweek
- * points equal exactly the threshold. When no exact match exists for a
- * given size, falls back to the closest combination without busting.
+ * Finds blackjack combinations of 2-5 players whose combined gameweek
+ * points equal exactly the threshold. Only sizes with exact matches
+ * are included.
  *
- * `skip` cycles strictly through sizes: 3 → 4 → 5 → 3 → 4 → 5 …
+ * `skip` cycles through available sizes: e.g. 2 → 3 → 4 → 5 → 2 → 3 → 4 → 5 …
  */
 export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21, skip = 0) {
   const candidates = players
@@ -20,17 +20,11 @@ export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21,
 
   const pool = candidates.slice(0, 30);
 
-  // For each size, collect exact matches; if none, grab the closest-under.
   const bySize = [];
-  for (let size = 3; size <= 5; size++) {
+  for (let size = 2; size <= 5; size++) {
     if (pool.length < size) continue;
     const exact = findAllCombinations(pool, size, threshold);
-    if (exact.length > 0) {
-      bySize.push(exact);
-    } else {
-      const closest = findClosestToThreshold(pool, size, threshold);
-      if (closest) bySize.push([closest]);
-    }
+    if (exact.length > 0) bySize.push(exact);
   }
 
   if (bySize.length === 0) return null;
@@ -65,32 +59,4 @@ function findAllCombinations(pool, size, target) {
   }
 
   return results;
-}
-
-function findClosestToThreshold(pool, size, target) {
-  const n = pool.length;
-  if (n < size) return null;
-
-  let best = null;
-  let bestSum = -1;
-  const indices = Array.from({ length: size }, (_, i) => i);
-
-  while (true) {
-    const sum = indices.reduce((acc, idx) => acc + pool[idx].points, 0);
-    if (sum <= target && sum > bestSum) {
-      bestSum = sum;
-      best = indices.map(idx => pool[idx]);
-    }
-
-    let i = size - 1;
-    while (i >= 0 && indices[i] === n - size + i) i--;
-    if (i < 0) break;
-
-    indices[i]++;
-    for (let j = i + 1; j < size; j++) {
-      indices[j] = indices[j - 1] + 1;
-    }
-  }
-
-  return best;
 }
