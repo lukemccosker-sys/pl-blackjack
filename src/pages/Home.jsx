@@ -341,12 +341,14 @@ export default function Home() {
             </p>
             <CardHand
               playerData={teamOfTheWeek}
-              isBlackjack={true}
               isNatural={false}
               threshold={threshold}
               showPoints={true}
               spread={true}
             />
+            <p className="text-center font-display font-black text-2xl blackjack-reveal mt-2">
+              BLACKJACK
+            </p>
           </div>
         </div>
       )}
