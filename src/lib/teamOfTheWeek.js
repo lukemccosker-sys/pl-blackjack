@@ -22,15 +22,15 @@ export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21,
 
   const pool = candidates.slice(0, 30);
 
-  // Collect every valid combination across all sizes (3, 4, 5),
-  // then index into the combined list with `skip` so the shuffle
-  // can surface teams of different sizes.
-  const all = [];
+  // Collect valid combinations per size, then interleave them so
+  // consecutive shuffles cycle through different hand sizes.
+  const bySize = [];
   for (let size = 3; size <= 5; size++) {
     if (pool.length < size) continue;
-    all.push(...findAllCombinations(pool, size, threshold));
+    bySize.push(findAllCombinations(pool, size, threshold));
   }
 
+  const all = interleave(bySize);
   if (all.length === 0) return null;
 
   const idx = skip % all.length;
@@ -61,4 +61,15 @@ function findAllCombinations(pool, size, target) {
   }
 
   return results;
+}
+
+function interleave(arrays) {
+  const result = [];
+  const maxLen = Math.max(...arrays.map(a => a.length));
+  for (let i = 0; i < maxLen; i++) {
+    for (const arr of arrays) {
+      if (i < arr.length) result.push(arr[i]);
+    }
+  }
+  return result;
 }
