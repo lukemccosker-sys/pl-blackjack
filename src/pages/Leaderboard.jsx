@@ -81,12 +81,16 @@ export default function Leaderboard() {
   const currentSeasonGw = gameweeks.find(g => g.is_active) || gameweeks[gameweeks.length - 1];
   const currentSeason = currentSeasonGw?.season;
   const finalizedGws = gameweeks.filter(g => g.is_finalized && (!currentSeason || g.season === currentSeason));
+  // Include the active gameweek in season totals once its deadline has passed,
+  // so the season leaderboard reflects live (in-progress) scores.
+  const liveGws = gameweeks.filter(g => !g.is_finalized && g.is_active && isDeadlinePassed(g) && (!currentSeason || g.season === currentSeason));
+  const countedGws = [...finalizedGws, ...liveGws];
   const seasonTotals = allMembers.map(m => {
     let totalScore = 0;
     let busts = 0;
     let blackjacks = 0;
     let played = 0;
-    finalizedGws.forEach(gw => {
+    countedGws.forEach(gw => {
       const pick = allPicks.find(p => p.member_id === m.id && p.gameweek === gw.number && matchesSeason(p, gw.season));
       if (pick) {
         const s = getPickScore(pick);
@@ -199,6 +203,13 @@ export default function Leaderboard() {
         </>
       ) : (
         <div className="space-y-2">
+          {liveGws.length > 0 && (
+            <div className="flex items-center justify-end mb-2">
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-accent text-muted-foreground">
+                Live · In Progress
+              </span>
+            </div>
+          )}
           {seasonTotals.map((s, i) => (
             <div
               key={s.member.id}
