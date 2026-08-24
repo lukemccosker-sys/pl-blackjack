@@ -28,7 +28,7 @@ export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21,
     if (exact.length > 0) {
       bySize.push(exact);
     } else {
-      const closest = findClosestUnder(pool, size, threshold);
+      const closest = findClosestToThreshold(pool, size, threshold);
       if (closest) bySize.push([closest]);
     }
   }
@@ -67,18 +67,19 @@ function findAllCombinations(pool, size, target) {
   return results;
 }
 
-function findClosestUnder(pool, size, target) {
+function findClosestToThreshold(pool, size, target) {
   const n = pool.length;
   if (n < size) return null;
 
   let best = null;
-  let bestSum = -1;
+  let bestDiff = Infinity;
   const indices = Array.from({ length: size }, (_, i) => i);
 
   while (true) {
     const sum = indices.reduce((acc, idx) => acc + pool[idx].points, 0);
-    if (sum <= target && sum > bestSum) {
-      bestSum = sum;
+    const diff = Math.abs(sum - target);
+    if (diff < bestDiff) {
+      bestDiff = diff;
       best = indices.map(idx => pool[idx]);
     }
 
