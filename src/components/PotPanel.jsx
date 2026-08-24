@@ -3,12 +3,10 @@ import { base44 } from '@/api/base44Client';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
-import { ensureDealerWeek } from '@/lib/dealer';
 import MemberAvatar from '@/components/MemberAvatar';
-import CardHand from '@/components/CardHand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Coins, Check, Crown, Lock, Plus, TrendingUp, TrendingDown, Spade, ChevronDown, ChevronUp, ShieldAlert, Trophy } from 'lucide-react';
+import { Coins, Check, Crown, Lock, Plus, TrendingUp, TrendingDown, ChevronDown, ChevronUp, ShieldAlert, Trophy } from 'lucide-react';
 
 const REINVEST_AMOUNT = 20;
 const MIN_BUYIN = 20;
@@ -16,7 +14,6 @@ const MIN_BUYIN = 20;
 export default function PotPanel() {
   const { member } = usePoolAuth();
   const [expanded, setExpanded] = useState(false);
-  const [dealerExpanded, setDealerExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [gameweeks, setGameweeks] = useState([]);
   const [scoringConfig, setScoringConfig] = useState(null);
@@ -57,8 +54,7 @@ export default function PotPanel() {
       setPlayers(allPlayers);
       setAllPicks(picks);
       setAllStats(stats);
-      const season = potSeasons[0] || null;
-      setPotSeason(season);
+      setPotSeason(potSeasons[0] || null);
 
       if (currentSeason) {
         const [potEntries, weeks, contribs] = await Promise.all([
@@ -68,13 +64,7 @@ export default function PotPanel() {
         ]);
         setContributions(contribs);
         setEntries(potEntries);
-
-        const weekLocked = isDeadlinePassed(active);
-        const updatedWeeks = await ensureDealerWeek({
-          base44, season: currentSeason, gameweekNumber: active.number,
-          weekLocked, players: allPlayers, existingWeeks: weeks,
-        });
-        setPotWeeks(updatedWeeks);
+        setPotWeeks(weeks);
       } else {
         setEntries([]);
         setPotWeeks([]);
@@ -93,7 +83,6 @@ export default function PotPanel() {
   const thisWeekBet = currentSeason ? potWeeks.find(w => w.gameweek === active.number) : null;
   const weekLocked = active ? isDeadlinePassed(active) : false;
   const iBetThisWeek = thisWeekBet?.bettor_ids?.includes(member?.id);
-  const rolloverPool = potSeason?.rollover_pool || 0;
 
   const myContributions = contributions
     .filter(c => c.member_id === member?.id)
@@ -101,24 +90,10 @@ export default function PotPanel() {
   const myFirstContribution = myContributions[0];
   const buyInConfirmed = myFirstContribution?.paid_in === true;
 
-  const dealerPlayerData = (thisWeekBet?.dealer_player_ids || []).map(id => {
-    const player = players.find(p => p.id === id);
-    if (!player) return null;
-    const stat = allStats.find(s => s.player_id === id && s.gameweek === thisWeekBet.gameweek);
-    return { player, stat, points: calculatePlayerPoints(stat, scoringConfig) };
-  }).filter(Boolean);
-  const dealerResult = calculatePickTotal(dealerPlayerData.map(d => d.points), scoringConfig, dealerPlayerData.map(d => d.stat));
-
   const getPickScore = (memberId, gwNumber) => {
     const pick = allPicks.find(p => p.member_id === memberId && p.gameweek === gwNumber);
     if (!pick) return 0;
     const stats = (pick.player_ids || []).map(pid => allStats.find(s => s.player_id === pid && s.gameweek === gwNumber));
-    const points = stats.map(stat => calculatePlayerPoints(stat, scoringConfig));
-    return calculatePickTotal(points, scoringConfig, stats).score;
-  };
-
-  const getDealerScore = (week) => {
-    const stats = (week.dealer_player_ids || []).map(pid => allStats.find(s => s.player_id === pid && s.gameweek === week.gameweek));
     const points = stats.map(stat => calculatePlayerPoints(stat, scoringConfig));
     return calculatePickTotal(points, scoringConfig, stats).score;
   };
@@ -133,7 +108,7 @@ export default function PotPanel() {
   const standings = [...entries].sort((a, b) => b.balance - a.balance);
   const pendingContributions = contributions.filter(c => !c.paid_in);
 
-  const totalPotAmount = (thisWeekBet?.stake_amount || 0) * (thisWeekBet?.bettor_ids?.length || 0) + rolloverPool;
+  const totalPotAmount = (thisWeekBet?.stake_amount || 0) * (thisWeekBet?.bettor_ids?.length || 0);
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
   const thisWeekLeaderboard = weekLocked && thisWeekBet?.bettor_ids?.length > 0
     ? thisWeekBet.bettor_ids
@@ -231,8 +206,6 @@ export default function PotPanel() {
     }
   };
 
-  // Admin correction: pull a bettor back out of an unresolved week and refund their stake.
-  // If they were the only bettor, the week resets to unset so the stake can be renegotiated.
   const handleRemoveBettor = async (week, bettorMemberId) => {
     setBusy(true);
     try {
@@ -241,7 +214,7 @@ export default function PotPanel() {
       const wasLastBettor = remainingBettors.length === 0;
 
       const weekUpdate = wasLastBettor
-        ? { bettor_ids: [], stake_amount: 0, set_by_member_id: null, set_by_member_name: null }
+        ? { bettor_ids: [], stake_amount: !weekLocked && (week.stake_amount > 0 || (week.bettor_ids || []).length === 0) ? 0 : week.stake_amount, set_by_member_id: null, set_by_member_name: null }
         : { bettor_ids: remainingBettors };
       const updatedWeek = await base44.entities.PotWeek.update(week.id, weekUpdate);
       setPotWeeks(prev => prev.map(w => (w.id === updatedWeek.id ? updatedWeek : w)));
@@ -262,44 +235,24 @@ export default function PotPanel() {
   const handleResolveWeek = async (week) => {
     setBusy(true);
     try {
-      const dealerScore = getDealerScore(week);
       const humanScores = (week.bettor_ids || []).map(id => ({ id, score: getPickScore(id, week.gameweek) }));
       humanScores.sort((a, b) => b.score - a.score);
       const topHuman = humanScores[0];
       const weekPot = week.stake_amount * (week.bettor_ids || []).length;
-      const houseWon = !topHuman || dealerScore >= topHuman.score;
 
-      if (houseWon) {
-        const updatedWeek = await base44.entities.PotWeek.update(week.id, {
-          is_resolved: true, dealer_score: dealerScore, house_won: true,
-          pot_amount: weekPot, resolved_at: new Date().toISOString(),
-        });
-        setPotWeeks(prev => prev.map(w => (w.id === updatedWeek.id ? updatedWeek : w)));
-        if (weekPot > 0 && potSeason) {
-          const updatedSeason = await base44.entities.PotSeason.update(potSeason.id, {
-            rollover_pool: (potSeason.rollover_pool || 0) + weekPot,
-          });
-          setPotSeason(updatedSeason);
-        }
-      } else {
+      if (topHuman) {
         const winnerEntry = entries.find(e => e.member_id === topHuman.id);
-        const claimedRollover = potSeason?.rollover_pool || 0;
-        const totalWin = weekPot + claimedRollover;
         const updatedWeek = await base44.entities.PotWeek.update(week.id, {
-          is_resolved: true, dealer_score: dealerScore, house_won: false,
+          is_resolved: true, house_won: false,
           winner_member_id: topHuman.id, winner_member_name: winnerEntry?.member_name,
-          pot_amount: totalWin, resolved_at: new Date().toISOString(),
+          pot_amount: weekPot, resolved_at: new Date().toISOString(),
         });
         setPotWeeks(prev => prev.map(w => (w.id === updatedWeek.id ? updatedWeek : w)));
         if (winnerEntry) {
           const updatedEntry = await base44.entities.PotEntry.update(winnerEntry.id, {
-            balance: winnerEntry.balance + totalWin,
+            balance: winnerEntry.balance + weekPot,
           });
           setEntries(prev => prev.map(e => (e.id === updatedEntry.id ? updatedEntry : e)));
-        }
-        if (claimedRollover > 0 && potSeason) {
-          const updatedSeason = await base44.entities.PotSeason.update(potSeason.id, { rollover_pool: 0 });
-          setPotSeason(updatedSeason);
         }
       }
     } catch (err) {
@@ -369,11 +322,6 @@ export default function PotPanel() {
           <span className="font-medium text-sm">The Pot</span>
         </div>
         <div className="flex items-center gap-2">
-          {rolloverPool > 0 && (
-            <span className="text-xs font-semibold text-white bg-primary/10 px-2 py-0.5 rounded-full">
-              ${rolloverPool} jackpot
-            </span>
-          )}
           <span className="text-xs text-muted-foreground">{summaryLine}</span>
           {expanded ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
         </div>
@@ -390,47 +338,8 @@ export default function PotPanel() {
           ) : (
             <>
               <p className="text-muted-foreground text-xs mb-3">
-                Totally optional. Buy in for at least ${MIN_BUYIN}, bet whatever you like each week, and top up ${REINVEST_AMOUNT} anytime you run dry — just watch out for the dealer.
+                Totally optional. Buy in for at least ${MIN_BUYIN}, bet whatever you like each week, and top up ${REINVEST_AMOUNT} anytime you run dry — highest scorer takes the pot.
               </p>
-
-              {/* The dealer's hand for this week */}
-              {thisWeekBet && dealerPlayerData.length > 0 && (
-                <button
-                  onClick={() => setDealerExpanded(prev => !prev)}
-                  className="w-full text-left rounded-xl bg-background/50 border border-border mb-3 p-2"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <Spade size={14} className="text-white" />
-                      <span className="text-sm font-medium">The Dealer</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {thisWeekBet.is_resolved && (
-                        <span className={`text-sm font-bold ${thisWeekBet.house_won ? 'text-destructive' : 'text-white'}`}>
-                          {thisWeekBet.dealer_score}
-                        </span>
-                      )}
-                      <ChevronDown size={14} className={`text-muted-foreground transition-transform ${dealerExpanded ? 'rotate-180' : ''}`} />
-                    </div>
-                  </div>
-                  <CardHand
-                    playerData={dealerPlayerData}
-                    isBust={dealerExpanded && dealerResult.isBust}
-                    isBlackjack={dealerExpanded && dealerResult.tier === 'blackjack' && !dealerResult.isBust}
-                    isNatural={dealerExpanded && dealerResult.isNatural}
-                    threshold={scoringConfig?.bust_threshold || 21}
-                    showPoints={dealerExpanded}
-                    spread={dealerExpanded}
-                  />
-                  {!dealerExpanded ? (
-                    <p className="text-center text-[10px] text-muted-foreground -mt-2">Tap to see their hand</p>
-                  ) : thisWeekBet.is_resolved ? (
-                    <p className={`text-center text-xs font-medium -mt-1 ${thisWeekBet.house_won ? 'text-destructive' : 'text-white'}`}>
-                      {thisWeekBet.house_won ? 'The house won this week' : `Beaten by ${thisWeekBet.winner_member_name}`}
-                    </p>
-                  ) : null}
-                </button>
-              )}
 
               {/* This week's pot — the headline number */}
               <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3 text-center">
@@ -440,7 +349,6 @@ export default function PotPanel() {
                   {thisWeekBet?.bettor_ids?.length > 0
                     ? `${thisWeekBet.bettor_ids.length} betting at $${thisWeekBet.stake_amount} each`
                     : 'Nobody has bet yet this week'}
-                  {rolloverPool > 0 && ` · includes $${rolloverPool} jackpot`}
                 </p>
               </div>
 
@@ -472,7 +380,7 @@ export default function PotPanel() {
                 </div>
               )}
 
-              {/* My bankroll — the biggest, most prominent number in the panel */}
+              {/* My bankroll */}
               {!myEntry ? (
                 <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3">
                   <p className="text-xs uppercase tracking-wide text-white/80 font-semibold mb-2">Your Bankroll</p>
@@ -578,13 +486,9 @@ export default function PotPanel() {
                     {resolvedWeeks.map(w => (
                       <div key={w.id} className="flex items-center justify-between bg-background/50 rounded-lg p-2.5 border border-border text-sm">
                         <span className="text-muted-foreground">GW{w.gameweek}</span>
-                        {w.house_won ? (
-                          <span className="font-medium text-destructive flex items-center gap-1"><Spade size={12} /> House won</span>
-                        ) : (
-                          <span className="font-medium">{w.winner_member_name}</span>
-                        )}
-                        <span className={`font-bold ${w.house_won ? 'text-muted-foreground' : 'text-white'}`}>
-                          {w.house_won ? `+$${w.pot_amount} → jackpot` : `+$${w.pot_amount}`}
+                        <span className="font-medium">{w.winner_member_name}</span>
+                        <span className="font-bold text-white">
+                          +${w.pot_amount}
                         </span>
                       </div>
                     ))}
@@ -620,16 +524,11 @@ export default function PotPanel() {
                 </div>
               )}
 
-              {/* Season closed / settlement — visible to everyone, only the action button is admin-only */}
+              {/* Season closed / settlement */}
               {potSeason?.is_closed && (
                 <div className="bg-background/50 rounded-xl p-4 border border-border text-center mb-3">
                   <Crown size={28} className="text-white mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground mb-3">Season pot closed — settle up based on each person's net below.</p>
-                  {rolloverPool > 0 && (
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Note: ${rolloverPool} was still sitting unclaimed in the house jackpot when the pot closed.
-                    </p>
-                  )}
                   <div className="space-y-2 text-left mb-4">
                     {standings.map(e => {
                       const net = e.balance - e.total_contributed;
@@ -651,10 +550,7 @@ export default function PotPanel() {
                 </div>
               )}
 
-              {/* ============================================================ */}
-              {/* Everything below this line is admin-only and never rendered  */}
-              {/* for regular players.                                         */}
-              {/* ============================================================ */}
+              {/* Admin-only section */}
               {isAdmin && hasAdminWork && (
                 <div className="mt-4 pt-4 border-t-2 border-dashed border-border">
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-3 flex items-center gap-1.5">

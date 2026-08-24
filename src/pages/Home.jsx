@@ -4,12 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
-import { ensureDealerWeek } from '@/lib/dealer';
 import { findBlackjackTeam } from '@/lib/teamOfTheWeek';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
-import { Lock, Spade, ChevronDown, Info, X, Sparkles, RefreshCw } from 'lucide-react';
+import { Lock, ChevronDown, Info, X, Sparkles, RefreshCw } from 'lucide-react';
 
 export default function Home() {
   const { member } = usePoolAuth();
@@ -19,7 +18,6 @@ export default function Home() {
   const [playerStats, setPlayerStats] = useState([]);
   const [players, setPlayers] = useState([]);
   const [members, setMembers] = useState([]);
-  const [potWeek, setPotWeek] = useState(null);
   const [scoringConfig, setScoringConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedIds, setExpandedIds] = useState(() => new Set());
@@ -60,29 +58,16 @@ export default function Home() {
     }
   };
 
-  const reloadGwData = async (gw, playerList) => {
+  const reloadGwData = async (gw) => {
     const gwNumber = gw.number;
     const season = gw.season;
-    const [gwPicks, gwStats, weeks] = await Promise.all([
+    const [gwPicks, gwStats] = await Promise.all([
       base44.entities.Pick.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
       base44.entities.PlayerStat.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
-      season ? base44.entities.PotWeek.filter({ season }) : Promise.resolve([]),
     ]);
     setAllPicks(gwPicks);
     setPlayerStats(gwStats);
     setMyPick(gwPicks.find(p => p.member_id === member?.id) || null);
-
-    if (season) {
-      const updatedWeeks = await ensureDealerWeek({
-        base44, season, gameweekNumber: gwNumber,
-        weekLocked: isDeadlinePassed(gw),
-        players: playerList,
-        existingWeeks: weeks,
-      });
-      setPotWeek(updatedWeeks.find(w => w.gameweek === gwNumber) || null);
-    } else {
-      setPotWeek(null);
-    }
   };
 
   useEffect(() => { loadData(); }, []);
@@ -93,13 +78,13 @@ export default function Home() {
 
     const unsubPicks = base44.entities.Pick.subscribe(() => {
       clearTimeout(timer);
-      timer = setTimeout(() => reloadGwData(gameweek, players), 500);
+      timer = setTimeout(() => reloadGwData(gameweek), 500);
     });
     const unsubStats = base44.entities.PlayerStat.subscribe(() => {
       clearTimeout(timer);
-      timer = setTimeout(() => reloadGwData(gameweek, players), 500);
+      timer = setTimeout(() => reloadGwData(gameweek), 500);
     });
-    const pollInterval = setInterval(() => reloadGwData(gameweek, players), 5 * 60 * 1000);
+    const pollInterval = setInterval(() => reloadGwData(gameweek), 5 * 60 * 1000);
 
     return () => {
       unsubPicks();
@@ -142,15 +127,6 @@ export default function Home() {
   }).sort((a, b) => b.score - a.score);
 
   const leaderboard = picksWithScores.slice(0, 5);
-
-  const dealerPlayerIds = potWeek?.dealer_player_ids || [];
-  const dealerPlayerData = dealerPlayerIds.map(id => {
-    const player = players.find(p => p.id === id);
-    if (!player) return null;
-    const stat = playerStats.find(s => s.player_id === id);
-    return { player, stat, points: calculatePlayerPoints(stat, scoringConfig) };
-  }).filter(Boolean);
-  const dealerResult = calculatePickTotal(dealerPlayerData.map(d => d.points), scoringConfig, dealerPlayerData.map(d => d.stat));
 
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
 
@@ -235,8 +211,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* Everyone's Picks + The Dealer, once locked */}
-      {locked && (picksWithScores.length > 0 || dealerPlayerData.length > 0) && (
+      {/* Everyone's Picks, once locked */}
+      {locked && picksWithScores.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Everyone's Picks</h2>
@@ -247,41 +223,6 @@ export default function Home() {
             </span>
           </div>
           <div className="space-y-3">
-            {dealerPlayerData.length > 0 && (() => {
-              const dealerExpanded = expandedIds.has('dealer');
-              return (
-                <button
-                  onClick={() => toggleExpanded('dealer')}
-                  className="w-full text-left rounded-xl bg-card ring-1 ring-primary/30 p-3"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Spade size={18} className="text-primary" />
-                      <span className="font-medium text-sm">The Dealer</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-lg font-bold ${dealerResult.isBust ? 'text-destructive' : 'text-white'}`}>
-                        {dealerResult.score}
-                      </span>
-                      <ChevronDown size={16} className={`text-muted-foreground transition-transform ${dealerExpanded ? 'rotate-180' : ''}`} />
-                    </div>
-                  </div>
-                  <CardHand
-                    playerData={dealerPlayerData}
-                    isBust={dealerExpanded && dealerResult.isBust}
-                    isBlackjack={dealerExpanded && dealerResult.tier === 'blackjack' && !dealerResult.isBust}
-                    isNatural={dealerExpanded && dealerResult.isNatural}
-                    threshold={threshold}
-                    showPoints={dealerExpanded}
-                    spread={dealerExpanded}
-                  />
-                  {!dealerExpanded && (
-                    <p className="text-center text-[10px] text-muted-foreground mt-2">Tap for the breakdown</p>
-                  )}
-                </button>
-              );
-            })()}
-
             {picksWithScores.map((pick, i) => {
               const isExpanded = expandedIds.has(pick.id);
               return (
@@ -404,9 +345,7 @@ export default function Home() {
                   { icon: '💥', title: 'Bust', text: `Go over ${threshold} and you bust — your gameweek score is 0.` },
                   { icon: '🃏', title: 'Blackjack', text: `Hit ${threshold} exactly for a Blackjack — that's +${scoringConfig?.blackjack_bonus || 10} bonus points on top of your score.` },
                   { icon: '✨', title: 'Natural 21', text: `If a GK you picked scores a goal, it's a "Natural 21" — automatic blackjack.` },
-                  { icon: '🤝', title: 'The Dealer', text: 'Each week the Dealer draws 5 random players. Beat the Dealer AND your mates to win the pot — ties go to the house.' },
-                  { icon: '💰', title: 'Pot Rollover', text: 'If the Dealer beats everyone, the pot rolls over and stacks onto next week\'s pot. It keeps growing until someone takes it down.' },
-                  { icon: '💵', title: 'The Pot (Side Game)', text: 'The money pot is an optional side game — buy in, bet each week, and try to beat the Dealer and your mates to win the cash. Totally separate from the main competition.' },
+                  { icon: '💵', title: 'The Pot (Side Game)', text: 'The money pot is an optional side game — buy in, bet each week, and try to beat your mates to win the cash. Highest scorer takes the pot. Totally separate from the main competition.' },
                   { icon: '🏆', title: 'Overall Leaderboard', text: 'Separate from the pot, there\'s a season-long leaderboard tracking everyone\'s gameweek scores. Hit the Leaderboard tab to see where you stack across the whole season.' },
                 ].map((r, i) => (
                   <div key={i} className="flex gap-3 bg-accent/40 rounded-lg p-3">
