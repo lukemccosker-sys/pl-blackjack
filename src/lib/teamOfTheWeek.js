@@ -1,13 +1,12 @@
 import { calculatePlayerPoints } from '@/lib/scoring';
 
 /**
- * Finds a combination of 3-5 players whose combined gameweek points
- * equal exactly the threshold — a "blackjack" team of the week.
+ * Finds blackjack combinations of 3-5 players whose combined gameweek
+ * points equal exactly the threshold. When no exact match exists for a
+ * given size, falls back to the closest combination without busting so
+ * the shuffle always has varying hand sizes.
  *
- * Searches the top 30 scoring players (by gameweek points) for the
- * smallest combination (3, then 4, then 5) that sums to the target.
- *
- * Pass `skip` to skip the first N found combinations (for refresh).
+ * Pass `skip` to cycle through found combinations (for refresh).
  */
 export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21, skip = 0) {
   const candidates = players
@@ -22,12 +21,17 @@ export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21,
 
   const pool = candidates.slice(0, 30);
 
-  // Collect valid combinations per size, then interleave them so
-  // consecutive shuffles cycle through different hand sizes.
+  // For each size, collect exact matches; if none, grab the closest-under.
   const bySize = [];
   for (let size = 3; size <= 5; size++) {
     if (pool.length < size) continue;
-    bySize.push(findAllCombinations(pool, size, threshold));
+    const exact = findAllCombinations(pool, size, threshold);
+    if (exact.length > 0) {
+      bySize.push(exact);
+    } else {
+      const closest = findClosestUnder(pool, size, threshold);
+      if (closest) bySize.push([closest]);
+    }
   }
 
   const all = interleave(bySize);
@@ -61,6 +65,34 @@ function findAllCombinations(pool, size, target) {
   }
 
   return results;
+}
+
+function findClosestUnder(pool, size, target) {
+  const n = pool.length;
+  if (n < size) return null;
+
+  let best = null;
+  let bestSum = -1;
+  const indices = Array.from({ length: size }, (_, i) => i);
+
+  while (true) {
+    const sum = indices.reduce((acc, idx) => acc + pool[idx].points, 0);
+    if (sum <= target && sum > bestSum) {
+      bestSum = sum;
+      best = indices.map(idx => pool[idx]);
+    }
+
+    let i = size - 1;
+    while (i >= 0 && indices[i] === n - size + i) i--;
+    if (i < 0) break;
+
+    indices[i]++;
+    for (let j = i + 1; j < size; j++) {
+      indices[j] = indices[j - 1] + 1;
+    }
+  }
+
+  return best;
 }
 
 function interleave(arrays) {

@@ -287,19 +287,36 @@ export default function Home() {
             </div>
           </div>
           <div className="rounded-xl bg-card ring-1 ring-primary/30 p-3">
-            <p className="text-xs text-muted-foreground text-center mb-1">
-              These {teamOfTheWeek.length} players would've hit {threshold} exactly
-            </p>
-            <CardHand
-              playerData={teamOfTheWeek}
-              isNatural={false}
-              threshold={threshold}
-              showPoints={true}
-              spread={true}
-            />
-            <p className="text-center font-display font-black text-2xl blackjack-reveal mt-2">
-              BLACKJACK
-            </p>
+            {(() => {
+              const totwSum = teamOfTheWeek.reduce((acc, d) => acc + (d.points || 0), 0);
+              const isExact = totwSum === threshold;
+              return (
+                <>
+                  <p className="text-xs text-muted-foreground text-center mb-1">
+                    {isExact
+                      ? `These players would've hit ${threshold} exactly`
+                      : `Closest ${teamOfTheWeek.length}-card hand to ${threshold}`}
+                  </p>
+                  <CardHand
+                    playerData={teamOfTheWeek}
+                    isBlackjack={isExact}
+                    isNatural={false}
+                    threshold={threshold}
+                    showPoints={true}
+                    spread={true}
+                  />
+                  {isExact ? (
+                    <p className="text-center font-display font-black text-2xl blackjack-reveal mt-2">
+                      BLACKJACK
+                    </p>
+                  ) : (
+                    <p className="text-center font-display font-black text-2xl text-white mt-2">
+                      {totwSum} / {threshold}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
