@@ -365,12 +365,12 @@ export default function PotPanel() {
         className="w-full flex items-center justify-between p-4 text-left"
       >
         <div className="flex items-center gap-2">
-          <Coins size={18} className="text-primary" />
+          <Coins size={18} className="text-white" />
           <span className="font-medium text-sm">The Pot</span>
         </div>
         <div className="flex items-center gap-2">
           {rolloverPool > 0 && (
-            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-white bg-primary/10 px-2 py-0.5 rounded-full">
               ${rolloverPool} jackpot
             </span>
           )}
@@ -401,12 +401,12 @@ export default function PotPanel() {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
-                      <Spade size={14} className="text-primary" />
+                      <Spade size={14} className="text-white" />
                       <span className="text-sm font-medium">The Dealer</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       {thisWeekBet.is_resolved && (
-                        <span className={`text-sm font-bold ${thisWeekBet.house_won ? 'text-destructive' : 'text-primary'}`}>
+                        <span className={`text-sm font-bold ${thisWeekBet.house_won ? 'text-destructive' : 'text-white'}`}>
                           {thisWeekBet.dealer_score}
                         </span>
                       )}
@@ -425,7 +425,7 @@ export default function PotPanel() {
                   {!dealerExpanded ? (
                     <p className="text-center text-[10px] text-muted-foreground -mt-2">Tap to see their hand</p>
                   ) : thisWeekBet.is_resolved ? (
-                    <p className={`text-center text-xs font-medium -mt-1 ${thisWeekBet.house_won ? 'text-destructive' : 'text-primary'}`}>
+                    <p className={`text-center text-xs font-medium -mt-1 ${thisWeekBet.house_won ? 'text-destructive' : 'text-white'}`}>
                       {thisWeekBet.house_won ? 'The house won this week' : `Beaten by ${thisWeekBet.winner_member_name}`}
                     </p>
                   ) : null}
@@ -434,8 +434,8 @@ export default function PotPanel() {
 
               {/* This week's pot — the headline number */}
               <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3 text-center">
-                <p className="text-xs uppercase tracking-wide text-primary/80 font-semibold">This Week's Pot</p>
-                <p className="text-4xl font-bold font-display text-primary mt-1">${totalPotAmount}</p>
+                <p className="text-xs uppercase tracking-wide text-white/80 font-semibold">This Week's Pot</p>
+                <p className="text-4xl font-bold font-display text-white mt-1">${totalPotAmount}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {thisWeekBet?.bettor_ids?.length > 0
                     ? `${thisWeekBet.bettor_ids.length} betting at $${thisWeekBet.stake_amount} each`
@@ -464,7 +464,7 @@ export default function PotPanel() {
                             {row.name}
                             {row.memberId === member?.id && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
                           </span>
-                          <span className="text-sm font-bold text-primary">{row.score}</span>
+                          <span className="text-sm font-bold text-white">{row.score}</span>
                         </div>
                       ))}
                     </div>
@@ -475,7 +475,7 @@ export default function PotPanel() {
               {/* My bankroll — the biggest, most prominent number in the panel */}
               {!myEntry ? (
                 <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3">
-                  <p className="text-xs uppercase tracking-wide text-primary/80 font-semibold mb-2">Your Bankroll</p>
+                  <p className="text-xs uppercase tracking-wide text-white/80 font-semibold mb-2">Your Bankroll</p>
                   <p className="text-sm mb-3">Buy in to get started — minimum ${MIN_BUYIN}.</p>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-muted-foreground">$</span>
@@ -487,10 +487,10 @@ export default function PotPanel() {
                 </div>
               ) : (
                 <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-3">
-                  <p className="text-xs uppercase tracking-wide text-primary/80 font-semibold mb-1">Your Bankroll</p>
+                  <p className="text-xs uppercase tracking-wide text-white/80 font-semibold mb-1">Your Bankroll</p>
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-5xl font-bold font-display text-primary leading-none">${myEntry.balance}</p>
+                      <p className="text-5xl font-bold font-display text-white leading-none">${myEntry.balance}</p>
                       <p className="text-xs text-muted-foreground mt-1.5">available to bet</p>
                     </div>
                     <div className="text-right">
@@ -551,7 +551,7 @@ export default function PotPanel() {
                   )}
 
                   {buyInConfirmed && thisWeekBet?.stake_amount > 0 && iBetThisWeek && (
-                    <div className="flex items-center gap-2 text-sm text-primary">
+                    <div className="flex items-center gap-2 text-sm text-white">
                       <Check size={16} /> You're in for ${thisWeekBet.stake_amount} · {thisWeekBet.bettor_ids.length} betting · ${thisWeekBet.stake_amount * thisWeekBet.bettor_ids.length} pot
                     </div>
                   )}
@@ -583,7 +583,7 @@ export default function PotPanel() {
                         ) : (
                           <span className="font-medium">{w.winner_member_name}</span>
                         )}
-                        <span className={`font-bold ${w.house_won ? 'text-muted-foreground' : 'text-primary'}`}>
+                        <span className={`font-bold ${w.house_won ? 'text-muted-foreground' : 'text-white'}`}>
                           {w.house_won ? `+$${w.pot_amount} → jackpot` : `+$${w.pot_amount}`}
                         </span>
                       </div>
@@ -609,7 +609,7 @@ export default function PotPanel() {
                             {isMe && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
                           </span>
                           <span className="text-sm font-bold">${e.balance}</span>
-                          <span className={`text-xs flex items-center gap-0.5 w-16 justify-end ${net >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                          <span className={`text-xs flex items-center gap-0.5 w-16 justify-end ${net >= 0 ? 'text-white' : 'text-destructive'}`}>
                             {net >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                             {net >= 0 ? '+' : ''}{net}
                           </span>
@@ -623,7 +623,7 @@ export default function PotPanel() {
               {/* Season closed / settlement — visible to everyone, only the action button is admin-only */}
               {potSeason?.is_closed && (
                 <div className="bg-background/50 rounded-xl p-4 border border-border text-center mb-3">
-                  <Crown size={28} className="text-primary mx-auto mb-2" />
+                  <Crown size={28} className="text-white mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground mb-3">Season pot closed — settle up based on each person's net below.</p>
                   {rolloverPool > 0 && (
                     <p className="text-xs text-muted-foreground mb-3">
@@ -636,7 +636,7 @@ export default function PotPanel() {
                       return (
                         <div key={e.id} className="flex items-center justify-between text-sm">
                           <span>{e.member_name}</span>
-                          <span className={net >= 0 ? 'text-primary font-semibold' : 'text-destructive font-semibold'}>
+                          <span className={net >= 0 ? 'text-white font-semibold' : 'text-destructive font-semibold'}>
                             {net >= 0 ? `owed $${net}` : `owes $${Math.abs(net)}`}
                           </span>
                         </div>

@@ -56,7 +56,7 @@ export default function Fixtures() {
       return <span className="text-xs flex items-center gap-1 bg-primary text-white px-2 py-0.5 rounded-full shrink-0"><Check size={12} /> Final</span>;
     }
     if (gw.is_active) {
-      return <span className="text-xs flex items-center gap-1 text-primary font-medium shrink-0"><Star size={12} className="fill-primary" /> Active</span>;
+      return <span className="text-xs flex items-center gap-1 text-white font-medium shrink-0"><Star size={12} className="fill-primary" /> Active</span>;
     }
     if (isDeadlinePassed(gw)) {
       return <span className="text-xs text-muted-foreground flex items-center gap-1 shrink-0"><Lock size={12} /> Locked</span>;
@@ -72,7 +72,7 @@ export default function Fixtures() {
           <p className="text-sm text-muted-foreground">{gameweeks.length} gameweeks synced</p>
           <button
             onClick={() => setView('fixtures')}
-            className="flex items-center gap-1 text-xs text-primary font-medium bg-primary/10 px-2.5 py-1.5 rounded-full"
+            className="flex items-center gap-1 text-xs text-white font-medium bg-primary/10 px-2.5 py-1.5 rounded-full"
           >
             <ChevronLeft size={14} /> Back
           </button>
@@ -122,7 +122,7 @@ export default function Fixtures() {
         </h1>
         <button
           onClick={() => setView('all')}
-          className="flex items-center gap-1 text-xs text-primary font-medium bg-primary/10 px-2.5 py-1.5 rounded-full"
+          className="flex items-center gap-1 text-xs text-white font-medium bg-primary/10 px-2.5 py-1.5 rounded-full"
         >
           <List size={14} /> All Gameweeks
         </button>

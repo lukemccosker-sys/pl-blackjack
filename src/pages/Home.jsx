@@ -177,7 +177,7 @@ export default function Home() {
             <div className="flex items-center justify-between bg-card rounded-xl p-3 mb-2">
               <p className="text-xs text-muted-foreground">Your total</p>
               <div className="flex items-center gap-1.5">
-                <span className={`text-2xl font-bold font-display ${myResult.isBust ? 'text-destructive' : 'text-primary'}`}>{myResult.score}</span>
+                <span className={`text-2xl font-bold font-display ${myResult.isBust ? 'text-destructive' : 'text-white'}`}>{myResult.score}</span>
                 <span className="text-xs text-muted-foreground">/ {threshold}</span>
                 <ChevronDown size={16} className={`text-muted-foreground transition-transform ${expandedIds.has('mine') ? 'rotate-180' : ''}`} />
               </div>
@@ -220,10 +220,10 @@ export default function Home() {
                 <span className={`w-5 text-center font-bold text-sm ${medalColors[i] || 'text-muted-foreground'}`}>{i + 1}</span>
                 <MemberAvatar member={members.find(m => m.id === entry.member_id)} size={28} />
                 <p className="flex-1 min-w-0 text-sm font-medium truncate">{entry.member_name}</p>
-                <span className={`text-lg font-bold ${entry.isBust ? 'text-destructive' : 'text-primary'}`}>{entry.score}</span>
+                <span className={`text-lg font-bold ${entry.isBust ? 'text-destructive' : 'text-white'}`}>{entry.score}</span>
               </div>
             ))}
-            <Link to="/leaderboard" className="block text-center text-xs text-primary font-medium py-2">See full leaderboard →</Link>
+            <Link to="/leaderboard" className="block text-center text-xs text-white font-medium py-2">See full leaderboard →</Link>
           </div>
         )}
       </div>
@@ -234,7 +234,7 @@ export default function Home() {
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Everyone's Picks</h2>
             <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-              gameweek.is_finalized ? 'bg-primary/20 text-primary' : 'bg-accent text-muted-foreground'
+              gameweek.is_finalized ? 'bg-primary/20 text-white' : 'bg-accent text-muted-foreground'
             }`}>
               {gameweek.is_finalized ? 'Final' : 'Live'}
             </span>
@@ -253,7 +253,7 @@ export default function Home() {
                       <span className="font-medium text-sm">The Dealer</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-lg font-bold ${dealerResult.isBust ? 'text-destructive' : 'text-primary'}`}>
+                      <span className={`text-lg font-bold ${dealerResult.isBust ? 'text-destructive' : 'text-white'}`}>
                         {dealerResult.score}
                       </span>
                       <ChevronDown size={16} className={`text-muted-foreground transition-transform ${dealerExpanded ? 'rotate-180' : ''}`} />
@@ -297,7 +297,7 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-lg font-bold ${pick.isBust ? 'text-destructive' : 'text-primary'}`}>{pick.score}</span>
+                      <span className={`text-lg font-bold ${pick.isBust ? 'text-destructive' : 'text-white'}`}>{pick.score}</span>
                       <ChevronDown size={16} className={`text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>

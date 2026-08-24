@@ -97,7 +97,7 @@ export default function Stats() {
   return (
     <div className="p-4 pb-20">
       <div className="flex items-center gap-2 mb-4">
-        <BarChart3 className="text-primary" size={20} />
+        <BarChart3 className="text-white" size={20} />
         <div>
           <h1 className="text-2xl font-bold font-heading">Stats</h1>
           <p className="text-sm text-muted-foreground">

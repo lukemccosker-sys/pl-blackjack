@@ -159,7 +159,7 @@ export default function Leaderboard() {
             <div className="space-y-2">
               <div className="flex items-center justify-end mb-2">
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                  selectedGwObj?.is_finalized ? 'bg-primary/20 text-primary' : 'bg-accent text-muted-foreground'
+                  selectedGwObj?.is_finalized ? 'bg-primary/20 text-white' : 'bg-accent text-muted-foreground'
                 }`}>
                   {selectedGwObj?.is_finalized ? 'Final' : 'Live · In Progress'}
                 </span>
@@ -184,7 +184,7 @@ export default function Leaderboard() {
                           <AlertTriangle size={10} /> BUST · {score.total - (scoringConfig?.bust_threshold || 21)} pts over
                         </p>
                       ) : score.tier === 'blackjack' ? (
-                        <p className="text-xs text-primary font-semibold">BLACKJACK!</p>
+                        <p className="text-xs text-white font-semibold">BLACKJACK!</p>
                       ) : null}
                     </div>
                     <div className="text-right">

@@ -27,11 +27,11 @@ export default function PickSummary({
                 <AlertTriangle size={16} /> BUST
               </span>
             ) : tier === 'blackjack' ? (
-              <span className="text-primary text-sm font-bold tracking-wide">
+              <span className="text-white text-sm font-bold tracking-wide">
                 BLACKJACK!
               </span>
             ) : isFinalized ? (
-              <span className="flex items-center gap-1 text-primary text-sm font-medium">
+              <span className="flex items-center gap-1 text-white text-sm font-medium">
                 <Check size={16} /> Final
               </span>
             ) : isLocked ? (
@@ -57,7 +57,7 @@ export default function PickSummary({
               )}
               <span className="text-xs font-medium">{p.web_name}</span>
               {isFinalized && (
-                <span className={`text-xs font-bold ${playerPoints[i] > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
+                <span className={`text-xs font-bold ${playerPoints[i] > 0 ? 'text-white' : 'text-muted-foreground'}`}>
                   {playerPoints[i]}
                 </span>
               )}

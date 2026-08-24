@@ -95,10 +95,10 @@ export default function PlayerSearch({ players, selectedIds, onToggle, pointsByP
                       <p className="font-medium text-sm truncate">{p.web_name}</p>
                       <p className="text-xs text-muted-foreground">{p.position} · {p.club_short}</p>
                     </div>
-                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${pts > 0 ? 'bg-primary/15 text-primary' : 'text-muted-foreground/70'}`}>
+                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${pts > 0 ? 'bg-primary/15 text-white' : 'text-muted-foreground/70'}`}>
                       {pts} pt{pts === 1 ? '' : 's'}
                     </span>
-                    {isSelected && <Check className="text-primary" size={18} />}
+                    {isSelected && <Check className="text-white" size={18} />}
                   </button>
                 );
               })}
