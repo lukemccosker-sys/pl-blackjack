@@ -72,14 +72,13 @@ function findClosestToThreshold(pool, size, target) {
   if (n < size) return null;
 
   let best = null;
-  let bestDiff = Infinity;
+  let bestSum = -1;
   const indices = Array.from({ length: size }, (_, i) => i);
 
   while (true) {
     const sum = indices.reduce((acc, idx) => acc + pool[idx].points, 0);
-    const diff = Math.abs(sum - target);
-    if (diff < bestDiff) {
-      bestDiff = diff;
+    if (sum <= target && sum > bestSum) {
+      bestSum = sum;
       best = indices.map(idx => pool[idx]);
     }
 
