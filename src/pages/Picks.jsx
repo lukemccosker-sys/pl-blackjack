@@ -7,7 +7,7 @@ import PlayerSearch from '@/components/PlayerSearch';
 import PickSummary from '@/components/PickSummary';
 import PickRail from '@/components/PickRail';
 import CardHand from '@/components/CardHand';
-import { Lock, Clock } from 'lucide-react';
+import { Lock, Clock, ChevronDown } from 'lucide-react';
 
 export default function Picks() {
   const { member } = usePoolAuth();
@@ -21,6 +21,7 @@ export default function Picks() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -143,13 +144,23 @@ export default function Picks() {
       {locked && (
         <div className="mb-4">
           {playerData.length > 0 ? (
-            <CardHand
-              playerData={playerData}
-              isBust={isBust}
-              isBlackjack={tier === 'blackjack'}
-              isNatural={isNatural}
-              threshold={scoringConfig?.bust_threshold || 21}
-            />
+            <button onClick={() => setExpanded(prev => !prev)} className="w-full text-left">
+              <div className="flex items-center justify-end mb-2">
+                <ChevronDown size={16} className={`text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              </div>
+              <CardHand
+                playerData={playerData}
+                isBust={isBust}
+                isBlackjack={tier === 'blackjack'}
+                isNatural={isNatural}
+                threshold={scoringConfig?.bust_threshold || 21}
+                showPoints={true}
+                spread={expanded}
+              />
+              {!expanded && (
+                <p className="text-center text-[10px] text-muted-foreground -mt-2">Tap to expand your picks</p>
+              )}
+            </button>
           ) : (
             <p className="text-center text-muted-foreground py-8">No picks saved for this gameweek</p>
           )}
