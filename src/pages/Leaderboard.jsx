@@ -76,7 +76,13 @@ export default function Leaderboard() {
 
   const selectedGwObj = gameweeks.find(g => g.number === selectedGw);
   const gwPicks = allPicks.filter(p => p.gameweek === selectedGw && matchesSeason(p, selectedGwObj?.season));
-  const gwSorted = [...gwPicks].sort((a, b) => getPickScore(b).score - getPickScore(a).score);
+  const pickByMember = {};
+  gwPicks.forEach(p => { pickByMember[p.member_id] = p; });
+  const gwSorted = allMembers.map(m => {
+    const pick = pickByMember[m.id];
+    const score = getPickScore(pick);
+    return { member: m, pick, ...score };
+  }).sort((a, b) => b.score - a.score);
 
   const currentSeasonGw = gameweeks.find(g => g.is_active) || gameweeks[gameweeks.length - 1];
   const currentSeason = currentSeasonGw?.season;
@@ -164,40 +170,41 @@ export default function Leaderboard() {
                   {selectedGwObj?.is_finalized ? 'Final' : 'Live · In Progress'}
                 </span>
               </div>
-              {gwSorted.map((pick, i) => {
-                const score = getPickScore(pick);
-                return (
-                  <div
-                    key={pick.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl ${
-                      i === 0 ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-card'
-                    }`}
-                  >
-                    <span className={`w-8 text-center font-bold ${medalColors[i] || 'text-muted-foreground'}`}>
-                      {i + 1}
-                    </span>
-                    <MemberAvatar member={allMembers.find(m => m.id === pick.member_id)} size={32} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{pick.member_name}</p>
-                      {score.isBust ? (
+              {gwSorted.map((entry, i) => (
+                <div
+                  key={entry.member.id}
+                  className={`flex items-center gap-3 p-3 rounded-xl ${
+                    i === 0 ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-card'
+                  }`}
+                >
+                  <span className={`w-8 text-center font-bold ${medalColors[i] || 'text-muted-foreground'}`}>
+                    {i + 1}
+                  </span>
+                  <MemberAvatar member={entry.member} size={32} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{entry.member.name}</p>
+                    {entry.pick ? (
+                      entry.isBust ? (
                         <p className="text-xs text-destructive flex items-center gap-1">
-                          <AlertTriangle size={10} /> BUST · {score.total - (scoringConfig?.bust_threshold || 21)} pts over
+                          <AlertTriangle size={10} /> BUST · {entry.total - (scoringConfig?.bust_threshold || 21)} pts over
                         </p>
-                      ) : score.tier === 'blackjack' ? (
+                      ) : entry.tier === 'blackjack' ? (
                         <p className="text-xs text-white font-semibold">BLACKJACK!</p>
-                      ) : null}
-                    </div>
-                    <div className="text-right">
-                      <p className={`flex items-center justify-center min-w-[42px] h-10 px-3 rounded-full text-lg font-bold font-display shrink-0 ${score.isBust ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-white'}`}>
-                        {score.score}
-                      </p>
-                      {!score.isBust && score.total > 0 && (
-                        <p className="text-xs text-muted-foreground">{score.total} pts</p>
-                      )}
-                    </div>
+                      ) : null
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No picks made</p>
+                    )}
                   </div>
-                );
-              })}
+                  <div className="text-right">
+                    <p className={`flex items-center justify-center min-w-[42px] h-10 px-3 rounded-full text-lg font-bold font-display shrink-0 ${entry.isBust ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-white'}`}>
+                      {entry.score}
+                    </p>
+                    {entry.pick && !entry.isBust && entry.total > 0 && (
+                      <p className="text-xs text-muted-foreground">{entry.total} pts</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </>
