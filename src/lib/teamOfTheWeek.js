@@ -21,38 +21,33 @@ export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21,
     .sort((a, b) => b.points - a.points);
 
   const pool = candidates.slice(0, 30);
-  let found = 0;
 
+  // Collect every valid combination across all sizes (3, 4, 5),
+  // then index into the combined list with `skip` so the shuffle
+  // can surface teams of different sizes.
+  const all = [];
   for (let size = 3; size <= 5; size++) {
-    const result = findCombination(pool, size, threshold, skip, found);
-    if (result) return result;
+    if (pool.length < size) continue;
+    all.push(...findAllCombinations(pool, size, threshold));
   }
 
-  // If skip was too high, wrap around to the first combination
-  if (skip > 0) {
-    for (let size = 3; size <= 5; size++) {
-      const result = findCombination(pool, size, threshold, 0, 0);
-      if (result) return result;
-    }
-  }
+  if (all.length === 0) return null;
 
-  return null;
+  const idx = skip % all.length;
+  return all[idx];
 }
 
-function findCombination(pool, size, target, skip, foundOffset) {
+function findAllCombinations(pool, size, target) {
   const n = pool.length;
-  if (n < size) return null;
+  if (n < size) return [];
 
+  const results = [];
   const indices = Array.from({ length: size }, (_, i) => i);
-  let found = foundOffset;
 
   while (true) {
     const sum = indices.reduce((acc, idx) => acc + pool[idx].points, 0);
     if (sum === target) {
-      if (found >= skip) {
-        return indices.map(idx => pool[idx]);
-      }
-      found++;
+      results.push(indices.map(idx => pool[idx]));
     }
 
     let i = size - 1;
@@ -65,5 +60,5 @@ function findCombination(pool, size, target, skip, foundOffset) {
     }
   }
 
-  return null;
+  return results;
 }
