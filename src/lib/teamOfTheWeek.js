@@ -6,8 +6,10 @@ import { calculatePlayerPoints } from '@/lib/scoring';
  *
  * Searches the top 30 scoring players (by gameweek points) for the
  * smallest combination (3, then 4, then 5) that sums to the target.
+ *
+ * Pass `skip` to skip the first N found combinations (for refresh).
  */
-export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21) {
+export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21, skip = 0) {
   const candidates = players
     .map(p => {
       const stat = stats.find(s => s.player_id === p.id);
@@ -19,25 +21,38 @@ export function findBlackjackTeam(players, stats, scoringConfig, threshold = 21)
     .sort((a, b) => b.points - a.points);
 
   const pool = candidates.slice(0, 30);
+  let found = 0;
 
   for (let size = 3; size <= 5; size++) {
-    const result = findCombination(pool, size, threshold);
+    const result = findCombination(pool, size, threshold, skip, found);
     if (result) return result;
+  }
+
+  // If skip was too high, wrap around to the first combination
+  if (skip > 0) {
+    for (let size = 3; size <= 5; size++) {
+      const result = findCombination(pool, size, threshold, 0, 0);
+      if (result) return result;
+    }
   }
 
   return null;
 }
 
-function findCombination(pool, size, target) {
+function findCombination(pool, size, target, skip, foundOffset) {
   const n = pool.length;
   if (n < size) return null;
 
   const indices = Array.from({ length: size }, (_, i) => i);
+  let found = foundOffset;
 
   while (true) {
     const sum = indices.reduce((acc, idx) => acc + pool[idx].points, 0);
     if (sum === target) {
-      return indices.map(idx => pool[idx]);
+      if (found >= skip) {
+        return indices.map(idx => pool[idx]);
+      }
+      found++;
     }
 
     let i = size - 1;

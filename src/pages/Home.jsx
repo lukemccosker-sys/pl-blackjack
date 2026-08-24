@@ -9,7 +9,7 @@ import { findBlackjackTeam } from '@/lib/teamOfTheWeek';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
-import { Lock, Spade, ChevronDown, Info, X, Sparkles } from 'lucide-react';
+import { Lock, Spade, ChevronDown, Info, X, Sparkles, RefreshCw } from 'lucide-react';
 
 export default function Home() {
   const { member } = usePoolAuth();
@@ -25,6 +25,7 @@ export default function Home() {
   const [expandedIds, setExpandedIds] = useState(() => new Set());
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoTab, setInfoTab] = useState('rules');
+  const [totwSkip, setTotwSkip] = useState(0);
 
   const toggleExpanded = (id) => {
     setExpandedIds(prev => {
@@ -114,8 +115,8 @@ export default function Home() {
 
   const teamOfTheWeek = useMemo(() => {
     if (!locked || !scoringConfig || players.length === 0 || playerStats.length === 0) return null;
-    return findBlackjackTeam(players, playerStats, scoringConfig, threshold);
-  }, [locked, scoringConfig, players, playerStats, threshold]);
+    return findBlackjackTeam(players, playerStats, scoringConfig, threshold, totwSkip);
+  }, [locked, scoringConfig, players, playerStats, threshold, totwSkip]);
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
   if (!gameweek) return <div className="p-6 text-center text-muted-foreground">No active gameweek yet.</div>;
@@ -333,7 +334,16 @@ export default function Home() {
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
               <Sparkles size={12} /> Team of the Week
             </h2>
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary/20 text-white">Blackjack</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setTotwSkip(s => s + 1)}
+                className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-accent text-muted-foreground hover:bg-primary/20 hover:text-white transition-colors"
+                aria-label="Shuffle Team of the Week"
+              >
+                <RefreshCw size={12} /> Shuffle
+              </button>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary/20 text-white">Blackjack</span>
+            </div>
           </div>
           <div className="rounded-xl bg-card ring-1 ring-primary/30 p-3">
             <p className="text-xs text-muted-foreground text-center mb-1">
