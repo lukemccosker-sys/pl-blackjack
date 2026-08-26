@@ -4,13 +4,14 @@ import GameweekManager from '@/components/GameweekManager';
 import StatEditor from '@/components/StatEditor';
 import ScoringEditor from '@/components/ScoringEditor';
 import SyncPanel from '@/components/SyncPanel';
+import ReminderSettings from '@/components/ReminderSettings';
 import { useUrlState } from '@/lib/useUrlState';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 export default function Admin() {
   const { member } = usePoolAuth();
-  const [tab, setTab] = useUrlState('tab', ['gameweeks', 'stats', 'scoring', 'sync'], 'gameweeks');
+  const [tab, setTab] = useUrlState('tab', ['gameweeks', 'stats', 'scoring', 'sync', 'reminders'], 'gameweeks');
 
   if (!member?.is_admin) {
     return <div className="p-6 text-center text-muted-foreground">Admin access required</div>;
@@ -21,6 +22,7 @@ export default function Admin() {
     { key: 'stats', label: 'Stats' },
     { key: 'scoring', label: 'Scoring' },
     { key: 'sync', label: 'Sync' },
+    { key: 'reminders', label: 'Reminders' },
   ];
 
   return (
@@ -52,6 +54,7 @@ export default function Admin() {
       {tab === 'stats' && <StatEditor />}
       {tab === 'scoring' && <ScoringEditor />}
       {tab === 'sync' && <SyncPanel member={member} />}
+      {tab === 'reminders' && <ReminderSettings />}
     </div>
   );
 }
