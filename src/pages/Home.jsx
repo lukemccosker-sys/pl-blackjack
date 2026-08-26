@@ -128,6 +128,10 @@ export default function Home() {
 
   const leaderboard = picksWithScores.slice(0, 5);
 
+  const myRankIndex = picksWithScores.findIndex(p => p.member_id === member?.id);
+  const myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
+  const totalPlayers = members.length;
+
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
 
   return (
@@ -145,6 +149,33 @@ export default function Home() {
           <Info size={20} />
         </button>
       </div>
+
+      {/* My Stats */}
+      {myPick && (
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          <div className="bg-card rounded-xl p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Your Points</p>
+            <p className={`text-3xl font-bold font-display ${myResult.isBust ? 'text-destructive' : 'text-white'}`}>
+              {myResult.score}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">/ {threshold}</p>
+          </div>
+          <div className="bg-card rounded-xl p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Your Rank</p>
+            {locked && myRank ? (
+              <>
+                <p className="text-3xl font-bold font-display text-white">{myRank}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">of {totalPlayers}</p>
+              </>
+            ) : (
+              <>
+                <Lock className="text-muted-foreground mx-auto mb-1" size={20} />
+                <p className="text-xs text-muted-foreground">Live once locked</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* My Picks */}
       <div className="mb-6">
