@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
+import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { findBlackjackTeam } from '@/lib/teamOfTheWeek';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
-import { Lock, ChevronDown, Info, X, Sparkles, RefreshCw } from 'lucide-react';
+import { Lock, ChevronDown, Info, X, Sparkles, RefreshCw, Trophy } from 'lucide-react';
 
 export default function Home() {
   const { member } = usePoolAuth();
   const [gameweek, setGameweek] = useState(null);
+  const [gameweeks, setGameweeks] = useState([]);
+  const [seasonPicks, setSeasonPicks] = useState([]);
+  const [seasonStats, setSeasonStats] = useState([]);
   const [myPick, setMyPick] = useState(null);
   const [allPicks, setAllPicks] = useState([]);
   const [playerStats, setPlayerStats] = useState([]);
@@ -45,16 +48,37 @@ export default function Home() {
       const sorted = gws.sort((a, b) => a.number - b.number);
       const active = sorted.find(g => g.is_active) || sorted[sorted.length - 1];
       setGameweek(active);
+      setGameweeks(sorted);
       setScoringConfig(configs[0]);
       setPlayers(allPlayers);
       setMembers(allMembers);
       if (active) {
-        await reloadGwData(active, allPlayers);
+        await Promise.all([
+          reloadGwData(active, allPlayers),
+          loadSeasonData(sorted),
+        ]);
       }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Season-wide picks + stats, so Home can show a running season total and
+  // ladder position regardless of which gameweek we're up to. Mirrors the
+  // Season tab in Leaderboard.jsx.
+  const loadSeasonData = async (sortedGws) => {
+    try {
+      const activeGw = sortedGws.find(g => g.is_active) || sortedGws[sortedGws.length - 1];
+      const [picks, stats] = await Promise.all([
+        base44.entities.Pick.list('', 1000),
+        fetchAllPlayerStats(base44.entities, activeGw?.season),
+      ]);
+      setSeasonPicks(picks);
+      setSeasonStats(stats);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -76,15 +100,18 @@ export default function Home() {
     if (!gameweek) return;
     let timer = null;
 
-    const unsubPicks = base44.entities.Pick.subscribe(() => {
+    const refreshAll = () => {
+      reloadGwData(gameweek);
+      loadSeasonData(gameweeks.length ? gameweeks : [gameweek]);
+    };
+    const debouncedRefresh = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => reloadGwData(gameweek), 500);
-    });
-    const unsubStats = base44.entities.PlayerStat.subscribe(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => reloadGwData(gameweek), 500);
-    });
-    const pollInterval = setInterval(() => reloadGwData(gameweek), 5 * 60 * 1000);
+      timer = setTimeout(refreshAll, 500);
+    };
+
+    const unsubPicks = base44.entities.Pick.subscribe(debouncedRefresh);
+    const unsubStats = base44.entities.PlayerStat.subscribe(debouncedRefresh);
+    const pollInterval = setInterval(refreshAll, 5 * 60 * 1000);
 
     return () => {
       unsubPicks();
@@ -93,7 +120,7 @@ export default function Home() {
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameweek]);
+  }, [gameweek, gameweeks]);
 
   const locked = gameweek ? isDeadlinePassed(gameweek) : false;
   const threshold = scoringConfig?.bust_threshold || 21;
