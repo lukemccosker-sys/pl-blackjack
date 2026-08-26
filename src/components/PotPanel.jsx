@@ -275,7 +275,7 @@ export default function PotPanel() {
         try {
           const latest = await base44.entities.PotEntry.get(entry.id);
           if (latest && typeof latest.balance === 'number') currentBalance = latest.balance;
-        } catch (e) {
+        } catch {
           // fall back to the balance we already hold
         }
         const updatedEntry = await base44.entities.PotEntry.update(entry.id, {
