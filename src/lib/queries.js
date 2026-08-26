@@ -31,7 +31,7 @@ export const qk = {
   members: ['members'],
   fixtures: ['fixtures'],
   seasonStats: (season) => ['season-stats', season ?? null],
-  seasonPicks: (season) => ['season-picks', season ?? null],
+  picks: ['picks'],
 };
 
 export function useGameweeks() {
@@ -98,13 +98,16 @@ export function useSeasonStats(season, { enabled = true } = {}) {
   });
 }
 
-export function useSeasonPicks(season, { enabled = true } = {}) {
+/**
+ * Every pick, all seasons. It's a tiny table (members x gameweeks) and
+ * fetching the lot preserves the existing tolerance for picks that predate
+ * the season backfill — filtering server-side by season would silently drop
+ * any pick whose season field hasn't been populated yet.
+ */
+export function usePicks() {
   return useQuery({
-    queryKey: qk.seasonPicks(season),
-    queryFn: () => (season
-      ? base44.entities.Pick.filter({ season }, '', 5000)
-      : base44.entities.Pick.list('', 5000)),
-    enabled,
+    queryKey: qk.picks,
+    queryFn: () => base44.entities.Pick.list('', 5000),
     staleTime: MINUTE,
   });
 }
@@ -129,7 +132,7 @@ export function useEntitySync() {
 
     const unsubs = [
       base44.entities.PlayerStat.subscribe(invalidate([['season-stats']])),
-      base44.entities.Pick.subscribe(invalidate([['season-picks']])),
+      base44.entities.Pick.subscribe(invalidate([qk.picks])),
       base44.entities.Gameweek.subscribe(invalidate([qk.gameweeks])),
     ];
 
@@ -144,7 +147,7 @@ export function useEntitySync() {
 export function useRefreshLiveData() {
   const queryClient = useQueryClient();
   return () => {
-    queryClient.invalidateQueries({ queryKey: ['season-picks'] });
+    queryClient.invalidateQueries({ queryKey: qk.picks });
     queryClient.invalidateQueries({ queryKey: ['season-stats'] });
   };
 }
