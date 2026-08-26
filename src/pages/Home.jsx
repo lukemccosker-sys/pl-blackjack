@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
-import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
+import {
+  useActiveGameweek, useScoringConfig, usePlayers, useMembers, usePicks, useSeasonStats,
+} from '@/lib/queries';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { findBlackjackTeam } from '@/lib/teamOfTheWeek';
 import MemberAvatar from '@/components/MemberAvatar';
@@ -12,19 +13,24 @@ import Countdown from '@/components/Countdown';
 import PageHeader from '@/components/PageHeader';
 import { Lock, ChevronDown, Info, X, Sparkles, RefreshCw, Trophy } from 'lucide-react';
 
+// A pick "matches" a season if it's been backfilled and agrees, or hasn't been
+// backfilled yet — best effort, so nothing silently disappears before a sync.
+const matchesSeason = (pick, season) => !season || !pick.season || pick.season === season;
+
 export default function Home() {
   const { member } = usePoolAuth();
-  const [gameweek, setGameweek] = useState(null);
-  const [gameweeks, setGameweeks] = useState([]);
-  const [seasonPicks, setSeasonPicks] = useState([]);
-  const [seasonStats, setSeasonStats] = useState([]);
-  const [myPick, setMyPick] = useState(null);
-  const [allPicks, setAllPicks] = useState([]);
-  const [playerStats, setPlayerStats] = useState([]);
-  const [players, setPlayers] = useState([]);
-  const [members, setMembers] = useState([]);
-  const [scoringConfig, setScoringConfig] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  const { gameweeks, active: gameweek, isLoading: gwLoading } = useActiveGameweek();
+  const { data: scoringConfig } = useScoringConfig();
+  const { data: players = [] } = usePlayers();
+  const { data: members = [] } = useMembers();
+  const { data: seasonPicks = [] } = usePicks();
+  const { data: seasonStats = [], isPending: statsPending } = useSeasonStats(gameweek?.season, {
+    enabled: !gwLoading,
+  });
+
+  const loading = gwLoading || statsPending;
+
   const [expandedIds, setExpandedIds] = useState(() => new Set());
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoTab, setInfoTab] = useState('rules');
@@ -39,89 +45,17 @@ export default function Home() {
     });
   };
 
-  const loadData = async () => {
-    try {
-      const [gws, configs, allPlayers, allMembers] = await Promise.all([
-        base44.entities.Gameweek.list('number', 50),
-        base44.entities.ScoringConfig.filter({ is_active: true }),
-        fetchAllPlayers(base44.entities),
-        base44.entities.PoolMember.list('', 50),
-      ]);
-      const sorted = gws.sort((a, b) => a.number - b.number);
-      const active = sorted.find(g => g.is_active) || sorted[sorted.length - 1];
-      setGameweek(active);
-      setGameweeks(sorted);
-      setScoringConfig(configs[0]);
-      setPlayers(allPlayers);
-      setMembers(allMembers);
-      if (active) {
-        await Promise.all([
-          reloadGwData(active, allPlayers),
-          loadSeasonData(sorted),
-        ]);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Season-wide picks + stats, so Home can show a running season total and
-  // ladder position regardless of which gameweek we're up to. Mirrors the
-  // Season tab in Leaderboard.jsx.
-  const loadSeasonData = async (sortedGws) => {
-    try {
-      const activeGw = sortedGws.find(g => g.is_active) || sortedGws[sortedGws.length - 1];
-      const [picks, stats] = await Promise.all([
-        base44.entities.Pick.list('', 1000),
-        fetchAllPlayerStats(base44.entities, activeGw?.season),
-      ]);
-      setSeasonPicks(picks);
-      setSeasonStats(stats);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const reloadGwData = async (gw) => {
-    const gwNumber = gw.number;
-    const season = gw.season;
-    const [gwPicks, gwStats] = await Promise.all([
-      base44.entities.Pick.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
-      base44.entities.PlayerStat.filter(season ? { gameweek: gwNumber, season } : { gameweek: gwNumber }),
-    ]);
-    setAllPicks(gwPicks);
-    setPlayerStats(gwStats);
-    setMyPick(gwPicks.find(p => p.member_id === member?.id) || null);
-  };
-
-  useEffect(() => { loadData(); }, []);
-
-  useEffect(() => {
-    if (!gameweek) return;
-    let timer = null;
-
-    const refreshAll = () => {
-      reloadGwData(gameweek);
-      loadSeasonData(gameweeks.length ? gameweeks : [gameweek]);
-    };
-    const debouncedRefresh = () => {
-      clearTimeout(timer);
-      timer = setTimeout(refreshAll, 500);
-    };
-
-    const unsubPicks = base44.entities.Pick.subscribe(debouncedRefresh);
-    const unsubStats = base44.entities.PlayerStat.subscribe(debouncedRefresh);
-    const pollInterval = setInterval(refreshAll, 5 * 60 * 1000);
-
-    return () => {
-      unsubPicks();
-      unsubStats();
-      clearInterval(pollInterval);
-      clearTimeout(timer);
-    };
-  }, [gameweek, gameweeks]);
+  // This gameweek's picks and stats are just a slice of the season data that's
+  // already cached, so they're derived rather than fetched again.
+  const allPicks = useMemo(
+    () => seasonPicks.filter(p => p.gameweek === gameweek?.number && matchesSeason(p, gameweek?.season)),
+    [seasonPicks, gameweek]
+  );
+  const playerStats = useMemo(
+    () => seasonStats.filter(s => s.gameweek === gameweek?.number),
+    [seasonStats, gameweek]
+  );
+  const myPick = allPicks.find(p => p.member_id === member?.id) || null;
 
   const locked = gameweek ? isDeadlinePassed(gameweek) : false;
   const threshold = scoringConfig?.bust_threshold || 21;
@@ -132,7 +66,6 @@ export default function Home() {
   const seasonStanding = useMemo(() => {
     if (!scoringConfig || !member || gameweeks.length === 0 || members.length === 0) return null;
 
-    const matchesSeason = (pick, season) => !season || !pick.season || pick.season === season;
     const currentGw = gameweeks.find(g => g.is_active) || gameweeks[gameweeks.length - 1];
     const season = currentGw?.season;
     const countedGws = gameweeks.filter(g =>
