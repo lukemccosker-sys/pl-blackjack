@@ -143,6 +143,11 @@ export function buildFormIndex(stats, scoringConfig, upToGameweek, windowSize = 
   const index = {};
   if (!scoringConfig || typeof upToGameweek !== 'number') return index;
 
+  // How many gameweeks the window actually covers. This is the denominator for
+  // start rate — using the count of rows a player happens to have would give a
+  // single cameo a perfect 100% start rate and float it to the top of the list.
+  const windowGws = Math.max(1, Math.min(windowSize, Math.max(0, upToGameweek - 1)));
+
   const byPlayer = {};
   (stats || []).forEach(s => {
     if (!s || typeof s.gameweek !== 'number' || !s.player_id) return;
@@ -167,7 +172,8 @@ export function buildFormIndex(stats, scoringConfig, upToGameweek, windowSize = 
       minutes: rows.reduce((sum, r) => sum + (r.minutes || 0), 0),
       lastPoints: pts[0] ?? 0,
       lastGameweek: rows[0]?.gameweek ?? null,
-      startRate: rows.length ? appearances / rows.length : 0,
+      startRate: clamp(appearances / windowGws, 0, 1),
+      windowGws,
     };
   });
 
