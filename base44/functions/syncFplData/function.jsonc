@@ -1,0 +1,23 @@
+{
+  // Without this the sync only ever ran when an admin opened the Admin panel
+  // and pressed "Sync Now", so live gameweek scores sat frozen in between.
+  "name": "syncFplData",
+  "entry": "entry.ts",
+  "automations": [
+    {
+      "type": "scheduled",
+      "name": "fpl_auto_sync",
+      "description": "Pull players, fixtures and live stats from FPL every 30 minutes so scores update on their own during a gameweek.",
+      "schedule_mode": "recurring",
+      "schedule_type": "cron",
+      // Every 30 minutes, UTC. Matches often finish mid-window, so a score can
+      // lag by up to half an hour — drop to "*/15 * * * *" if that feels slow.
+      "cron_expression": "*/30 * * * *",
+      "is_active": true,
+      // entry.ts gates on an admin PoolMember id. This is Luke's member record;
+      // if that record is ever deleted or demoted the schedule stops working,
+      // so update this id if the admin changes.
+      "function_args": { "member_id": "6a603571061e8f7b61731b4e" }
+    }
+  ]
+}
