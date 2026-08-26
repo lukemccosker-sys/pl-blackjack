@@ -4,9 +4,12 @@ import { fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { AlertTriangle } from 'lucide-react';
 import MemberAvatar from '@/components/MemberAvatar';
+import PageHeader from '@/components/PageHeader';
+import SegmentedControl from '@/components/SegmentedControl';
+import { useUrlState } from '@/lib/useUrlState';
 
 export default function Leaderboard() {
-  const [tab, setTab] = useState('gameweek');
+  const [tab, setTab] = useUrlState('tab', ['gameweek', 'season'], 'gameweek');
   const [gameweeks, setGameweeks] = useState([]);
   const [selectedGw, setSelectedGw] = useState(null);
   const [allPicks, setAllPicks] = useState([]);
@@ -116,27 +119,19 @@ export default function Leaderboard() {
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold font-heading mb-4">Leaderboard</h1>
+    <div className="p-4 pb-20">
+      <PageHeader title="Leaderboard" />
 
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setTab('gameweek')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            tab === 'gameweek' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'
-          }`}
-        >
-          Gameweek
-        </button>
-        <button
-          onClick={() => setTab('season')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            tab === 'season' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'
-          }`}
-        >
-          Season
-        </button>
-      </div>
+      <SegmentedControl
+        ariaLabel="Leaderboard range"
+        value={tab}
+        onChange={setTab}
+        className="mb-4"
+        options={[
+          { value: 'gameweek', label: 'Gameweek' },
+          { value: 'season', label: 'Season' },
+        ]}
+      />
 
       {tab === 'gameweek' ? (
         <>
@@ -144,7 +139,8 @@ export default function Leaderboard() {
             <select
               value={selectedGw || ''}
               onChange={(e) => setSelectedGw(Number(e.target.value))}
-              className="w-full bg-accent rounded-lg px-3 py-2 mb-4 text-sm"
+              aria-label="Choose gameweek"
+              className="w-full bg-accent rounded-lg px-3 min-h-[44px] mb-4 text-sm"
             >
               {[...gameweeks].reverse().map(gw => (
                 <option key={gw.id} value={gw.number}>
