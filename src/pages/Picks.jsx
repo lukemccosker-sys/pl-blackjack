@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
+import {
+  useActiveGameweek, useScoringConfig, usePlayers, useFixtures, usePicks,
+  useSeasonStats, useRefreshLiveData,
+} from '@/lib/queries';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed, isGameweekFinished } from '@/lib/scoring';
 import { buildPickingContext, buildShortlist, filterFixturesToSeason } from '@/lib/playerForm';
 import PlayerSearch from '@/components/PlayerSearch';
@@ -11,59 +14,54 @@ import Countdown from '@/components/Countdown';
 import PageHeader from '@/components/PageHeader';
 import { Lock, ChevronDown } from 'lucide-react';
 
+// Tolerate picks that predate the season backfill.
+const matchesSeason = (pick, season) => !season || !pick.season || pick.season === season;
+
 export default function Picks() {
   const { member } = usePoolAuth();
-  const [gameweek, setGameweek] = useState(null);
-  const [scoringConfig, setScoringConfig] = useState(null);
-  const [players, setPlayers] = useState([]);
-  const [existingPick, setExistingPick] = useState(null);
-  const [playerStats, setPlayerStats] = useState([]);
-  const [seasonStats, setSeasonStats] = useState([]);
-  const [fixtures, setFixtures] = useState([]);
+
+  const { gameweeks, active: gameweek, isLoading: gwLoading } = useActiveGameweek();
+  const { data: scoringConfig } = useScoringConfig();
+  const { data: players = [] } = usePlayers();
+  const { data: allFixtures = [] } = useFixtures();
+  const { data: seasonPicks = [] } = usePicks();
+  const { data: seasonStats = [], isPending: statsPending } = useSeasonStats(gameweek?.season, {
+    enabled: !gwLoading,
+  });
+  const refreshLiveData = useRefreshLiveData();
+
+  const loading = gwLoading || statsPending;
+
   const [selectedIds, setSelectedIds] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [seeded, setSeeded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
+  const fixtures = useMemo(
+    () => filterFixturesToSeason(allFixtures, gameweeks, gameweek?.season),
+    [allFixtures, gameweeks, gameweek]
+  );
+  const playerStats = useMemo(
+    () => seasonStats.filter(s => s.gameweek === gameweek?.number),
+    [seasonStats, gameweek]
+  );
+  const existingPick = useMemo(
+    () => seasonPicks.find(p =>
+      p.member_id === member?.id &&
+      p.gameweek === gameweek?.number &&
+      matchesSeason(p, gameweek?.season)
+    ) || null,
+    [seasonPicks, member, gameweek]
+  );
 
-  const loadData = async () => {
-    try {
-      const [gws, configs, allPlayers] = await Promise.all([
-        base44.entities.Gameweek.list('number', 50),
-        base44.entities.ScoringConfig.filter({ is_active: true }),
-        fetchAllPlayers(base44.entities),
-      ]);
-      const sorted = gws.sort((a, b) => a.number - b.number);
-      const active = sorted.find(g => g.is_active) || sorted[sorted.length - 1];
-      setGameweek(active);
-      setScoringConfig(configs[0] || null);
-      setPlayers(allPlayers);
-      if (active && member) {
-        // Season-wide stats and fixtures power the form + fixture-difficulty
-        // suggestions and the projected total, so they're fetched here rather
-        // than only the current gameweek's slice.
-        const [picks, stats, allFixtures, seasonStatRows] = await Promise.all([
-          base44.entities.Pick.filter(active.season ? { member_id: member.id, gameweek: active.number, season: active.season } : { member_id: member.id, gameweek: active.number }),
-          base44.entities.PlayerStat.filter(active.season ? { gameweek: active.number, season: active.season } : { gameweek: active.number }),
-          base44.entities.Fixture.list('', 1000),
-          fetchAllPlayerStats(base44.entities, active.season),
-        ]);
-        if (picks.length > 0) {
-          setExistingPick(picks[0]);
-          setSelectedIds(picks[0].player_ids || []);
-        }
-        setPlayerStats(stats);
-        setSeasonStats(seasonStatRows);
-        setFixtures(filterFixturesToSeason(allFixtures, sorted, active.season));
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Seed the selection from a saved pick exactly once, so a later cache
+  // refresh can't wipe out choices made since.
+  useEffect(() => {
+    if (seeded || loading) return;
+    setSelectedIds(existingPick?.player_ids || []);
+    setSeeded(true);
+  }, [seeded, loading, existingPick]);
 
   // Form + fixture difficulty for every player, and the ranked shortlist that
   // fronts the picker. Hooks must sit above the early returns below.
@@ -110,9 +108,9 @@ export default function Picks() {
       if (existingPick) {
         await base44.entities.Pick.update(existingPick.id, pickData);
       } else {
-        const created = await base44.entities.Pick.create(pickData);
-        setExistingPick(created);
+        await base44.entities.Pick.create(pickData);
       }
+      refreshLiveData();
       setSaved(true);
     } catch (err) {
       console.error(err);
