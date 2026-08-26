@@ -243,7 +243,7 @@ export default function PotPanel() {
       if (topHuman) {
         const winnerEntry = entries.find(e => e.member_id === topHuman.id);
         const updatedWeek = await base44.entities.PotWeek.update(week.id, {
-          is_resolved: true, house_won: false,
+          is_resolved: true,
           winner_member_id: topHuman.id, winner_member_name: winnerEntry?.member_name,
           pot_amount: weekPot, resolved_at: new Date().toISOString(),
         });
