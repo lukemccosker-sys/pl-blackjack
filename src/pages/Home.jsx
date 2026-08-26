@@ -125,6 +125,67 @@ export default function Home() {
   const locked = gameweek ? isDeadlinePassed(gameweek) : false;
   const threshold = scoringConfig?.bust_threshold || 21;
 
+  // Running season total + ladder position for the logged-in member. Counts
+  // every finalized gameweek this season, plus the active one once its
+  // deadline has passed (so it goes live mid-week), matching Leaderboard.jsx.
+  const seasonStanding = useMemo(() => {
+    if (!scoringConfig || !member || gameweeks.length === 0 || members.length === 0) return null;
+
+    const matchesSeason = (pick, season) => !season || !pick.season || pick.season === season;
+    const currentGw = gameweeks.find(g => g.is_active) || gameweeks[gameweeks.length - 1];
+    const season = currentGw?.season;
+    const countedGws = gameweeks.filter(g =>
+      (!season || g.season === season) &&
+      (g.is_finalized || (g.is_active && isDeadlinePassed(g)))
+    );
+
+    const scorePick = (pick) => {
+      const stats = (pick.player_ids || []).map(pid =>
+        seasonStats.find(s => s.player_id === pid && s.gameweek === pick.gameweek)
+      );
+      const points = stats.map(stat => calculatePlayerPoints(stat, scoringConfig));
+      return calculatePickTotal(points, scoringConfig, stats);
+    };
+
+    const totals = members.map(m => {
+      let totalScore = 0;
+      let blackjacks = 0;
+      let busts = 0;
+      let played = 0;
+      countedGws.forEach(gw => {
+        const pick = seasonPicks.find(p =>
+          p.member_id === m.id && p.gameweek === gw.number && matchesSeason(p, gw.season)
+        );
+        if (pick) {
+          const s = scorePick(pick);
+          totalScore += s.score;
+          if (s.tier === 'blackjack') blackjacks++;
+          if (s.isBust) busts++;
+          played++;
+        }
+      });
+      return { member: m, totalScore, blackjacks, busts, played };
+    }).sort((a, b) => {
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+      if (b.blackjacks !== a.blackjacks) return b.blackjacks - a.blackjacks;
+      return a.busts - b.busts;
+    });
+
+    const idx = totals.findIndex(t => t.member.id === member.id);
+    if (idx === -1) return null;
+    const me = totals[idx];
+    const leader = totals[0];
+
+    return {
+      ...me,
+      rank: idx + 1,
+      fieldSize: totals.length,
+      gwsCounted: countedGws.length,
+      pointsBehindLeader: leader ? leader.totalScore - me.totalScore : 0,
+      leaderName: leader?.member?.name,
+    };
+  }, [gameweeks, seasonPicks, seasonStats, members, scoringConfig, member]);
+
   const teamOfTheWeek = useMemo(() => {
     if (!locked || !scoringConfig || players.length === 0 || playerStats.length === 0) return null;
     return findBlackjackTeam(players, playerStats, scoringConfig, threshold, totwSkip);
@@ -176,6 +237,48 @@ export default function Home() {
           <Info size={20} />
         </button>
       </div>
+
+      {/* Season standing — always on show, whatever gameweek we're up to */}
+      {seasonStanding && (
+        <div className="mb-4 bg-card rounded-xl p-4 ring-1 ring-primary/20">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <Trophy size={12} /> Season so far
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {seasonStanding.gwsCounted === 0
+                ? 'Not started'
+                : `After ${seasonStanding.gwsCounted} GW${seasonStanding.gwsCounted === 1 ? '' : 's'}`}
+            </span>
+          </div>
+
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Total Points</p>
+              <p className="text-4xl font-bold font-display text-white leading-none">{seasonStanding.totalScore}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Position</p>
+              <p className={`text-4xl font-bold font-display leading-none ${medalColors[seasonStanding.rank - 1] || 'text-white'}`}>
+                {seasonStanding.rank}
+                <span className="text-base font-normal text-muted-foreground"> / {seasonStanding.fieldSize}</span>
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-3">
+            {seasonStanding.rank === 1
+              ? 'Top of the table'
+              : `${seasonStanding.pointsBehindLeader} pt${seasonStanding.pointsBehindLeader === 1 ? '' : 's'} behind ${seasonStanding.leaderName}`}
+            {seasonStanding.blackjacks > 0 && ` · ${seasonStanding.blackjacks} blackjack${seasonStanding.blackjacks > 1 ? 's' : ''}`}
+            {seasonStanding.busts > 0 && ` · ${seasonStanding.busts} bust${seasonStanding.busts > 1 ? 's' : ''}`}
+          </p>
+
+          <Link to="/leaderboard" className="block text-center text-xs text-white font-medium pt-3">
+            See full season table →
+          </Link>
+        </div>
+      )}
 
       {/* My Stats */}
       {myPick && (
