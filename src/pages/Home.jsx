@@ -186,10 +186,33 @@ export default function Home() {
     };
   }, [gameweeks, seasonPicks, seasonStats, members, scoringConfig, member]);
 
+  // Team of the Week runs off the last COMPLETED gameweek, not the live one.
+  // Before kick-off the current gameweek has no stats, so anchoring to it left
+  // Home with nothing to show for most of the week.
+  const totwGameweek = useMemo(() => {
+    if (gameweeks.length === 0) return null;
+    const currentGw = gameweeks.find(g => g.is_active) || gameweeks[gameweeks.length - 1];
+    const season = currentGw?.season;
+    const cutoff = currentGw?.number ?? Infinity;
+    const earlier = gameweeks.filter(g => (!season || g.season === season) && g.number < cutoff);
+
+    const finalized = earlier.filter(g => g.is_finalized);
+    if (finalized.length > 0) return finalized[finalized.length - 1];
+
+    // Not finalized yet, but if stats have landed it's still worth showing.
+    const withStats = earlier.filter(g => seasonStats.some(s => s.gameweek === g.number));
+    return withStats.length > 0 ? withStats[withStats.length - 1] : null;
+  }, [gameweeks, seasonStats]);
+
+  const totwStats = useMemo(
+    () => (totwGameweek ? seasonStats.filter(s => s.gameweek === totwGameweek.number) : []),
+    [seasonStats, totwGameweek]
+  );
+
   const teamOfTheWeek = useMemo(() => {
-    if (!locked || !scoringConfig || players.length === 0 || playerStats.length === 0) return null;
-    return findBlackjackTeam(players, playerStats, scoringConfig, threshold, totwSkip);
-  }, [locked, scoringConfig, players, playerStats, threshold, totwSkip]);
+    if (!scoringConfig || players.length === 0 || totwStats.length === 0) return null;
+    return findBlackjackTeam(players, totwStats, scoringConfig, threshold, totwSkip);
+  }, [scoringConfig, players, totwStats, threshold, totwSkip]);
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
   if (!gameweek) return <div className="p-6 text-center text-muted-foreground">No active gameweek yet.</div>;
@@ -430,12 +453,15 @@ export default function Home() {
         </div>
       )}
 
-      {/* Team of the Week — a blackjack example */}
-      {locked && teamOfTheWeek && (
+      {/* Team of the Week — a blackjack example from the last completed gameweek */}
+      {teamOfTheWeek && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
               <Sparkles size={12} /> Team of the Week
+              {totwGameweek && (
+                <span className="normal-case font-normal text-muted-foreground/70">· GW {totwGameweek.number}</span>
+              )}
             </h2>
             <div className="flex items-center gap-2">
               <button
