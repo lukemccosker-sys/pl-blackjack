@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { fetchAllPlayers } from '../../base44/shared/playerQueries.js';
+import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed, isGameweekFinished } from '@/lib/scoring';
+import { buildPickingContext, buildShortlist, filterFixturesToSeason } from '@/lib/playerForm';
 import PlayerSearch from '@/components/PlayerSearch';
 import PickSummary from '@/components/PickSummary';
 import PickRail from '@/components/PickRail';
 import CardHand from '@/components/CardHand';
-import { Lock, Clock, ChevronDown } from 'lucide-react';
+import Countdown from '@/components/Countdown';
+import TwentyOneMeter from '@/components/TwentyOneMeter';
+import { Lock, ChevronDown } from 'lucide-react';
 
 export default function Picks() {
   const { member } = usePoolAuth();
@@ -16,7 +19,9 @@ export default function Picks() {
   const [players, setPlayers] = useState([]);
   const [existingPick, setExistingPick] = useState(null);
   const [playerStats, setPlayerStats] = useState([]);
+  const [seasonStats, setSeasonStats] = useState([]);
   const [fixtures, setFixtures] = useState([]);
+  const [gameweeks, setGameweeks] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,20 +40,26 @@ export default function Picks() {
       const sorted = gws.sort((a, b) => a.number - b.number);
       const active = sorted.find(g => g.is_active) || sorted[sorted.length - 1];
       setGameweek(active);
+      setGameweeks(sorted);
       setScoringConfig(configs[0] || null);
       setPlayers(allPlayers);
       if (active && member) {
-        const [picks, stats, gwFixtures] = await Promise.all([
+        // Season-wide stats and fixtures power the form + fixture-difficulty
+        // suggestions and the projected total, so they're fetched here rather
+        // than only the current gameweek's slice.
+        const [picks, stats, allFixtures, seasonStatRows] = await Promise.all([
           base44.entities.Pick.filter(active.season ? { member_id: member.id, gameweek: active.number, season: active.season } : { member_id: member.id, gameweek: active.number }),
           base44.entities.PlayerStat.filter(active.season ? { gameweek: active.number, season: active.season } : { gameweek: active.number }),
-          base44.entities.Fixture.filter({ gameweek: active.number }),
+          base44.entities.Fixture.list('', 1000),
+          fetchAllPlayerStats(base44.entities, active.season),
         ]);
         if (picks.length > 0) {
           setExistingPick(picks[0]);
           setSelectedIds(picks[0].player_ids || []);
         }
         setPlayerStats(stats);
-        setFixtures(gwFixtures);
+        setSeasonStats(seasonStatRows);
+        setFixtures(filterFixturesToSeason(allFixtures, sorted, active.season));
       }
     } catch (err) {
       console.error(err);
