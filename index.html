@@ -2,10 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="manifest" href="/manifest.json" />
+    <!-- viewport-fit=cover so the fixed bottom nav sits correctly under the
+         home indicator on notched phones -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
     <title>PL Blackjack</title>
+    <meta name="description" content="Pick 2-5 Premier League players each gameweek and try to hit 21 without busting." />
+
+    <!-- Icons. Was the Base44 logo, so an installed app looked like Base44
+         rather than PL Blackjack. -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Home-screen install behaviour -->
+    <meta name="theme-color" content="#123F2D" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PL Blackjack" />
   </head>
   <body>
     <div id="root"></div>
