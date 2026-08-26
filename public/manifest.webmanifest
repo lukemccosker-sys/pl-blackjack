@@ -1,0 +1,17 @@
+{
+  "name": "PL Blackjack",
+  "short_name": "PL Blackjack",
+  "description": "Pick 2-5 Premier League players each gameweek and try to hit 21 without busting.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#123F2D",
+  "theme_color": "#123F2D",
+  "categories": ["sports", "games"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
