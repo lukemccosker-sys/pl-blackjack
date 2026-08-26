@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="felt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#17513A"/>
+      <stop offset="100%" stop-color="#0E3323"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1EADA"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#felt)"/>
+
+  <!-- back card, fanned out behind -->
+  <g transform="rotate(-14 256 292)">
+    <rect x="120" y="122" width="200" height="290" rx="26" fill="#CBBE9F"/>
+  </g>
+
+  <!-- front card: 21 over a gold spade -->
+  <g transform="rotate(7 256 286)">
+    <rect x="176" y="112" width="212" height="300" rx="28" fill="url(#card)"/>
+    <text x="282" y="292" font-family="Georgia, 'Times New Roman', serif" font-size="150"
+          font-weight="700" fill="#123F2D" text-anchor="middle">21</text>
+    <path d="M282 318 c -26 30 -44 44 -44 64 c 0 15 12 25 26 25 c 8 0 14 -3 18 -8
+             c 4 5 10 8 18 8 c 14 0 26 -10 26 -25 c 0 -20 -18 -34 -44 -64 z"
+          fill="#F5C13D" transform="translate(0,6)"/>
+  </g>
+</svg>
