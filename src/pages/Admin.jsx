@@ -11,18 +11,19 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function Admin() {
   const { member } = usePoolAuth();
-  const [tab, setTab] = useUrlState('tab', ['gameweeks', 'stats', 'scoring', 'sync', 'reminders'], 'gameweeks');
+  // Sync is what this page is actually for, so it leads and is the default.
+  const [tab, setTab] = useUrlState('tab', ['sync', 'reminders', 'gameweeks', 'stats', 'scoring'], 'sync');
 
   if (!member?.is_admin) {
     return <div className="p-6 text-center text-muted-foreground">Admin access required</div>;
   }
 
   const tabs = [
+    { key: 'sync', label: 'Sync' },
+    { key: 'reminders', label: 'Reminders' },
     { key: 'gameweeks', label: 'Gameweeks' },
     { key: 'stats', label: 'Stats' },
     { key: 'scoring', label: 'Scoring' },
-    { key: 'sync', label: 'Sync' },
-    { key: 'reminders', label: 'Reminders' },
   ];
 
   return (
