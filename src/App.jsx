@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -9,9 +9,8 @@ import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import Login from '@/pages/Login';
 import Home from '@/pages/Home';
-import Stats from '@/pages/Stats';
 import Picks from '@/pages/Picks';
-import Fixtures from '@/pages/Fixtures';
+import Football from '@/pages/Football';
 import Leaderboard from '@/pages/Leaderboard';
 import Admin from '@/pages/Admin';
 import Settings from '@/pages/Settings';
@@ -48,9 +47,12 @@ const AuthenticatedApp = () => {
       <Route path="/login" element={<Login />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/stats" element={<Stats />} />
         <Route path="/picks" element={<Picks />} />
-        <Route path="/fixtures" element={<Fixtures />} />
+        <Route path="/football" element={<Football />} />
+        {/* Fixtures and Stats merged into Football; keep the old paths working
+            for anyone with a bookmark or a link in the group chat. */}
+        <Route path="/fixtures" element={<Navigate to="/football?view=fixtures" replace />} />
+        <Route path="/stats" element={<Navigate to="/football?view=stats" replace />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/settings" element={<Settings />} />
