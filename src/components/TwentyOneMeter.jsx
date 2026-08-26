@@ -16,6 +16,7 @@ export default function TwentyOneMeter({
   threshold = 21,
   count = 0,
   live = false,
+  compact = false,
   className = '',
 }) {
   const rounded = Math.round(total * 10) / 10;
@@ -57,7 +58,7 @@ export default function TwentyOneMeter({
   }
 
   return (
-    <div className={`bg-card rounded-xl p-3 ring-1 ring-border ${className}`}>
+    <div className={compact ? className : `bg-card rounded-xl p-3 ring-1 ring-border ${className}`}>
       <div className="flex items-end justify-between mb-2">
         <div className="flex items-center gap-1.5">
           {live ? (
@@ -92,7 +93,7 @@ export default function TwentyOneMeter({
         <span className="text-xs text-muted-foreground shrink-0">{count}/{MAX_PICKS}</span>
       </div>
 
-      {!live && count > 0 && (
+      {!live && count > 0 && !compact && (
         <p className="text-[10px] text-muted-foreground/70 mt-1.5">
           Projection uses recent form and this week's fixture — real points start at kick-off.
         </p>
