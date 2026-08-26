@@ -8,6 +8,7 @@ import { findBlackjackTeam } from '@/lib/teamOfTheWeek';
 import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
+import Countdown from '@/components/Countdown';
 import { Lock, ChevronDown, Info, X, Sparkles, RefreshCw, Trophy } from 'lucide-react';
 
 export default function Home() {
@@ -227,6 +228,7 @@ export default function Home() {
         <div>
           <h1 className="text-2xl font-bold font-heading">Home</h1>
           <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
+          {!locked && <Countdown deadline={gameweek.deadline} className="mt-0.5" />}
         </div>
         <button
           onClick={() => setInfoOpen(true)}
