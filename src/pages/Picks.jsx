@@ -6,10 +6,8 @@ import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed, isGameweek
 import { buildPickingContext, buildShortlist, filterFixturesToSeason } from '@/lib/playerForm';
 import PlayerSearch from '@/components/PlayerSearch';
 import PickSummary from '@/components/PickSummary';
-import PickRail from '@/components/PickRail';
 import CardHand from '@/components/CardHand';
 import Countdown from '@/components/Countdown';
-import TwentyOneMeter from '@/components/TwentyOneMeter';
 import { Lock, ChevronDown } from 'lucide-react';
 
 export default function Picks() {
@@ -146,7 +144,8 @@ export default function Picks() {
   );
 
   return (
-    <div className={`p-4 ${locked ? 'pb-48' : 'pb-6'}`}>
+    // Bottom padding clears the persistent pick sheet plus the nav bar.
+    <div className="p-4 pb-64">
       <div className="mb-4">
         <h1 className="text-2xl font-bold font-heading">Gameweek {gameweek.number}</h1>
         {locked ? (
@@ -158,40 +157,20 @@ export default function Picks() {
         )}
       </div>
 
+      {/* Full width: the running total and the save button live in the sheet
+          pinned to the bottom, so nothing competes with the player list. */}
       {!locked && (
-        <TwentyOneMeter
-          total={projectedTotal}
-          threshold={scoringConfig?.bust_threshold || 21}
-          count={selectedIds.length}
-          live={false}
-          className="mb-4"
+        <PlayerSearch
+          players={players}
+          selectedIds={selectedIds}
+          onToggle={handleToggle}
+          pointsByPlayerId={pointsByPlayerId}
+          gameweekNumber={gameweek.number}
+          shortlist={shortlist}
+          formIndex={pickingContext.formIndex}
+          fixtureByClub={pickingContext.fixtureByClub}
+          showLivePoints={false}
         />
-      )}
-
-      {!locked && (
-        <div className="flex gap-3 items-start">
-          <div className="flex-1 min-w-0">
-            <PlayerSearch
-              players={players}
-              selectedIds={selectedIds}
-              onToggle={handleToggle}
-              pointsByPlayerId={pointsByPlayerId}
-              gameweekNumber={gameweek.number}
-              shortlist={shortlist}
-              formIndex={pickingContext.formIndex}
-              fixtureByClub={pickingContext.fixtureByClub}
-              showLivePoints={false}
-            />
-          </div>
-          <PickRail
-            selectedPlayers={selectedPlayers}
-            onRemove={handleToggle}
-            onSave={handleSave}
-            saving={saving}
-            saved={saved}
-            hasFive={selectedIds.length >= 2}
-          />
-        </div>
       )}
 
       {locked && (
@@ -226,21 +205,21 @@ export default function Picks() {
         </div>
       )}
 
-      {locked && (
-        <PickSummary
-          selectedPlayers={selectedPlayers}
-          playerPoints={playerPoints}
-          isBust={isBust}
-          onSave={handleSave}
-          onRemove={handleToggle}
-          saving={saving}
-          saved={saved}
-          isLocked={locked}
-          hasFive={selectedIds.length >= 2}
-          tier={tier}
-          isFinalized={gwFinished}
-        />
-      )}
+      <PickSummary
+        selectedPlayers={selectedPlayers}
+        playerPoints={playerPoints}
+        isBust={isBust}
+        onSave={handleSave}
+        onRemove={handleToggle}
+        saving={saving}
+        saved={saved}
+        isLocked={locked}
+        hasMinimum={selectedIds.length >= 2}
+        tier={tier}
+        isFinalized={gwFinished}
+        meterTotal={projectedTotal}
+        threshold={scoringConfig?.bust_threshold || 21}
+      />
     </div>
   );
 }
