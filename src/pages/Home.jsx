@@ -9,6 +9,7 @@ import MemberAvatar from '@/components/MemberAvatar';
 import CardHand from '@/components/CardHand';
 import PotPanel from '@/components/PotPanel';
 import Countdown from '@/components/Countdown';
+import PageHeader from '@/components/PageHeader';
 import { Lock, ChevronDown, Info, X, Sparkles, RefreshCw, Trophy } from 'lucide-react';
 
 export default function Home() {
@@ -247,20 +248,23 @@ export default function Home() {
 
   return (
     <div className="p-4 pb-20">
-      <div className="mb-4 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold font-heading">Home</h1>
-          <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
-          {!locked && <Countdown deadline={gameweek.deadline} className="mt-0.5" />}
-        </div>
+      <PageHeader
+        title="Home"
+        subtitle={
+          <>
+            <p className="text-sm text-muted-foreground">Gameweek {gameweek.number}</p>
+            {!locked && <Countdown deadline={gameweek.deadline} className="mt-0.5" />}
+          </>
+        }
+      >
         <button
           onClick={() => setInfoOpen(true)}
-          className="p-2 rounded-full bg-card ring-1 ring-border text-foreground hover:bg-accent transition-colors shrink-0 mr-10"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-card ring-1 ring-border text-foreground hover:bg-accent transition-colors"
           aria-label="Rules and scoring info"
         >
           <Info size={20} />
         </button>
-      </div>
+      </PageHeader>
 
       {/* Season standing — always on show, whatever gameweek we're up to */}
       {seasonStanding && (
