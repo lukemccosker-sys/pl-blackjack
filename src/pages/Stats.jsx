@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
+import React from 'react';
+import { usePlayers, useSeasonStats, useActiveGameweek } from '@/lib/queries';
 import ClubBadge from '@/components/ClubBadge';
 import PageHeader from '@/components/PageHeader';
 import SegmentedControl from '@/components/SegmentedControl';
@@ -15,52 +14,18 @@ const TABLES = [
 ];
 
 export default function Stats({ embedded = false }) {
-  const [players, setPlayers] = useState([]);
-  const [stats, setStats] = useState([]);
-  const [activeGwNumber, setActiveGwNumber] = useState(null);
   // URL-backed so back/refresh keep the view, and it's linkable.
   const [scope, setScope] = useUrlState('scope', ['season', 'gameweek'], 'season');
   const [viewMode, setViewMode] = useUrlState('mode', ['stats', 'points'], 'stats');
-  const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
-    try {
-      const [allPlayers, gws] = await Promise.all([
-        fetchAllPlayers(base44.entities),
-        base44.entities.Gameweek.list('number', 50),
-      ]);
-      const sortedGws = gws.sort((a, b) => a.number - b.number);
-      const activeGw = sortedGws.find(g => g.is_active) || sortedGws[sortedGws.length - 1];
-      const currentSeason = activeGw?.season;
-      const allStats = await fetchAllPlayerStats(base44.entities, currentSeason);
-      setActiveGwNumber(activeGw?.number || null);
-      setPlayers(allPlayers);
-      setStats(allStats);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { active, isLoading: gwLoading } = useActiveGameweek();
+  const { data: players = [], isLoading: playersLoading } = usePlayers();
+  const { data: stats = [], isPending: statsPending } = useSeasonStats(active?.season, {
+    enabled: !gwLoading,
+  });
 
-  useEffect(() => { loadData(); }, []);
-
-  useEffect(() => {
-    let timer = null;
-    const unsubStats = base44.entities.PlayerStat.subscribe(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => loadData(), 500);
-    });
-    const unsubGws = base44.entities.Gameweek.subscribe(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => loadData(), 500);
-    });
-    return () => {
-      unsubStats();
-      unsubGws();
-      clearTimeout(timer);
-    };
-  }, []);
+  const activeGwNumber = active?.number || null;
+  const loading = gwLoading || playersLoading || statsPending;
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
   const pad = embedded ? '' : 'p-4 pb-20';
