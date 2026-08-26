@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import ClubBadge from '@/components/ClubBadge';
+import PageHeader from '@/components/PageHeader';
+import SegmentedControl from '@/components/SegmentedControl';
+import { useUrlState } from '@/lib/useUrlState';
 import { BarChart3 } from 'lucide-react';
 
 const TABLES = [
@@ -11,12 +14,13 @@ const TABLES = [
   { title: 'Defensive Contributions', key: 'dc_hits', suffix: ' hits' },
 ];
 
-export default function Stats() {
+export default function Stats({ embedded = false }) {
   const [players, setPlayers] = useState([]);
   const [stats, setStats] = useState([]);
   const [activeGwNumber, setActiveGwNumber] = useState(null);
-  const [scope, setScope] = useState('season');
-  const [viewMode, setViewMode] = useState('stats');
+  // URL-backed so back/refresh keep the view, and it's linkable.
+  const [scope, setScope] = useUrlState('scope', ['season', 'gameweek'], 'season');
+  const [viewMode, setViewMode] = useUrlState('mode', ['stats', 'points'], 'stats');
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
@@ -59,6 +63,7 @@ export default function Stats() {
   }, []);
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
+  const pad = embedded ? '' : 'p-4 pb-20';
 
   const playerMap = {};
   players.forEach(p => { playerMap[p.id] = p; });
@@ -95,54 +100,43 @@ export default function Stats() {
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
 
   return (
-    <div className="p-4 pb-20">
-      <div className="flex items-center gap-2 mb-4">
-        <BarChart3 className="text-white" size={20} />
-        <div>
-          <h1 className="text-2xl font-bold font-heading">Stats</h1>
-          <p className="text-sm text-muted-foreground">
+    <div className={pad}>
+      {!embedded && (
+        <PageHeader
+          title="Stats"
+          subtitle={<p className="text-sm text-muted-foreground">
             {scope === 'gameweek' ? `Gameweek ${activeGwNumber || '—'}` : 'Season totals across all gameweeks'}
-          </p>
-        </div>
-      </div>
+          </p>}
+        />
+      )}
+      {embedded && (
+        <p className="text-sm text-muted-foreground mb-3 flex items-center gap-1.5">
+          <BarChart3 size={14} />
+          {scope === 'gameweek' ? `Gameweek ${activeGwNumber || '—'}` : 'Season totals across all gameweeks'}
+        </p>
+      )}
 
-      <div className="flex gap-2 mb-3">
-        <button
-          onClick={() => setViewMode('stats')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            viewMode === 'stats' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'
-          }`}
-        >
-          Raw Stats
-        </button>
-        <button
-          onClick={() => setViewMode('points')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            viewMode === 'points' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'
-          }`}
-        >
-          Game Points
-        </button>
-      </div>
+      <SegmentedControl
+        ariaLabel="Stat type"
+        value={viewMode}
+        onChange={setViewMode}
+        className="mb-2"
+        options={[
+          { value: 'stats', label: 'Raw Stats' },
+          { value: 'points', label: 'Game Points' },
+        ]}
+      />
 
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setScope('season')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            scope === 'season' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'
-          }`}
-        >
-          Season Total
-        </button>
-        <button
-          onClick={() => setScope('gameweek')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            scope === 'gameweek' ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'
-          }`}
-        >
-          This Gameweek
-        </button>
-      </div>
+      <SegmentedControl
+        ariaLabel="Time range"
+        value={scope}
+        onChange={setScope}
+        className="mb-4"
+        options={[
+          { value: 'season', label: 'Season Total' },
+          { value: 'gameweek', label: 'This Gameweek' },
+        ]}
+      />
 
       {viewMode === 'points' ? (
         <div>
