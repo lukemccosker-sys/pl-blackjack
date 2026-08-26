@@ -119,7 +119,6 @@ export default function Home() {
       clearInterval(pollInterval);
       clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameweek, gameweeks]);
 
   const locked = gameweek ? isDeadlinePassed(gameweek) : false;
