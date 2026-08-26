@@ -30,11 +30,14 @@ export default function Countdown({ deadline, prefix = 'Locks in', className = '
 
   useEffect(() => {
     if (!target) return undefined;
-    if (now >= target) return undefined;
     const tick = underAnHour ? 1000 : 30 * 1000;
-    const id = setInterval(() => setNow(Date.now()), tick);
+    const id = setInterval(() => {
+      const t = Date.now();
+      setNow(t);
+      if (t >= target) clearInterval(id);   // nothing left to count
+    }, tick);
     return () => clearInterval(id);
-  }, [target, underAnHour, now]);
+  }, [target, underAnHour]);
 
   if (!target || Number.isNaN(target)) {
     return (
