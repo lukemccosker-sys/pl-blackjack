@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Camera, Check, AlertCircle, LogOut, ArrowLeft } from 'lucide-react';
+import { Camera, Check, AlertCircle, LogOut, ArrowLeft, Shield, ChevronRight } from 'lucide-react';
 
 export default function Settings() {
   const { member, updateProfilePhoto, updateMemberName, changePin, logout } = usePoolAuth();
@@ -116,11 +116,31 @@ export default function Settings() {
   return (
     <div className="p-4 space-y-6">
       <div className="flex items-center gap-3">
-        <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link
+          to="/"
+          aria-label="Back to home"
+          className="-ml-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        >
           <ArrowLeft size={20} />
         </Link>
         <h1 className="text-2xl font-bold">Settings</h1>
       </div>
+
+      {/* Admin used to be a sixth item in the bottom nav. It's occasional
+          configuration, so it lives here with the rest of the account stuff. */}
+      {isAdmin && (
+        <Link
+          to="/admin"
+          className="flex items-center gap-3 bg-card rounded-xl p-4 min-h-[56px] hover:bg-accent transition-colors"
+        >
+          <Shield size={18} className="text-primary shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-sm">Admin Panel</p>
+            <p className="text-xs text-muted-foreground">Gameweeks, stats, scoring and FPL sync</p>
+          </div>
+          <ChevronRight size={18} className="text-muted-foreground shrink-0" />
+        </Link>
+      )}
 
       <section className="bg-card rounded-xl p-4 space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Profile Photo</h2>
