@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
+import { decidePotWeek, winnerLabel } from '@/lib/pot';
 import MemberAvatar from '@/components/MemberAvatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -235,25 +236,52 @@ export default function PotPanel() {
   const handleResolveWeek = async (week) => {
     setBusy(true);
     try {
-      const humanScores = (week.bettor_ids || []).map(id => ({ id, score: getPickScore(id, week.gameweek) }));
-      humanScores.sort((a, b) => b.score - a.score);
-      const topHuman = humanScores[0];
-      const weekPot = week.stake_amount * (week.bettor_ids || []).length;
+      // Re-read the week before paying out. A double tap, or someone else
+      // resolving on another device, would otherwise credit the winner twice.
+      const fresh = await base44.entities.PotWeek.get(week.id);
+      if (!fresh || fresh.is_resolved) {
+        if (fresh) setPotWeeks(prev => prev.map(w => (w.id === fresh.id ? fresh : w)));
+        return;
+      }
 
-      if (topHuman) {
-        const winnerEntry = entries.find(e => e.member_id === topHuman.id);
-        const updatedWeek = await base44.entities.PotWeek.update(week.id, {
-          is_resolved: true,
-          winner_member_id: topHuman.id, winner_member_name: winnerEntry?.member_name,
-          pot_amount: weekPot, resolved_at: new Date().toISOString(),
-        });
-        setPotWeeks(prev => prev.map(w => (w.id === updatedWeek.id ? updatedWeek : w)));
-        if (winnerEntry) {
-          const updatedEntry = await base44.entities.PotEntry.update(winnerEntry.id, {
-            balance: winnerEntry.balance + weekPot,
-          });
-          setEntries(prev => prev.map(e => (e.id === updatedEntry.id ? updatedEntry : e)));
+      const outcome = decidePotWeek({
+        bettorIds: fresh.bettor_ids,
+        stakeAmount: fresh.stake_amount,
+        scoreOf: (id) => getPickScore(id, fresh.gameweek),
+      });
+      if (outcome.winners.length === 0) return;
+
+      const nameOf = (id) =>
+        entries.find(e => e.member_id === id)?.member_name
+        || allMembers.find(m => m.id === id)?.name;
+
+      // Mark the week resolved FIRST, so a concurrent resolve re-reads it,
+      // sees is_resolved and bails out before crediting anyone again.
+      const updatedWeek = await base44.entities.PotWeek.update(fresh.id, {
+        is_resolved: true,
+        winner_member_id: outcome.winners[0].id,
+        winner_member_name: winnerLabel(outcome.winners, nameOf),
+        pot_amount: outcome.potAmount,
+        resolved_at: new Date().toISOString(),
+      });
+      setPotWeeks(prev => prev.map(w => (w.id === updatedWeek.id ? updatedWeek : w)));
+
+      // Tied top scorers split the pot. Each balance is read fresh rather than
+      // taken from local state, which may be minutes stale.
+      for (const winner of outcome.winners) {
+        const entry = entries.find(e => e.member_id === winner.id);
+        if (!entry) continue;
+        let currentBalance = entry.balance;
+        try {
+          const latest = await base44.entities.PotEntry.get(entry.id);
+          if (latest && typeof latest.balance === 'number') currentBalance = latest.balance;
+        } catch (e) {
+          // fall back to the balance we already hold
         }
+        const updatedEntry = await base44.entities.PotEntry.update(entry.id, {
+          balance: Math.round((currentBalance + winner.share) * 100) / 100,
+        });
+        setEntries(prev => prev.map(e => (e.id === updatedEntry.id ? updatedEntry : e)));
       }
     } catch (err) {
       console.error(err);
