@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { usePoolAuth } from '@/lib/PoolAuth';
-import { fetchAllPlayers, fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
+import {
+  useActiveGameweek, useScoringConfig, useMembers, usePicks, useSeasonStats,
+} from '@/lib/queries';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
 import { decidePotWeek, winnerLabel } from '@/lib/pot';
 import MemberAvatar from '@/components/MemberAvatar';
@@ -15,13 +17,19 @@ const MIN_BUYIN = 20;
 export default function PotPanel() {
   const { member } = usePoolAuth();
   const [expanded, setExpanded] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [gameweeks, setGameweeks] = useState([]);
-  const [scoringConfig, setScoringConfig] = useState(null);
-  const [allMembers, setAllMembers] = useState([]);
-  const [players, setPlayers] = useState([]);
-  const [allPicks, setAllPicks] = useState([]);
-  const [allStats, setAllStats] = useState([]);
+
+  // Shared, cached data — the same rows Home and Leaderboard are already using.
+  const { gameweeks, active: activeGw, isLoading: gwLoading } = useActiveGameweek();
+  const { data: scoringConfig } = useScoringConfig();
+  const { data: allMembers = [] } = useMembers();
+  const { data: allPicks = [] } = usePicks();
+  const { data: allStats = [], isPending: statsPending } = useSeasonStats(activeGw?.season, {
+    enabled: !gwLoading,
+  });
+
+  // Pot records are small, local to this panel and mutated in place, so they
+  // stay on plain state rather than going through the shared cache.
+  const [potLoading, setPotLoading] = useState(true);
   const [potSeason, setPotSeason] = useState(null);
   const [entries, setEntries] = useState([]);
   const [potWeeks, setPotWeeks] = useState([]);
@@ -31,55 +39,42 @@ export default function PotPanel() {
   const [busy, setBusy] = useState(false);
   const [confirmingCloseSeason, setConfirmingCloseSeason] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
+  const active = activeGw;
+  const currentSeason = active?.season;
+  const loading = gwLoading || statsPending || potLoading;
 
-  const loadData = async () => {
-    try {
-      const gws = await base44.entities.Gameweek.list('number', 50);
-      const sorted = gws.sort((a, b) => a.number - b.number);
-      const active = sorted.find(g => g.is_active) || sorted[sorted.length - 1];
-      const currentSeason = active?.season;
+  useEffect(() => {
+    if (gwLoading) return undefined;
+    let cancelled = false;
 
-      const [configs, members, allPlayers, picks, stats, potSeasons] = await Promise.all([
-        base44.entities.ScoringConfig.filter({ is_active: true }),
-        base44.entities.PoolMember.list('', 50),
-        fetchAllPlayers(base44.entities),
-        currentSeason ? base44.entities.Pick.filter({ season: currentSeason }) : base44.entities.Pick.list('', 1000),
-        fetchAllPlayerStats(base44.entities, currentSeason),
-        currentSeason ? base44.entities.PotSeason.filter({ season: currentSeason }) : Promise.resolve([]),
-      ]);
-
-      setGameweeks(sorted);
-      setScoringConfig(configs[0] || null);
-      setAllMembers(members);
-      setPlayers(allPlayers);
-      setAllPicks(picks);
-      setAllStats(stats);
-      setPotSeason(potSeasons[0] || null);
-
-      if (currentSeason) {
-        const [potEntries, weeks, contribs] = await Promise.all([
+    (async () => {
+      try {
+        if (!currentSeason) {
+          if (!cancelled) {
+            setPotSeason(null); setEntries([]); setPotWeeks([]); setContributions([]);
+          }
+          return;
+        }
+        const [potSeasons, potEntries, weeks, contribs] = await Promise.all([
+          base44.entities.PotSeason.filter({ season: currentSeason }),
           base44.entities.PotEntry.filter({ season: currentSeason }),
           base44.entities.PotWeek.filter({ season: currentSeason }),
           base44.entities.PotContribution.filter({ season: currentSeason }),
         ]);
-        setContributions(contribs);
+        if (cancelled) return;
+        setPotSeason(potSeasons[0] || null);
         setEntries(potEntries);
         setPotWeeks(weeks);
-      } else {
-        setEntries([]);
-        setPotWeeks([]);
-        setContributions([]);
+        setContributions(contribs);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) setPotLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    })();
 
-  const active = gameweeks.find(g => g.is_active) || gameweeks[gameweeks.length - 1];
-  const currentSeason = active?.season;
+    return () => { cancelled = true; };
+  }, [currentSeason, gwLoading]);
   const myEntry = entries.find(e => e.member_id === member?.id);
   const thisWeekBet = currentSeason ? potWeeks.find(w => w.gameweek === active.number) : null;
   const weekLocked = active ? isDeadlinePassed(active) : false;
