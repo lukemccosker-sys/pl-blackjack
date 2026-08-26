@@ -21,7 +21,6 @@ export default function Picks() {
   const [playerStats, setPlayerStats] = useState([]);
   const [seasonStats, setSeasonStats] = useState([]);
   const [fixtures, setFixtures] = useState([]);
-  const [gameweeks, setGameweeks] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,7 +39,6 @@ export default function Picks() {
       const sorted = gws.sort((a, b) => a.number - b.number);
       const active = sorted.find(g => g.is_active) || sorted[sorted.length - 1];
       setGameweek(active);
-      setGameweeks(sorted);
       setScoringConfig(configs[0] || null);
       setPlayers(allPlayers);
       if (active && member) {
