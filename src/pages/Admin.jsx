@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import GameweekManager from '@/components/GameweekManager';
 import StatEditor from '@/components/StatEditor';
 import ScoringEditor from '@/components/ScoringEditor';
 import SyncPanel from '@/components/SyncPanel';
-import PageHeader from '@/components/PageHeader';
 import { useUrlState } from '@/lib/useUrlState';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
