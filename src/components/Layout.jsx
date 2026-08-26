@@ -1,11 +1,15 @@
 import React from 'react';
 import { Outlet, Navigate, Link } from 'react-router-dom';
 import { usePoolAuth } from '@/lib/PoolAuth';
+import { useEntitySync } from '@/lib/queries';
 import BottomNav from '@/components/BottomNav';
 import MemberAvatar from '@/components/MemberAvatar';
 
 export default function Layout() {
   const { member, loading } = usePoolAuth();
+  // One subscription bridge for the whole app, instead of every page running
+  // its own subscribe-and-refetch loop.
+  useEntitySync();
 
   if (loading) {
     return (
