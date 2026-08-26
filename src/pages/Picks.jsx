@@ -8,6 +8,7 @@ import PlayerSearch from '@/components/PlayerSearch';
 import PickSummary from '@/components/PickSummary';
 import CardHand from '@/components/CardHand';
 import Countdown from '@/components/Countdown';
+import PageHeader from '@/components/PageHeader';
 import { Lock, ChevronDown } from 'lucide-react';
 
 export default function Picks() {
@@ -146,16 +147,16 @@ export default function Picks() {
   return (
     // Bottom padding clears the persistent pick sheet plus the nav bar.
     <div className="p-4 pb-64">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold font-heading">Gameweek {gameweek.number}</h1>
-        {locked ? (
+      <PageHeader
+        title={`Gameweek ${gameweek.number}`}
+        subtitle={locked ? (
           <p className="text-destructive flex items-center gap-1 mt-1 text-sm">
             <Lock size={14} /> Picks locked
           </p>
         ) : (
           <Countdown deadline={gameweek.deadline} className="mt-1" />
         )}
-      </div>
+      />
 
       {/* Full width: the running total and the save button live in the sheet
           pinned to the bottom, so nothing competes with the player list. */}
