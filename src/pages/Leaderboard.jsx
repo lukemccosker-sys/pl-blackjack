@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { fetchAllPlayerStats } from '../../base44/shared/playerQueries.js';
 import { calculatePlayerPoints, calculatePickTotal, isDeadlinePassed } from '@/lib/scoring';
+import { useActiveGameweek, useScoringConfig, useMembers, usePicks, useSeasonStats } from '@/lib/queries';
 import { AlertTriangle } from 'lucide-react';
 import MemberAvatar from '@/components/MemberAvatar';
 import PageHeader from '@/components/PageHeader';
@@ -10,58 +9,28 @@ import { useUrlState } from '@/lib/useUrlState';
 
 export default function Leaderboard() {
   const [tab, setTab] = useUrlState('tab', ['gameweek', 'season'], 'gameweek');
-  const [gameweeks, setGameweeks] = useState([]);
   const [selectedGw, setSelectedGw] = useState(null);
-  const [allPicks, setAllPicks] = useState([]);
-  const [allStats, setAllStats] = useState([]);
-  const [scoringConfig, setScoringConfig] = useState(null);
-  const [allMembers, setAllMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadInitial(); }, []);
+  const { gameweeks, active, isLoading: gwLoading } = useActiveGameweek();
+  const { data: scoringConfig } = useScoringConfig();
+  const { data: allMembers = [] } = useMembers();
+  const { data: allPicks = [] } = usePicks();
+  const { data: allStats = [], isPending: statsPending } = useSeasonStats(
+    active?.season || gameweeks[gameweeks.length - 1]?.season,
+    { enabled: !gwLoading }
+  );
 
+  const loading = gwLoading || statsPending;
+
+  // Default the picker to the live gameweek once the list arrives, but never
+  // stomp on a gameweek the user has since chosen.
   useEffect(() => {
-    let timer = null;
-    const unsubStats = base44.entities.PlayerStat.subscribe(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => loadInitial(), 500);
-    });
-    const unsubGws = base44.entities.Gameweek.subscribe(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => loadInitial(), 500);
-    });
-    return () => {
-      unsubStats();
-      unsubGws();
-      clearTimeout(timer);
-    };
-  }, []);
-
-  const loadInitial = async () => {
-    try {
-      const [gws, configs, members, picks] = await Promise.all([
-        base44.entities.Gameweek.list('number', 50),
-        base44.entities.ScoringConfig.filter({ is_active: true }),
-        base44.entities.PoolMember.list('', 50),
-        base44.entities.Pick.list('', 1000),
-      ]);
-      const sorted = gws.sort((a, b) => a.number - b.number);
-      const active = sorted.find(g => g.is_active);
-      const currentSeason = active?.season || sorted[sorted.length - 1]?.season;
-      const stats = await fetchAllPlayerStats(base44.entities, currentSeason);
-      setGameweeks(sorted);
-      setScoringConfig(configs[0]);
-      setAllMembers(members);
-      setAllPicks(picks);
-      setAllStats(stats);
-      const latestFinalized = sorted.filter(g => g.is_finalized).pop();
-      setSelectedGw(prev => prev ?? (active || latestFinalized || sorted[sorted.length - 1])?.number);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (selectedGw != null || gameweeks.length === 0) return;
+    const activeGw = gameweeks.find(g => g.is_active);
+    const latestFinalized = gameweeks.filter(g => g.is_finalized).pop();
+    const fallback = activeGw || latestFinalized || gameweeks[gameweeks.length - 1];
+    if (fallback?.number != null) setSelectedGw(fallback.number);
+  }, [gameweeks, selectedGw]);
 
   const getPickScore = (pick) => {
     if (!pick) return { score: 0, total: 0, isBust: false, isNatural: false };
