@@ -52,6 +52,38 @@ export function buildClubStrength(fixtures) {
   return table;
 }
 
+/**
+ * The Fixture entity has no season field, so gameweek numbers repeat every
+ * year. Narrow a raw fixture list to the current season using the gameweek
+ * deadlines as a date window, falling back to gameweek-number matching for
+ * fixtures that carry no kickoff time.
+ */
+export function filterFixturesToSeason(fixtures, gameweeks, season) {
+  if (!fixtures?.length) return [];
+  const seasonGws = (gameweeks || []).filter(g => !season || g.season === season);
+  if (seasonGws.length === 0) return fixtures;
+
+  const numbers = new Set(seasonGws.map(g => g.number));
+  const deadlines = seasonGws
+    .map(g => (g.deadline ? new Date(g.deadline).getTime() : null))
+    .filter(t => t && !Number.isNaN(t));
+
+  if (deadlines.length === 0) return fixtures.filter(f => numbers.has(f?.gameweek));
+
+  const DAY = 24 * 60 * 60 * 1000;
+  const start = Math.min(...deadlines) - 7 * DAY;
+  const end = Math.max(...deadlines) + 30 * DAY;
+
+  return fixtures.filter(f => {
+    if (!f) return false;
+    if (!numbers.has(f.gameweek)) return false;
+    if (!f.kickoff_time) return true;                       // best effort
+    const t = new Date(f.kickoff_time).getTime();
+    if (Number.isNaN(t)) return true;
+    return t >= start && t <= end;
+  });
+}
+
 /** club name -> club_short, harvested from the player list. */
 export function buildClubShortNames(players) {
   const map = {};
