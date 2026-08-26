@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { isDeadlinePassed } from '@/lib/scoring';
+import { useUrlState } from '@/lib/useUrlState';
 import ClubBadge from '@/components/ClubBadge';
+import PageHeader from '@/components/PageHeader';
 import { Check, Lock, Star, ChevronLeft, List } from 'lucide-react';
 
 const formatScorers = (list) => (list || []).map(s => {
@@ -17,12 +19,14 @@ const isKickoffConfirmed = (kickoffTime, deadline) => {
   return Math.abs(new Date(kickoffTime) - new Date(deadline)) <= FOURTEEN_DAYS_MS;
 };
 
-export default function Fixtures() {
+export default function Fixtures({ embedded = false }) {
   const [gameweeks, setGameweeks] = useState([]);
   const [allFixtures, setAllFixtures] = useState([]);
   const [selectedGwNumber, setSelectedGwNumber] = useState(null);
-  const [view, setView] = useState('fixtures'); // 'fixtures' | 'all'
+  // In the URL so the phone back button leaves the all-gameweeks list.
+  const [view, setView] = useUrlState('fx', ['fixtures', 'all'], 'fixtures');
   const [loading, setLoading] = useState(true);
+  const pad = embedded ? '' : 'p-4';
 
   useEffect(() => { loadData(); }, []);
 
@@ -66,13 +70,13 @@ export default function Fixtures() {
 
   if (view === 'all') {
     return (
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-1">All Gameweeks</h1>
-        <div className="flex items-center justify-between mb-4">
+      <div className={pad}>
+        {!embedded && <PageHeader title="All Gameweeks" className="mb-1" />}
+        <div className="flex items-center justify-between mb-4 gap-2">
           <p className="text-sm text-muted-foreground">{gameweeks.length} gameweeks synced</p>
           <button
             onClick={() => setView('fixtures')}
-            className="flex items-center gap-1 text-xs text-white font-medium bg-primary/10 px-2.5 py-1.5 rounded-full"
+            className="flex items-center gap-1 text-xs text-white font-medium bg-primary/10 px-3 min-h-[44px] rounded-full shrink-0"
           >
             <ChevronLeft size={14} /> Back
           </button>
@@ -115,14 +119,14 @@ export default function Fixtures() {
   }
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-bold">
+    <div className={pad}>
+      <div className="flex items-center justify-between mb-1 gap-2">
+        <h2 className={`font-bold truncate ${embedded ? 'text-base' : 'text-2xl'}`}>
           {selectedGw ? `Gameweek ${selectedGw.number}` : 'Fixtures'}
-        </h1>
+        </h2>
         <button
           onClick={() => setView('all')}
-          className="flex items-center gap-1 text-xs text-white font-medium bg-primary/10 px-2.5 py-1.5 rounded-full"
+          className="flex items-center gap-1 text-xs text-white font-medium bg-primary/10 px-3 min-h-[44px] rounded-full shrink-0"
         >
           <List size={14} /> All Gameweeks
         </button>
