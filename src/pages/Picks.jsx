@@ -68,6 +68,25 @@ export default function Picks() {
     }
   };
 
+  // Form + fixture difficulty for every player, and the ranked shortlist that
+  // fronts the picker. Hooks must sit above the early returns below.
+  const pickingContext = useMemo(() => buildPickingContext({
+    players,
+    stats: seasonStats,
+    fixtures,
+    scoringConfig,
+    gameweekNumber: gameweek?.number,
+  }), [players, seasonStats, fixtures, scoringConfig, gameweek]);
+
+  const shortlist = useMemo(() => buildShortlist({
+    players,
+    stats: seasonStats,
+    fixtures,
+    scoringConfig,
+    gameweekNumber: gameweek?.number,
+    limit: 20,
+  }), [players, seasonStats, fixtures, scoringConfig, gameweek]);
+
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
   if (!gameweek) return <div className="p-6 text-center text-muted-foreground">No active gameweek yet. Ask your admin to set one up.</div>;
 
@@ -121,6 +140,13 @@ export default function Picks() {
     pointsByPlayerId[p.id] = calculatePlayerPoints(stat, scoringConfig);
   });
 
+  // Pre-deadline every live score is 0, so the meter runs on projected points
+  // (recent form discounted by start rate, nudged by fixture difficulty).
+  const projectedTotal = selectedIds.reduce(
+    (sum, id) => sum + (pickingContext.expectedByPlayerId[id] || 0),
+    0
+  );
+
   return (
     <div className={`p-4 ${locked ? 'pb-48' : 'pb-6'}`}>
       <div className="mb-4">
@@ -130,16 +156,34 @@ export default function Picks() {
             <Lock size={14} /> Picks locked
           </p>
         ) : (
-          <p className="text-muted-foreground flex items-center gap-1 mt-1 text-sm">
-            <Clock size={14} /> {gameweek.deadline ? `Deadline: ${new Date(gameweek.deadline).toLocaleString()}` : 'No deadline set'}
-          </p>
+          <Countdown deadline={gameweek.deadline} className="mt-1" />
         )}
       </div>
 
       {!locked && (
+        <TwentyOneMeter
+          total={projectedTotal}
+          threshold={scoringConfig?.bust_threshold || 21}
+          count={selectedIds.length}
+          live={false}
+          className="mb-4"
+        />
+      )}
+
+      {!locked && (
         <div className="flex gap-3 items-start">
           <div className="flex-1 min-w-0">
-            <PlayerSearch players={players} selectedIds={selectedIds} onToggle={handleToggle} pointsByPlayerId={pointsByPlayerId} gameweekNumber={gameweek.number} />
+            <PlayerSearch
+              players={players}
+              selectedIds={selectedIds}
+              onToggle={handleToggle}
+              pointsByPlayerId={pointsByPlayerId}
+              gameweekNumber={gameweek.number}
+              shortlist={shortlist}
+              formIndex={pickingContext.formIndex}
+              fixtureByClub={pickingContext.fixtureByClub}
+              showLivePoints={false}
+            />
           </div>
           <PickRail
             selectedPlayers={selectedPlayers}
