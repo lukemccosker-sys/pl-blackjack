@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home as HomeIcon, Hand, Calendar, Trophy, Settings, BarChart3 } from 'lucide-react';
+import { Home as HomeIcon, Hand, Trophy, Goal } from 'lucide-react';
 import { usePoolAuth } from '@/lib/PoolAuth';
 import { base44 } from '@/api/base44Client';
 import { isDeadlinePassed } from '@/lib/scoring';
@@ -36,28 +36,27 @@ export default function BottomNav() {
     };
   }, []);
 
+  // Four tabs, fixed for everyone. Fixtures and Stats live together under
+  // Football, and Admin sits behind the profile avatar with Settings — it's
+  // occasional configuration, and having it come and go made the bar shift
+  // depending on who was logged in.
   const links = [
     { to: '/', label: 'Home', icon: HomeIcon, live: isLive },
-    { to: '/stats', label: 'Stats', icon: BarChart3 },
     { to: '/picks', label: 'Picks', icon: Hand },
-    { to: '/fixtures', label: 'Fixtures', icon: Calendar },
     { to: '/leaderboard', label: 'Standings', icon: Trophy },
+    { to: '/football', label: 'Football', icon: Goal },
   ];
-
-  if (member?.is_admin) {
-    links.push({ to: '/admin', label: 'Admin', icon: Settings });
-  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
-      <div className="max-w-lg mx-auto flex justify-around items-center h-16">
+      <div className="max-w-lg mx-auto flex items-stretch h-16">
         {links.map(({ to, label, icon: Icon, live }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 px-2 py-2 transition-colors ${
+              `flex flex-col items-center justify-center gap-1 flex-1 min-h-[56px] transition-colors ${
                 isActive ? 'text-primary' : 'text-muted-foreground'
               }`
             }
@@ -66,7 +65,7 @@ export default function BottomNav() {
               <Icon size={20} className={live ? 'nav-live-icon' : ''} />
               {live && <span className="nav-live-dot" />}
             </span>
-            <span className="text-[10px] font-medium">{label}</span>
+            <span className="text-[11px] font-medium">{label}</span>
           </NavLink>
         ))}
       </div>
