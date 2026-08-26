@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home as HomeIcon, Hand, Trophy, Goal } from 'lucide-react';
-import { usePoolAuth } from '@/lib/PoolAuth';
 import { base44 } from '@/api/base44Client';
 import { isDeadlinePassed } from '@/lib/scoring';
 
 export default function BottomNav() {
-  const { member } = usePoolAuth();
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
