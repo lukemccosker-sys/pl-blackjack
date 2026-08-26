@@ -5,6 +5,24 @@
     "admin_pin": {
       "type": "string",
       "title": "Admin PIN"
+    },
+    "reminder_webhook_url": {
+      "type": "string",
+      "title": "Reminder Webhook URL"
+    },
+    "reminder_hours_before": {
+      "type": "number",
+      "default": 24,
+      "title": "Reminder Hours Before Deadline"
+    },
+    "reminder_enabled": {
+      "type": "boolean",
+      "default": false,
+      "title": "Reminders Enabled"
+    },
+    "last_reminder_key": {
+      "type": "string",
+      "title": "Last Reminder Sent (season:gameweek)"
     }
   },
   "required": [
