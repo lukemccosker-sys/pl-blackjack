@@ -1,0 +1,19 @@
+{
+  "name": "remindPickers",
+  "entry": "entry.ts",
+  "automations": [
+    {
+      "type": "scheduled",
+      "name": "deadline_reminder",
+      "description": "Check daily whether the gameweek deadline is inside the reminder window, and nudge whoever hasn't picked.",
+      "schedule_mode": "recurring",
+      "schedule_type": "cron",
+      // 08:00 Sydney (UTC+10) = 22:00 UTC the day before. The function itself
+      // decides whether the deadline is close enough to be worth a message, so
+      // running once a day is enough — and last_reminder_key makes sure a
+      // gameweek can only ever be nudged once.
+      "cron_expression": "0 22 * * *",
+      "is_active": true
+    }
+  ]
+}
