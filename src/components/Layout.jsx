@@ -25,9 +25,16 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-lg mx-auto min-h-screen pb-20 relative">
-        <Link to="/settings" className="absolute top-4 right-4 z-30 rounded-full ring-2 ring-border hover:ring-primary transition-all">
-          <MemberAvatar member={member} size={32} />
+      <div className="max-w-lg mx-auto min-h-screen pb-nav relative pt-safe">
+        {/* Sits below the status bar on an installed app (top-safe), and is a
+            44px target on a solid background so it reads as a button rather
+            than blending into the wallpaper next to the system icons. */}
+        <Link
+          to="/settings"
+          aria-label="Profile and settings"
+          className="absolute right-3 top-safe z-30 w-11 h-11 flex items-center justify-center rounded-full bg-card ring-1 ring-border shadow-lg shadow-black/40 hover:ring-primary active:scale-95 transition-all"
+        >
+          <MemberAvatar member={member} size={30} />
         </Link>
         <Outlet />
       </div>
