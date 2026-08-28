@@ -46,7 +46,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30 pb-safe">
       <div className="max-w-lg mx-auto flex items-stretch h-16">
         {links.map(({ to, label, icon: Icon, live }) => (
           <NavLink
