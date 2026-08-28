@@ -29,7 +29,7 @@ export default function PickSummary({
   const showBadge = isBust || tier === 'blackjack' || isFinalized || isLocked;
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 z-40">
+    <div className="fixed above-nav left-0 right-0 z-40">
       <div className="max-w-lg mx-auto bg-card border-t border-border rounded-t-2xl shadow-lg p-4">
         {/* While picking, the running total lives here so it stays visible as
             you scroll the player list. Once locked the page header already
