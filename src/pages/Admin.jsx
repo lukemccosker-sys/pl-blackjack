@@ -27,8 +27,8 @@ export default function Admin() {
   ];
 
   return (
-    <div className="p-4 pb-20">
-      <div className="flex items-center gap-3 mb-4 pr-12">
+    <div className="p-4 pb-nav">
+      <div className="flex items-center gap-3 mb-4 pr-14">
         <Link
           to="/settings"
           aria-label="Back to settings"

@@ -15,7 +15,7 @@ export default function Football() {
   const [view, setView] = useUrlState('view', ['fixtures', 'stats'], 'fixtures');
 
   return (
-    <div className="p-4 pb-20">
+    <div className="p-4 pb-nav">
       <PageHeader title="Football" className="mb-3" />
 
       <SegmentedControl

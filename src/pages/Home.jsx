@@ -180,7 +180,7 @@ export default function Home() {
   const medalColors = ['text-yellow-400', 'text-gray-300', 'text-orange-400'];
 
   return (
-    <div className="p-4 pb-20">
+    <div className="p-4 pb-nav">
       <PageHeader
         title="Home"
         subtitle={

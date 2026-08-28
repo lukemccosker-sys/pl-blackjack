@@ -144,7 +144,7 @@ export default function Picks() {
 
   return (
     // Bottom padding clears the persistent pick sheet plus the nav bar.
-    <div className="p-4 pb-64">
+    <div className="p-4 pb-sheet">
       <PageHeader
         title={`Gameweek ${gameweek.number}`}
         subtitle={locked ? (

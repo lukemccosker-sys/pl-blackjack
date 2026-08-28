@@ -28,7 +28,7 @@ export default function Stats({ embedded = false }) {
   const loading = gwLoading || playersLoading || statsPending;
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading...</div>;
-  const pad = embedded ? '' : 'p-4 pb-20';
+  const pad = embedded ? '' : 'p-4 pb-nav';
 
   const playerMap = {};
   players.forEach(p => { playerMap[p.id] = p; });
