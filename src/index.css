@@ -187,3 +187,20 @@
   filter: drop-shadow(0 0 6px hsl(273 55% 45% / 0.5));
   letter-spacing: 0.1em;
 }
+/* --- iOS safe areas -------------------------------------------------------
+   Installed to the Home Screen the app runs full-bleed (viewport-fit=cover
+   plus a translucent status bar), so without these the top of the page sits
+   UNDER the clock/battery/wifi and the bottom sits under the home indicator.
+   env() resolves to 0px anywhere it doesn't apply, so these are safe in a
+   normal browser tab too. */
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Absolutely-positioned elements are placed against the padding box, so they
+   don't inherit the container's safe-area padding and need it in the offset. */
+.top-safe { top: calc(env(safe-area-inset-top, 0px) + 0.5rem); }
+
+/* Clearance for the fixed bottom nav (h-16), and on Picks the pick sheet. */
+.pb-nav { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+.pb-sheet { padding-bottom: calc(16rem + env(safe-area-inset-bottom, 0px)); }
+.above-nav { bottom: calc(4rem + env(safe-area-inset-bottom, 0px)); }
