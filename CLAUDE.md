@@ -50,10 +50,24 @@ duplicate the maths.
   functions gate on a `member_id` passed in the request body, which is
   spoofable — don't build anything security-critical on it.
 
+### Gotcha: deleting files
+
+The sandbox auto-commits as "External agent changes", but that only reliably
+picks up files touched through the platform's own write path. A bare `rm` can
+be left unstaged, and the file reappears when the sandbox is rebuilt from the
+last commit. After deleting anything, run `git add -A` and confirm with
+`git status --porcelain` that the tree is clean.
+
 ### UI conventions
 
 - Mobile first; `Layout` constrains to `max-w-lg` and pins the profile avatar
   top-right. Use `PageHeader` for page titles — it reserves that corner.
+- **Safe areas matter.** Installed to the Home Screen the app runs full-bleed
+  (`viewport-fit=cover` plus a translucent status bar), so anything at the top
+  or bottom edge lands under the system clock/battery or the home indicator.
+  Use the `pt-safe` / `pb-safe` / `top-safe` / `pb-nav` / `pb-sheet` /
+  `above-nav` helpers in `index.css` rather than raw `top-4` or `pb-20` on
+  fixed or absolutely-positioned chrome.
 - Tap targets are 44px minimum. Use `SegmentedControl` for view switches.
 - Page view state belongs in the URL via `useUrlState`, so the phone back
   button and back-swipe work.
